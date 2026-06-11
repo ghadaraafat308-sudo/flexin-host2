@@ -111,19 +111,19 @@ except ImportError:
 
 # Firebase Realtime Database — بديل kvsqlite
 
-FIREBASE_URL = "https://botratn555-default-rtdb.firebaseio.com"
+FIREBASE_URL = "https://bostgram-default-rtdb.firebaseio.com"
 
 FIREBASE_SA_INFO = {
     "type": "service_account",
-    "project_id": "botratn555",
-    "private_key_id": "c3035e02ae65b2a7841b572b592b553d59be2f32",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCtSoFIy1Nf56nm\nXLAhta1/5my7hr9M72ktuNQX8aNjIqDbYlw65+c4iWJw/qiHbEXYMVd0yIbbjcPJ\nmZ2voH72L6bkaxyM9Oz1ny8qoc7bc3GcZDZO8I5PqoYdVd+CB+/MkeZ+uvBhscFt\ng+9cOOLWF7MlgzGQ0dmsXEyjtZW91z+u3vltadNpMYBjmMP3l15hL3gpqRoMDk3s\nRS2C5YdcMkaeFLG9NIejqE9iApb9y7mXZZPWBtDFx6gJ4vk+IEYEKNveXa1CdriE\ngeY9CVk+Dj7GLspW/2aslb2cPBrpiXnLARFY3zfmOIuwOgsUOabVFOAJ5OuiVRjK\nA/LeANIXAgMBAAECggEABb7rrHs5Z3up8X5vRJ7egtgkEM+19hoWFbMELUsQzM+w\nH7YSMs3Pp9s+TVrUQbFAW5u/N5sShaMcs8mJJfKfYxBPa1F13+KbHMXLbZFx52rb\ngID+H/3v6gpQahaX05rpw5Gu39LY95RKQpRWUmt8cfbVNNA1y4R5wDJLRD5YGbRE\navM1UpnSocKhFLdFfoexHnoYC4jUPjiK+9+ii3f+spd29XWbI/FWIXV5jsiYoUEM\nlRZdevChDWArD+eTfh9bL0liQTQAE5Bj9DwOQSDZNdCIOTL/rFvWxZdAWod4CtuA\nI/cppRqyPPCHS8eEaUo3yvewHw7NlUOviVZolvCaEQKBgQDWvYfcXkbFkcZ4jOGY\n4pUmJdxZhCnfZIE2Y5N2ZxNlurLJ6hegowNCoOyW6LB/yHixF+a0J5uGQUeDFPnc\nnqG6w+X46CPK/Kc3xdtgtn8rLninQRst0Ja/si0eQdysUQp5vJbk3RgwWNUP2xaH\n8ioSspBPorG+GB1OPur4pOmWmQKBgQDOljMmRU/pfMq166TiEEY8sEjPDRD8U9BW\nRwBc2rn1+OS9CTdP1ILI+z1tR/C7N3uUNDi10rEJA9OepTI5hZgSidNB2NyLu+sg\nid7lDB+j6Pki64twTervJQ2P8iHePZncbEXvMO2hdFKb9VKdEug4dQuuW09gbPgy\nkP6YwOcMLwKBgArsnWrCiQsn/VbIo/lpHXlRV8JeDNtGe6ROsIPHfp8gPlQzSnxr\njpDnKuIKeGAnzKwFsUDc+vZ7f63VdViZ4VRk/uAIvzlmXQNjV2O2JQYHWS/5Ce7s\nu56I6+6sHxPNE6FZzLtb3A0pl700whKsaSOGXf0PI8et5l/Cp6V6jj+RAoGBAMGi\nX0cb6I89fPOPb/jEsFDqGxSXdrhMBxcXbeuayHsZU60sGkAlPIENnMH1kFqq4pZD\nbHRgi7ebcptc0/q+kY+ux+kMT4xaE0VodRfTiUSldf+ZMBWPswl8fX3SwpQAwVqt\n0c8k2VdgJJ4yD8FSm39vlgdTZs9G1EzxQvICvY3ZAoGBAJP5SjlxoX94EtR+mwQ/\nHXq/qtkBNUguOmd6sWDrP98W/Oj6udyHgBlP002CiW1Ot/BA2cf9I98qgwtNAiq5\ndZZhIi9jWmTPzIXxS6RFDntwVf95rnAAJVoyaUn1C8L2K0ozGMRMq+qQL4RzhTwA\nYUbtPbQLtb9ONKDxxCPBvreK\n-----END PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk-fbsvc@botratn555.iam.gserviceaccount.com",
-    "client_id": "113378375417736185838",
+    "project_id": "bostgram",
+    "private_key_id": "2039a9d57714806f864913c2dda8a3ee137e37aa",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCmGcrc4wMd8n4q\nLmLozJdaoqa3VA9zI/S1xqHf3oVr17JsQ/qNroz0o+ko8swO+I1OXSy640tIn//y\nNr4IyNV8D5HdZ7K5pu2u3ePxg53c1xE4s2HKNsIJOdcyeKTOssAdgXkxSzPx5IoI\nWIIN/RbcS8fwW6ODP/E59l8UC5UagO49u15P6hRGaxTO5BykYljtBBI8sbJUBEDw\n8wuNo0HCSKIZsbNzIXL9qg0UZeERVuXTTJAk9WdPBu4YK04n0VCoPUAZD5+Lpuqo\nUhkmIvw8fFtGnrjCo+fgvnqVOsdFVY/n72forXqEOmM3NdYWvxHawv+pIlVF7Nxg\nW3frcTiTAgMBAAECggEAIMgtZAv/1PzDjsKp7cVXR+GbIsqZ5AEgLnIeB6eM0Jx5\nD+oYvLbLBguFnHnS8U934BP+nIH4nURKyPyp4+TzUXFnOfnZ6c860MzlTIjL8saV\nlQm+TqEhCZ4bTVBHQq4/wXMIvsRXY7HV1lDVljoxtVfVhagobOKFUwm/eR7SFjEz\nleJcyr24rjqTrq5BBEKTdqyqNTFJVEUwJ0JS5fqw8ROPmo5bA1OLTxO1OSvTQr0J\nwT+J0fF+xKtMJMUN8FJbaE4eKmyeXpCeGcJP2nPBjKgFSbIAnrPo4L9W3h4guaYt\nOKq61BtmcVAlZQ8fHbKSxmHlMDM6mh055EMhMPSGfQKBgQDYfB1EPWdv2vWGWLJz\nLoO4CQHC0UXgX/6KxyATDtl7pk18usSeQIfh9E4/qtjuO2fEfzQ1GiwV0PJo1ZZw\nQ80Znyy9mk0TTB9wVBrybHPzLwR3zE72ee2EHPteagNC1C5p6SP7nYh2VKGZOeLU\nJSGnV05l5m9LNgpOPvsmHsZntwKBgQDEa1XT6FLG299yEyfrnXEk+krUn29LDzxr\nEs5x8Wv9q41nz3HREeR0+BRvsIYaFP7YXpG4EKYD2uI5CiaILwrNGvIy5pLLM/YF\n4Acu3VEueJ74E7a9kci3LNLm3B48c/IPEb8XubVPJN4n7aiVuX2pCZKiNbjubPNU\nLfarrGReBQKBgAsMoq3F+I6T/W4i/tC0MhLlmspnxgpCvAo3SaLPYjhWb6QLIFf3\ncTgOMSQ8wx+9tnkoCPEg6dkfNhA1vpzySPii0DTJOF/gxcYE9O8kq/JglvjKW8lm\nxcG1fPr/rDTwAYJ0XNrN2pY3kZvxgWtUjdgts5mt3kZXdsUxn739WiEXAoGARJpg\nrdTVJJOjJYq/RLIG1K1++Wh+TK8ToSo+ZNm3qDAFAZ8Y17byHlCPgrsa+30dzaCq\nMKnP8kS/AsEi2CnmEeE5esHBv6t0YHTwzVOLiTmj/G2WQ/vpKOFFAFEdVmwAvXar\nUbQROYVc+oEtgq34z9OCHZm577yp+FrdbvSVUakCgYEAoCLiloAOiP+wCiyFv8B/\nHRIMI7mYquB5R29yUPWToFzGfS+KVAFjCmfXVpMfGYBTILG/yYdMpJvD8YwJLUfe\nI/Pl4gwKItS1FP4hzbWx82cM+DQN1QV+A5gRtsTp5LQzVoyrWqhvWpCoHzf6gSs0\nLeQduKG8FNxKJfd4rS/L6Mw=\n-----END PRIVATE KEY-----\n",
+    "client_email": "firebase-adminsdk-fbsvc@bostgram.iam.gserviceaccount.com",
+    "client_id": "109165842728854310464",
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40botratn555.iam.gserviceaccount.com",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40bostgram.iam.gserviceaccount.com",
     "universe_domain": "googleapis.com"
 }
 
@@ -505,6 +505,28 @@ BTN_KEYS = {
     "free_reactions": "الخدمات المجانية",
     "free_react_go": "تفاعلات مجانية على منشور",
     "free_react_plus": "⚡ تفاعلات + مشاهدات مستقبلية",
+    # ========== أزرار v62 الجديدة ==========
+    "change_lang": "تغيير اللغة",
+    "setlang_ar": "العربية",
+    "setlang_en": "English",
+    "profile": "الملف الشخصي",
+    "profile_share": "دعوة صديق",
+    "profile_badges": "الشارات",
+    "profile_settings": "الإعدادات",
+    "check": "فحص قناة",
+    "check_again": "فحص قناة تانية",
+    "design": "تصميم منشور AI",
+    "design_go_formal": "أسلوب رسمي",
+    "design_go_friendly": "أسلوب ودود",
+    "design_go_marketing": "أسلوب تسويقي",
+    "football": "كورة قدم",
+    "fb_bet_50": "رهان 50",
+    "fb_bet_100": "رهان 100",
+    "fb_bet_250": "رهان 250",
+    "fb_bet_500": "رهان 500",
+    "rec": "خدمة التفاعل التلقائي",
+    "shop": "متجر VIP",
+    "ai_support_chat": "دعم بالذكاء الاصطناعي",
 }
 
 def _get_btn_color(callback_data, default="blue"):
@@ -661,6 +683,35 @@ STATIC_BUTTON_REGISTRY = [
         ("11",            "عدد الطلبات"),
         ("bot_channel_btn", "📢 قناة البوت"),
     ]),
+    ('🆕 ميزات v62', [
+        ('profile'             , '👤 الملف الشخصي'),
+        ('profile_share'       , '🎁 دعوة صديق'),
+        ('profile_badges'      , '🏅 الشارات'),
+        ('profile_settings'    , '⚙️ الإعدادات'),
+        ('change_lang'         , '🌐 تغيير اللغة'),
+        ('setlang_ar'          , '🇸🇦 العربية'),
+        ('setlang_en'          , '🇬🇧 English'),
+        ('check'               , '🔍 فحص قناة'),
+        ('check_again'         , '🔄 فحص قناة تانية'),
+        ('design'              , '🎨 تصميم منشور AI'),
+        ('design_go_formal'    , '💼 أسلوب رسمي'),
+        ('design_go_friendly'  , '☕ أسلوب ودود'),
+        ('design_go_marketing' , '🔥 أسلوب تسويقي'),
+    ]),
+    ('🎮 الألعاب الجديدة', [
+        ('football'            , '⚽ كورة قدم'),
+        ('fb_bet_50'           , '⚽ رهان 50'),
+        ('fb_bet_100'          , '⚽ رهان 100'),
+        ('fb_bet_250'          , '⚽ رهان 250'),
+        ('fb_bet_500'          , '⚽ رهان 500'),
+    ]),
+    ('🛒 خدمات إضافية', [
+        ('rec'                 , '🤖 خدمة التفاعل التلقائي'),
+        ('shop'                , '💎 متجر VIP'),
+        ('ai_support_chat'     , '🤖 دعم AI'),
+        ('user_store'          , '🛍️ متجر المستخدمين'),
+        ('votes_fsub'          , '🗳️ تصويت اشتراك إجباري'),
+    ]),
 ]
 
 def _label_for_cb(cb):
@@ -698,6 +749,550 @@ def btn(text, callback_data=None, url=None, color="blue", **kwargs):
 
 def mk(row_width=2):
     return TelebotMarkup(row_width=row_width)
+
+# =====================================================
+# 🌍 نظام اللغات (i18n) — عربي / إنجليزي
+# =====================================================
+
+I18N = {
+    "ar": {
+        "lang_pick_title":  "🌍 اختر لغتك / Choose your language",
+        "lang_pick_sub":    "اضغط على اللغة المفضّلة لك:",
+        "lang_btn_ar":      "🇸🇦 العربية",
+        "lang_btn_en":      "🇬🇧 English",
+        "lang_saved":       "✅ تم حفظ اللغة: العربية",
+        "back":             "🔙 رجوع",
+        "main_menu":        "🏠 الرئيسية",
+        "profile":          "👤 البروفايل",
+        "shop":             "🛍️ المتجر",
+        "games":            "🎮 الألعاب",
+        "support":          "💬 الدعم",
+        "language":         "🌐 اللغة",
+        "balance":          "💰 الرصيد",
+        "level":            "🏆 المستوى",
+        "streak":           "🔥 سلسلة الدخول",
+        "member_since":     "📅 عضو منذ",
+        "refs":             "🎁 الإحالات",
+        "games_played":     "🎮 ألعاب لُعبت",
+        "check_title":      "🔍 فحص قناة",
+        "check_prompt":     "📥 أرسل يوزر القناة (مثل: @channel) أو رابط الدعوة:",
+        "check_ok":         "✅ تم الفحص بنجاح",
+        "design_title":     "🎨 تصميم منشور بالـ AI",
+        "design_prompt":    "📝 اكتب فكرة المنشور (مثال: عرض VIP):",
+        "design_styles":    "✨ اختر الأسلوب:",
+        "design_style_formal":   "💼 رسمي",
+        "design_style_friendly": "☕ ودود",
+        "design_style_marketing":"🔥 تسويقي",
+        "profile_btn_share":     "🎁 دعوة صديق",
+        "profile_btn_badges":    "🏅 الشارات",
+        "profile_btn_settings":  "⚙️ الإعدادات",
+        "profile_btn_stats":     "📊 التفاصيل",
+        "vip":              "💎 VIP",
+        "not_subscribed":   "⛔ غير مشترك",
+        "design_loading":   "⚡ جاري تصميم المنشور...",
+        "design_done":      "✅ المنشور جاهز",
+        "design_again":     "♻️ ولّد تاني",
+        "check_failed":     "❌ فشل الفحص. اتأكد إن القناة عامّة وجرّب تاني.",
+    },
+    "en": {
+        "lang_pick_title":  "🌍 Choose your language / اختر لغتك",
+        "lang_pick_sub":    "Tap your preferred language:",
+        "lang_btn_ar":      "🇸🇦 العربية",
+        "lang_btn_en":      "🇬🇧 English",
+        "lang_saved":       "✅ Language saved: English",
+        "back":             "🔙 Back",
+        "main_menu":        "🏠 Main Menu",
+        "profile":          "👤 Profile",
+        "shop":             "🛍️ Shop",
+        "games":            "🎮 Games",
+        "support":          "💬 Support",
+        "language":         "🌐 Language",
+        "balance":          "💰 Balance",
+        "level":            "🏆 Level",
+        "streak":           "🔥 Streak",
+        "member_since":     "📅 Member since",
+        "refs":             "🎁 Referrals",
+        "games_played":     "🎮 Games Played",
+        "check_title":      "🔍 Channel Check",
+        "check_prompt":     "📥 Send channel username (e.g. @channel) or invite link:",
+        "check_ok":         "✅ Check complete",
+        "design_title":     "🎨 AI Post Designer",
+        "design_prompt":    "📝 Type your post idea (e.g., VIP offer):",
+        "design_styles":    "✨ Choose style:",
+        "design_style_formal":   "💼 Formal",
+        "design_style_friendly": "☕ Friendly",
+        "design_style_marketing":"🔥 Marketing",
+        "profile_btn_share":     "🎁 Invite a Friend",
+        "profile_btn_badges":    "🏅 Badges",
+        "profile_btn_settings":  "⚙️ Settings",
+        "profile_btn_stats":     "📊 Details",
+        "vip":              "💎 VIP",
+        "not_subscribed":   "⛔ Not subscribed",
+        "design_loading":   "⚡ Designing post...",
+        "design_done":      "✅ Post ready",
+        "design_again":     "♻️ Regenerate",
+        "check_failed":     "❌ Check failed. Make sure the channel is public and try again.",
+    },
+}
+
+def _user_lang(uid):
+    try:
+        v = db.get(f'user_{uid}_lang')
+        if v in ('ar', 'en'):
+            return v
+    except Exception:
+        pass
+    return 'ar'
+
+def _set_user_lang(uid, lang):
+    if lang not in ('ar', 'en'):
+        lang = 'ar'
+    try:
+        db.set(f'user_{uid}_lang', lang)
+    except Exception:
+        pass
+
+def t(key, uid=None, lang=None):
+    """ترجمة بناءً على لغة المستخدم."""
+    if lang is None:
+        lang = _user_lang(uid) if uid else 'ar'
+    return I18N.get(lang, I18N['ar']).get(key, I18N['ar'].get(key, key))
+
+def _show_lang_picker(cid, mid=None):
+    keys = mk(row_width=2)
+    keys.add(
+        TelebotButton(text=I18N['ar']['lang_btn_ar'], callback_data='setlang_ar'),
+        TelebotButton(text=I18N['en']['lang_btn_en'], callback_data='setlang_en')
+    )
+    txt = (
+        f"{I18N['ar']['lang_pick_title']}\n"
+        f"━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🇸🇦 {I18N['ar']['lang_pick_sub']}\n"
+        f"🇬🇧 {I18N['en']['lang_pick_sub']}"
+    )
+    try:
+        if mid:
+            bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
+        else:
+            bot.send_message(cid, txt, reply_markup=keys, parse_mode='HTML')
+    except Exception:
+        bot.send_message(cid, txt, reply_markup=keys, parse_mode='HTML')
+
+# =====================================================
+# 👤 /profile — صفحة بروفايل احترافية بصورة Pillow
+# =====================================================
+
+def _calc_user_level(xp):
+    """يحسب المستوى والـXP المطلوب للمستوى التالي."""
+    tiers = [
+        (0, "🥉 Bronze"),
+        (500, "🥈 Silver"),
+        (2000, "🥇 Gold"),
+        (5000, "💎 Platinum"),
+        (10000, "💫 Diamond"),
+        (25000, "👑 VIP"),
+    ]
+    lvl = 1
+    label = tiers[0][1]
+    next_xp = tiers[1][0]
+    cur_xp = 0
+    for i, (thr, lbl) in enumerate(tiers):
+        if xp >= thr:
+            lvl = i + 1
+            label = lbl
+            cur_xp = thr
+            next_xp = tiers[i+1][0] if i+1 < len(tiers) else thr * 2
+    return lvl, label, cur_xp, next_xp
+
+def _get_user_xp(uid):
+    try:
+        info = get(uid) or {}
+        # XP = (coins / 10) + (games * 5) + (refs * 50) — تقريبي
+        coins = int(info.get('coins', 0) or 0)
+        games = int(info.get('games_played', 0) or 0)
+        refs  = len(info.get('users', []) or [])
+        return (coins // 10) + (games * 5) + (refs * 50)
+    except Exception:
+        return 0
+
+def _make_profile_image(uid, user_data):
+    """يولّد صورة بروفايل بـ Pillow. يرجّع BytesIO أو None."""
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        from io import BytesIO
+        import os, glob
+    except Exception as _e:
+        print(f'[profile] PIL not available: {_e}')
+        return None
+
+    try:
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+        def ar(s):
+            try:
+                return get_display(arabic_reshaper.reshape(str(s)))
+            except Exception:
+                return str(s)
+    except Exception:
+        def ar(s):
+            return str(s)
+
+    # دوّر على خط يدعم العربية
+    font_candidates = [
+        '/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf',
+        '/usr/share/fonts/truetype/noto/NotoNaskhArabic-Bold.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    ]
+    font_path = None
+    for fp in font_candidates:
+        if os.path.exists(fp):
+            font_path = fp
+            break
+    if not font_path:
+        # أي خط ttf
+        ttfs = glob.glob('/usr/share/fonts/**/*.ttf', recursive=True)
+        if ttfs:
+            font_path = ttfs[0]
+
+    try:
+        W, H = 900, 1200
+        # خلفية تدرج
+        img = Image.new('RGB', (W, H), color=(15, 20, 35))
+        draw = ImageDraw.Draw(img)
+        # رسم تدريج بسيط
+        for y in range(H):
+            ratio = y / H
+            r = int(15 + ratio * 25)
+            g = int(20 + ratio * 30)
+            b = int(35 + ratio * 50)
+            draw.line([(0, y), (W, y)], fill=(r, g, b))
+
+        if font_path:
+            f_big   = ImageFont.truetype(font_path, 56)
+            f_med   = ImageFont.truetype(font_path, 38)
+            f_small = ImageFont.truetype(font_path, 30)
+            f_tiny  = ImageFont.truetype(font_path, 24)
+        else:
+            f_big = f_med = f_small = f_tiny = ImageFont.load_default()
+
+        # خط علوي
+        draw.rectangle([(0, 0), (W, 110)], fill=(25, 35, 60))
+        draw.text((W//2, 55), ar('👤 البروفايل / PROFILE'), font=f_big, fill=(255, 215, 0), anchor='mm')
+
+        # بيانات أساسية
+        y0 = 160
+        draw.text((W//2, y0), ar(user_data.get('name', '')), font=f_med, fill=(255, 255, 255), anchor='mm')
+        y0 += 55
+        draw.text((W//2, y0), f"@{user_data.get('username', '-')} | ID: {uid}", font=f_small, fill=(180, 200, 220), anchor='mm')
+
+        # فاصل
+        y0 += 60
+        draw.line([(60, y0), (W-60, y0)], fill=(100, 120, 150), width=2)
+        y0 += 40
+
+        # المستوى والـXP
+        lvl_label = user_data.get('level_label', '')
+        draw.text((80, y0), ar(f"🏆 المستوى: {lvl_label}"), font=f_med, fill=(255, 215, 0))
+        y0 += 60
+        xp = user_data.get('xp', 0)
+        next_xp = user_data.get('next_xp', 100)
+        progress = min(1.0, xp / max(next_xp, 1))
+        # شريط XP
+        bar_x, bar_y, bar_w, bar_h = 80, y0, W-160, 40
+        draw.rounded_rectangle([(bar_x, bar_y), (bar_x+bar_w, bar_y+bar_h)], radius=20, fill=(40, 50, 80))
+        if progress > 0:
+            draw.rounded_rectangle([(bar_x, bar_y), (bar_x+int(bar_w*progress), bar_y+bar_h)], radius=20, fill=(70, 200, 120))
+        draw.text((W//2, bar_y+bar_h//2), f"{xp:,} / {next_xp:,} XP", font=f_small, fill=(255, 255, 255), anchor='mm')
+        y0 += 70
+
+        # فاصل
+        draw.line([(60, y0), (W-60, y0)], fill=(100, 120, 150), width=2)
+        y0 += 30
+
+        # إحصائيات
+        stats = [
+            ("💰", ar(f"الرصيد: {user_data.get('coins', 0):,} نقطة")),
+            ("💎", ar(f"VIP: {user_data.get('vip', '⛔ غير مشترك')}")),
+            ("🔥", ar(f"سلسلة الدخول: {user_data.get('streak', 0)} يوم")),
+            ("🎮", ar(f"ألعاب لُعبت: {user_data.get('games', 0)}")),
+            ("🎁", ar(f"الإحالات: {user_data.get('refs', 0)} شخص")),
+            ("📅", ar(f"عضو منذ: {user_data.get('since', '-')}")),
+        ]
+        for emo, line in stats:
+            draw.text((80, y0), emo, font=f_med, fill=(255, 215, 0))
+            draw.text((150, y0+5), line, font=f_small, fill=(220, 235, 255))
+            y0 += 60
+
+        # فاصل
+        y0 += 20
+        draw.line([(60, y0), (W-60, y0)], fill=(100, 120, 150), width=2)
+        y0 += 30
+        draw.text((W//2, y0), ar('🔗 رابط الدعوة الخاص بك'), font=f_small, fill=(150, 200, 255), anchor='mm')
+        y0 += 40
+        ref_link = user_data.get('ref_link', '')
+        draw.text((W//2, y0), ref_link[:60], font=f_tiny, fill=(180, 220, 255), anchor='mm')
+
+        # تذييل
+        draw.rectangle([(0, H-50), (W, H)], fill=(25, 35, 60))
+        draw.text((W//2, H-25), ar('⚡ Powered by Bot'), font=f_tiny, fill=(150, 170, 200), anchor='mm')
+
+        buf = BytesIO()
+        img.save(buf, format='PNG', optimize=True)
+        buf.seek(0)
+        return buf
+    except Exception as _e:
+        print(f'[profile] image err: {_e}')
+        return None
+
+@bot.message_handler(commands=['profile'])
+def cmd_profile(message):
+    if not _fsub_check_msg(message): return
+    _show_profile(message.from_user, message.chat.id, None)
+
+def _show_profile(from_user, cid, mid):
+    uid  = from_user.id
+    lang = _user_lang(uid)
+    info = get(uid) or {'id': uid, 'coins': 0}
+    coins = int(info.get('coins', 0) or 0)
+    games = int(info.get('games_played', 0) or 0)
+    refs  = len(info.get('users', []) or [])
+    xp    = _get_user_xp(uid)
+    lvl, lvl_label, cur_xp, next_xp = _calc_user_level(xp)
+    streak = int(db.get(f'user_{uid}_streak') or 0)
+    vip_until = db.get(f'user_{uid}_vip_until')
+    vip_txt = '⛔ غير مشترك' if not vip_until else '✅ مفعّل'
+    if lang == 'en':
+        vip_txt = 'Not subscribed' if not vip_until else 'Active'
+    try:
+        bot_username = (bot.get_me().username) if hasattr(bot, 'get_me') else ''
+    except Exception:
+        bot_username = ''
+    ref_link = f't.me/{bot_username}?start={uid}' if bot_username else ''
+    name = from_user.first_name or 'User'
+    if from_user.last_name:
+        name = f'{name} {from_user.last_name}'
+    user_data = {
+        'name': name,
+        'username': (from_user.username or '-'),
+        'coins': coins,
+        'games': games,
+        'refs': refs,
+        'xp': xp,
+        'level_label': lvl_label,
+        'next_xp': next_xp,
+        'streak': streak,
+        'vip': vip_txt,
+        'since': '-',
+        'ref_link': ref_link,
+    }
+    img_buf = _make_profile_image(uid, user_data)
+    keys = mk(row_width=2)
+    keys.add(
+        btn(t('profile_btn_share', uid),    callback_data='ref_link',   color='green'),
+        btn(t('profile_btn_badges', uid),   callback_data='profile_badges', color='blue')
+    )
+    keys.add(
+        btn(t('profile_btn_settings', uid), callback_data='profile_settings', color='blue'),
+        btn(t('language', uid),             callback_data='change_lang', color='blue')
+    )
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    caption_ar = (
+        f'👤 <b>بروفايل {name}</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'🏆 {lvl_label} • {xp:,} XP\n'
+        f'💰 الرصيد: <b>{coins:,} نقطة</b>\n'
+        f'💎 VIP: {vip_txt}\n'
+        f'🔥 سلسلة: {streak} يوم\n'
+        f'🎁 إحالات: {refs}\n'
+        f'🎮 ألعاب: {games}\n'
+    )
+    caption_en = (
+        f'👤 <b>{name}\'s Profile</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'🏆 {lvl_label} • {xp:,} XP\n'
+        f'💰 Balance: <b>{coins:,} pts</b>\n'
+        f'💎 VIP: {vip_txt}\n'
+        f'🔥 Streak: {streak} days\n'
+        f'🎁 Referrals: {refs}\n'
+        f'🎮 Games: {games}\n'
+    )
+    caption = caption_en if lang == 'en' else caption_ar
+    try:
+        if img_buf:
+            bot.send_photo(cid, photo=img_buf, caption=caption, reply_markup=keys, parse_mode='HTML')
+        else:
+            bot.send_message(cid, caption, reply_markup=keys, parse_mode='HTML')
+    except Exception as _e:
+        print(f'[profile] send err: {_e}')
+        try:
+            bot.send_message(cid, caption, reply_markup=keys, parse_mode='HTML')
+        except Exception: pass
+
+# =====================================================
+# 🔍 /check — فحص قناة تيليجرام
+# =====================================================
+
+@bot.message_handler(commands=['check'])
+def cmd_check(message):
+    if not _fsub_check_msg(message): return
+    uid = message.from_user.id
+    cid = message.chat.id
+    keys = mk(row_width=1)
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    msg = bot.reply_to(
+        message,
+        f'┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+        f'   {t("check_title", uid)}\n'
+        f'┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
+        f'{t("check_prompt", uid)}',
+        reply_markup=keys, parse_mode='HTML'
+    )
+    bot.register_next_step_handler(msg, _handle_check_input)
+
+def _handle_check_input(message):
+    uid = message.from_user.id
+    cid = message.chat.id
+    if not message.text:
+        bot.reply_to(message, t('check_failed', uid))
+        return
+    target = message.text.strip().lstrip('@')
+    if target.startswith('https://t.me/'):
+        target = target.replace('https://t.me/', '').strip('/')
+    if target.startswith('t.me/'):
+        target = target.replace('t.me/', '').strip('/')
+    if not target:
+        bot.reply_to(message, t('check_failed', uid))
+        return
+    try:
+        chat = bot.get_chat(f'@{target}')
+        try:
+            members_count = bot.get_chat_member_count(chat.id)
+        except Exception:
+            members_count = 0
+        title = chat.title or chat.first_name or '-'
+        username = f'@{chat.username}' if chat.username else '-'
+        chat_type = chat.type or '-'
+        desc = (chat.description or '-')[:200]
+        # تقدير جودة بسيط
+        if members_count >= 100000: quality = '⭐⭐⭐⭐⭐'
+        elif members_count >= 10000: quality = '⭐⭐⭐⭐'
+        elif members_count >= 1000:  quality = '⭐⭐⭐'
+        elif members_count >= 100:   quality = '⭐⭐'
+        else:                         quality = '⭐'
+        keys = mk(row_width=1)
+        keys.add(btn('🔄 ' + ('فحص تاني' if _user_lang(uid)=='ar' else 'Check another'), callback_data='check_again', color='blue'))
+        keys.add(btn(t('back', uid), callback_data='back', color='red'))
+        if _user_lang(uid) == 'en':
+            txt = (
+                f'🔍 <b>Channel Report</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n\n'
+                f'📛 <b>Name:</b> {title}\n'
+                f'🔗 <b>Username:</b> {username}\n'
+                f'🆔 <b>ID:</b> <code>{chat.id}</code>\n'
+                f'📂 <b>Type:</b> {chat_type}\n\n'
+                f'👥 <b>Members:</b> {members_count:,}\n'
+                f'🌟 <b>Quality:</b> {quality}\n\n'
+                f'📝 <b>Description:</b>\n<i>{desc}</i>'
+            )
+        else:
+            txt = (
+                f'🔍 <b>تقرير فحص القناة</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n\n'
+                f'📛 <b>الاسم:</b> {title}\n'
+                f'🔗 <b>اليوزر:</b> {username}\n'
+                f'🆔 <b>الـ ID:</b> <code>{chat.id}</code>\n'
+                f'📂 <b>النوع:</b> {chat_type}\n\n'
+                f'👥 <b>الأعضاء:</b> {members_count:,}\n'
+                f'🌟 <b>الجودة:</b> {quality}\n\n'
+                f'📝 <b>الوصف:</b>\n<i>{desc}</i>'
+            )
+        bot.reply_to(message, txt, reply_markup=keys, parse_mode='HTML')
+    except Exception as _e:
+        keys = mk(row_width=1)
+        keys.add(btn(t('back', uid), callback_data='back', color='red'))
+        bot.reply_to(message, t('check_failed', uid) + f'\n\n<code>{str(_e)[:200]}</code>', reply_markup=keys, parse_mode='HTML')
+
+# =====================================================
+# 🎨 /design — تصميم منشور بالـ AI
+# =====================================================
+
+@bot.message_handler(commands=['design'])
+def cmd_design(message):
+    if not _fsub_check_msg(message): return
+    uid = message.from_user.id
+    cid = message.chat.id
+    keys = mk(row_width=1)
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    msg = bot.reply_to(
+        message,
+        f'┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+        f'   {t("design_title", uid)}\n'
+        f'┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
+        f'{t("design_prompt", uid)}',
+        reply_markup=keys, parse_mode='HTML'
+    )
+    bot.register_next_step_handler(msg, _handle_design_topic)
+
+def _handle_design_topic(message):
+    uid = message.from_user.id
+    cid = message.chat.id
+    if not message.text:
+        bot.reply_to(message, '❌ أرسل فكرة بالنص.')
+        return
+    topic = message.text.strip()[:300]
+    db.set(f'user_{uid}_design_topic', topic)
+    keys = mk(row_width=1)
+    keys.add(btn(t('design_style_formal', uid),    callback_data='design_go_formal',    color='blue'))
+    keys.add(btn(t('design_style_friendly', uid),  callback_data='design_go_friendly',  color='green'))
+    keys.add(btn(t('design_style_marketing', uid), callback_data='design_go_marketing', color='red'))
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    bot.reply_to(message, f'✨ <b>{t("design_styles", uid)}</b>\n\n💡 <i>{topic}</i>', reply_markup=keys, parse_mode='HTML')
+
+def _do_design_post(call, style):
+    uid = call.from_user.id
+    cid = call.message.chat.id
+    mid = call.message.message_id
+    topic = db.get(f'user_{uid}_design_topic') or 'عرض عام'
+    lang = _user_lang(uid)
+    style_prompts = {
+        'formal':    ('رسمي ومحترف', 'Formal and professional'),
+        'friendly':  ('ودود وفدودي',  'Friendly and casual'),
+        'marketing': ('تسويقي قوي ومحفّز', 'Strong marketing and persuasive'),
+    }
+    style_ar, style_en = style_prompts.get(style, style_prompts['friendly'])
+    if lang == 'en':
+        prompt = (
+            f"Create a beautiful Telegram channel post in English about: {topic}\n"
+            f"Style: {style_en}. Use emojis, line breaks, bold (via *bold*) and bullet points. "
+            f"Keep it under 200 words and ready to copy-paste."
+        )
+    else:
+        prompt = (
+            f"اصنع منشور جميل لقناة تيليجرام بالعربية عن: {topic}\n"
+            f"الأسلوب: {style_ar}. استخدم إيموجيات وفواصل ونقاط وتدرجات بصرية. "
+            f"أقل من 200 كلمة وجاهز للنسخ والنشر."
+        )
+    bot.answer_callback_query(call.id)
+    try:
+        bot.edit_message_text(chat_id=cid, message_id=mid, text=t('design_loading', uid), parse_mode='HTML')
+    except Exception: pass
+    ans, err = _ai_ask(prompt)
+    keys = mk(row_width=1)
+    keys.add(btn(t('design_again', uid), callback_data=f'design_go_{style}', color='blue'))
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    if err or not ans:
+        try:
+            bot.edit_message_text(chat_id=cid, message_id=mid, text=err or '❌', reply_markup=keys, parse_mode='HTML')
+        except Exception:
+            bot.send_message(cid, err or '❌', reply_markup=keys, parse_mode='HTML')
+        return
+    final_txt = f'✨ <b>{t("design_done", uid)}</b>\n━━━━━━━━━━━━━━━━━━━\n\n{ans[:3500]}'
+    try:
+        bot.edit_message_text(chat_id=cid, message_id=mid, text=final_txt, reply_markup=keys, parse_mode='HTML')
+    except Exception:
+        bot.send_message(cid, final_txt, reply_markup=keys, parse_mode='HTML')
+
 
 # الإعدادات - يمكنك تعديلها هنا مباشرة
 
@@ -2064,7 +2659,7 @@ TOP_LEVELS = [
     {
         "level":   25,
         "name":    "عبقري III",
-        "emoji":   "���",
+        "emoji":   "🧠",
         "color":   "🟥",
         "req_refs":    95,
         "req_orders":  90,
@@ -2170,7 +2765,7 @@ def get_next_level(uid: int) -> dict | None:
 def check_and_award_level(uid: int):
     """
     يُشغَّل بعد كل إحالة / طلب / إضافة نقاط.
-    لو المستخدم وصل مستوى جديد يديه المكافأة وي��عتله رسالة.
+    لو المستخدم وصل مستوى جديد يديه المكافأة ويبعتله رسالة.
     """
     current   = get_user_level(uid)
     saved_key = f'user_{uid}_top_level'
@@ -3277,6 +3872,13 @@ def start_message(message):
     user_id = message.from_user.id
     if not _check_rate_limit(user_id):
         return
+    # 🌍 شاشة اختيار اللغة أول مرة (بعد فحص الاشتراك الإجباري)
+    try:
+        if not db.exists(f'user_{user_id}_lang') and not db.exists(f'lang_shown_{user_id}'):
+            db.set(f'lang_shown_{user_id}', True)
+            _show_lang_picker(message.chat.id, None)
+            return
+    except Exception: pass
 
     try:
         for temp in ['leave','member','vote','spam','userbot','forward','linkbot','view','poll','react','reacts','react_special','votes_fsub']:
@@ -3847,23 +4449,6 @@ def _import_db_from_json(jdata, import_type="all"):
         res["errors"].append("صيغة الملف غير صحيحة")
         return res
     incoming_accounts = None
-    # unwrap users[]/settings{} export format
-    META_SKIP_IMPORT = {'bot_version', 'export_type', 'exported_at', 'users_count', 'accounts_count', 'settings_count', '_import_meta', '_meta'}
-    if isinstance(jdata, dict):
-        _flat = {}
-        for _kk, _vv in list(jdata.items()):
-            if _kk in META_SKIP_IMPORT: continue
-            if _kk == 'users' and isinstance(_vv, list):
-                for _u in _vv:
-                    if isinstance(_u, dict) and _u.get('id') is not None:
-                        _flat['user_' + str(_u['id'])] = _u
-                continue
-            if _kk == 'settings' and isinstance(_vv, dict):
-                for _sk, _sv in _vv.items():
-                    if _sk not in _flat: _flat[_sk] = _sv
-                continue
-            _flat[_kk] = _vv
-        jdata = _flat
     for k, v in jdata.items():
         try:
             if str(k).startswith('_import_') or str(k).startswith('_meta'):
@@ -4165,77 +4750,30 @@ def cmd_football(message):
     if not _fsub_check_msg(message): return
     _show_football_menu(message.from_user.id, message.chat.id, None)
 
-def _do_football_direction(call, direction):
-    cid = call.from_user.id
-    COOLDOWN = 1800
-    now = int(time.time())
-    last_key = f'fb_last_{cid}'
-    last = int(db.get(last_key) or 0)
-    if now - last < COOLDOWN:
-        remain = COOLDOWN - (now - last)
-        mins = remain // 60 + 1
-        try: bot.answer_callback_query(call.id, f'⏳ انتظر {mins} دقيقة', show_alert=True)
-        except: pass
-        return
-    try: bot.answer_callback_query(call.id)
-    except: pass
-    try:
-        dice_msg = bot.send_dice(cid, emoji='⚽')
-        val = dice_msg.dice.value
-    except Exception as e:
-        try: bot.send_message(cid, f'❌ خطأ: {e}')
-        except: pass
-        return
-    db.set(last_key, now)
-    goal_map = {3: 'left', 4: 'center', 5: 'right'}
-    result_dir = goal_map.get(val)
-    win_amount = int(db.get('fb_win_amount') or 100)
-    dir_ar = {'left': 'يسار', 'center': 'وسط', 'right': 'يمين'}
-    time.sleep(4)
-    try:
-        info = get(cid) or {'coins': 0, 'id': cid, 'premium': False, 'users': []}
-    except Exception:
-        info = {'coins': 0, 'id': cid}
-    if result_dir == direction:
-        info['coins'] = int(info.get('coins', 0)) + win_amount
-        try: set_user(cid, info)
-        except Exception: pass
-        msg = (f'⚽🎉 <b>جووول!</b>\n\n'
-               f'🎯 اخترت: <b>{dir_ar[direction]}</b>\n'
-               f'⚽ الكورة: <b>{dir_ar[result_dir]}</b>\n\n'
-               f'💰 ربحت: <b>+{win_amount:,}</b>\n'
-               f'💳 رصيدك: <b>{int(info["coins"]):,}</b>')
-    else:
-        if result_dir:
-            res_txt = f'⚽ الكورة راحت: <b>{dir_ar[result_dir]}</b>'
-        else:
-            miss = 'left' if val == 1 else 'right'
-            res_txt = f'❌ الكورة خرجت برّا من الـ{dir_ar[miss]}'
-        msg = (f'⚽😔 <b>خسرت</b>\n\n'
-               f'🎯 اخترت: <b>{dir_ar[direction]}</b>\n'
-               f'{res_txt}\n\n'
-               f'🔄 حاول تاني بعد 30 دقيقة')
-    try: bot.send_message(cid, msg, parse_mode='HTML')
-    except: pass
-
 def _show_football_menu(uid, cid, mid):
-    win_amount = int(db.get('fb_win_amount') or 100)
-    txt = (
-        '┏━━━━━━━━━━━━━━━━━━┓\n'
-        '   ⚽ ركلة جزاء\n'
-        '┗━━━━━━━━━━━━━━━━━━┛\n\n'
-        f'🎯 <b>اختر اتجاه الكورة:</b>\n\n'
-        f'💰 الجائزة: <b>{win_amount:,}</b> نقطة\n'
-        f'⏱ وقت الانتظار: 30 دقيقة\n\n'
-        '💡 <i>لو توقعت اتجاه الكورة صح ستربح!</i>'
-    )
-    keys = mk(row_width=3)
+    info = get(uid)
+    bal = int(info.get("coins", 0)) if info else 0
+    keys = mk(row_width=2)
     keys.add(
-        btn('⬅️ يسار', callback_data='fb_dir_left', color='blue'),
-        btn('⬆️ وسط', callback_data='fb_dir_center', color='green'),
-        btn('➡️ يمين', callback_data='fb_dir_right', color='blue')
+        btn('⚽ 50 نقطة',  callback_data='fb_bet_50',  color='green'),
+        btn('⚽ 100 نقطة', callback_data='fb_bet_100', color='green')
     )
-    keys.add(btn('⬅️ رجوع', callback_data='back', color='red'))
+    keys.add(
+        btn('⚽ 250 نقطة', callback_data='fb_bet_250', color='blue'),
+        btn('⚽ 500 نقطة', callback_data='fb_bet_500', color='blue')
+    )
+    keys.add(btn('🔙 رجوع', callback_data='back', color='red'))
+    txt = (
+        '┏━━━━━━━━━━━━━━━━━━━┓\n'
+        '   ⚽ <b>كورة القدم</b> ⚽\n'
+        '┗━━━━━━━━━━━━━━━━━━━┛\n\n'
+        '🎯 <b>الفكرة:</b> صوّب عالمرمى وجيب جول!\n\n'
+        '🏆 <b>الجول (3/4/5):</b> تربح ضعف الرهان ×2\n'
+        '❌ <b>الإخفاق (1/2):</b> تخسر الرهان\n\n'
+        '━━━━━━━━━━━━━━━━━━━\n'
+        f'💳 <b>رصيدك:</b> {bal:,} نقطة\n\n'
+        '👇 <b>اختار قيمة الرهان:</b>'
+    )
     if mid:
         try:
             bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
@@ -4244,10 +4782,71 @@ def _show_football_menu(uid, cid, mid):
             pass
     bot.send_message(cid, txt, reply_markup=keys, parse_mode='HTML')
 
-def _do_football_bet(call, bet_amount=None):
-    # legacy bet handler now routes to direction-based menu
-    _show_football_menu(call.from_user.id, call.message.chat.id, call.message.message_id)
+def _do_football_bet(call, bet_amount):
+    cid = call.message.chat.id
+    uid = call.from_user.id
+    mid = call.message.message_id
+    info = get(uid) or {'id': uid, 'coins': 0}
+    bal = int(info.get('coins', 0))
+    if bal < bet_amount:
+        bot.answer_callback_query(call.id, f'⚠️ رصيدك غير كافٍ ({bal:,} نقطة)', show_alert=True)
+        return
+    # خصم فوري للرهان
+    info['coins'] = bal - bet_amount
+    set_user(uid, info)
+    bot.answer_callback_query(call.id)
+    # أرسل رسالة تأكيد أولاً
+    try:
+        bot.edit_message_text(
+            chat_id=cid, message_id=mid,
+            text=f'⚽ <b>التصويبة قادمة...</b>\n\n🎯 الرهان: <b>{bet_amount:,} نقطة</b>',
+            parse_mode='HTML'
+        )
+    except Exception:
+        pass
+    # أرسل الدايس ⚽ وخلّ تيليجرام يعرض الأنيميشن
+    try:
+        dice_msg = bot.send_dice(cid, emoji='⚽')
+        val = int(dice_msg.dice.value) if dice_msg and dice_msg.dice else 0
+    except Exception:
+        val = 0
+    # انتظر لحد ما تخلص الأنيميشن (~3 ثواني)
+    time.sleep(3.5)
+    goal = val in (3, 4, 5)
+    if goal:
+        win = bet_amount * 2
+        info['coins'] = int(info.get('coins', 0)) + win
+        set_user(uid, info)
+        result_txt = (
+            '⚽🎉 <b>جوووول!</b> 🎉⚽\n'
+            '━━━━━━━━━━━━━━━━━━━\n\n'
+            f'🏆 ربحت: <b>+{win:,} نقطة</b>\n'
+            f'💰 رصيدك الجديد: <b>{info["coins"]:,} نقطة</b>\n\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '🔥 برافو يا بطل!'
+        )
+    else:
+        result_txt = (
+            '😔 <b>إخفاق!</b>\n'
+            '━━━━━━━━━━━━━━━━━━━\n\n'
+            f'❌ خسرت: <b>-{bet_amount:,} نقطة</b>\n'
+            f'💳 رصيدك: <b>{int(info.get("coins", 0)):,} نقطة</b>\n\n'
+            '━━━━━━━━━━━━━━━━━━━\n'
+            '💪 حظ أوفر المرة الجاية!'
+        )
+    keys = mk(row_width=2)
+    keys.add(
+        btn('⚽ لعب تاني',     callback_data='football', color='green'),
+        btn('🔙 رجوع',       callback_data='back',     color='blue')
+    )
+    try:
+        bot.send_message(cid, result_txt, reply_markup=keys, parse_mode='HTML')
+    except Exception:
+        pass
 
+# 🎮 قائمة الألعاب
+
+@bot.message_handler(commands=['play'])
 def cmd_play(message):
     if not _fsub_check_msg(message): return
     cid = message.from_user.id
@@ -4447,8 +5046,7 @@ def _c_rs_worker(call):
         'adm_import_db', 'adm_import_type_', 'adm_import_confirm_',
         'svc_toggle_',
         'adm_set_channel_btn', 'adm_set_emojis',
-        'adm_emoji_bal', 'adm_emoji_ord', 'adm_emoji_ch', 'adm_emoji_restore',
-        'emjbtndel_adm_import_db',
+        'adm_emoji_bal', 'adm_emoji_ord', 'adm_emoji_ch',
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
@@ -4662,22 +5260,17 @@ def _c_rs_worker(call):
         confirm_keys = mk(row_width=1)
         confirm_keys.add(btn(f'✅ تأكيد الشراء ({total:,} نقطة)', callback_data=f'mkt_confirm_{listing_id}', color='green'))
         confirm_keys.add(btn('🔙 إلغاء', callback_data='mkt_browse', color='red'))
-        try:
-            bot.edit_message_text(
-                        text=f'🛒 <b>تأكيد الشراء</b>\n\n'
-                             f'📱 الحساب: {target.get("phone", "?")}\n'
-                             f'👤 البائع: {target.get("seller_name", "?")}\n'
-                             f'💰 السعر: {price:,} نقطة\n'
-                             f'⚖️ رسوم المتجر ({fee_pct}%): {fee:,} نقطة\n'
-                             f'💳 الإجمالي: <b>{total:,}</b> نقطة\n'
-                             f'━━━━━━━━━━━━━━━━━━━\n'
-                             f'📌 رصيدك الحالي: {bal:,} نقطة',
-                        chat_id=cid, message_id=mid, reply_markup=confirm_keys, parse_mode='HTML'
-                    )
-        except Exception:
-            try:
-                bot.send_message(call.message.chat.id, confirm_txt, reply_markup=confirm_keys, parse_mode='HTML')  # mkt_buy_fallback_done
-            except Exception: pass
+        bot.edit_message_text(
+            text=f'🛒 <b>تأكيد الشراء</b>\n\n'
+                 f'📱 الحساب: {target.get("phone", "?")}\n'
+                 f'👤 البائع: {target.get("seller_name", "?")}\n'
+                 f'💰 السعر: {price:,} نقطة\n'
+                 f'⚖️ رسوم المتجر ({fee_pct}%): {fee:,} نقطة\n'
+                 f'💳 الإجمالي: <b>{total:,}</b> نقطة\n'
+                 f'━━━━━━━━━━━━━━━━━━━\n'
+                 f'📌 رصيدك الحالي: {bal:,} نقطة',
+            chat_id=cid, message_id=mid, reply_markup=confirm_keys, parse_mode='HTML'
+        )
         return
 
     if data.startswith('mkt_confirm_') and data != 'mkt_confirm_add':
@@ -4836,7 +5429,62 @@ def _c_rs_worker(call):
         )
         return
 
-    # 🛰️ /rec خدمة التفاعل ال��لقائ��
+    # 🌍 اختيار اللغة
+
+    if data == 'setlang_ar' or data == 'setlang_en':
+        _set_user_lang(call.from_user.id, 'ar' if data == 'setlang_ar' else 'en')
+        try:
+            bot.answer_callback_query(call.id, t('lang_saved', call.from_user.id), show_alert=False)
+        except Exception: pass
+        # دوّر للرئيسية
+        try:
+            bot.delete_message(cid, mid)
+        except Exception: pass
+        try:
+            start_message(call.message)
+        except Exception: pass
+        return
+
+    if data == 'change_lang':
+        _show_lang_picker(cid, mid)
+        return
+
+    # 👤 /profile callbacks
+
+    if data == 'profile' or data == 'show_profile':
+        _show_profile(call.from_user, cid, None)
+        return
+
+    if data == 'profile_badges':
+        uid = call.from_user.id
+        keys_ = mk(row_width=1)
+        keys_.add(btn(t('back', uid), callback_data='show_profile', color='red'))
+        bot.send_message(cid, '🏅 <b>شاراتك / Your Badges</b>\n\n⏳ قريباً... / Coming soon...', reply_markup=keys_, parse_mode='HTML')
+        return
+
+    if data == 'profile_settings':
+        uid = call.from_user.id
+        keys_ = mk(row_width=1)
+        keys_.add(btn(t('language', uid), callback_data='change_lang', color='blue'))
+        keys_.add(btn(t('back', uid), callback_data='show_profile', color='red'))
+        bot.send_message(cid, '⚙️ <b>الإعدادات / Settings</b>', reply_markup=keys_, parse_mode='HTML')
+        return
+
+    # 🔍 /check callbacks
+
+    if data == 'check_again':
+        cmd_check(call.message)
+        return
+
+    # 🎨 /design callbacks
+
+    if data.startswith('design_go_'):
+        style = data.replace('design_go_', '')
+        if style in ('formal', 'friendly', 'marketing'):
+            _do_design_post(call, style)
+        return
+
+    # 🛰️ /rec خدمة التفاعل التلقائي
 
     if data == 'rec':
         _show_rec_panel(cid, mid)
@@ -4850,27 +5498,12 @@ def _c_rs_worker(call):
 
     # ⚽ كورة القدم — عرض القائمة
 
-    if data == 'vip_info':
-        week_p  = int(db.get('vip_week_price')  or 5000)
-        month_p = int(db.get('vip_month_price') or 15000)
-        year_p  = int(db.get('vip_year_price')  or 100000)
-        su = (db.get('support_username') or '').lstrip(chr(64))
-        contact = f'@{su}' if su else '@admin'
-        msg = (f'\u270f\ufe0f \u0644\u0644\u0627\u0634\u062a\u0631\u0627\u0643\n\n\ud83d\udcc5 \u0623\u0633\u0628\u0648\u0639\u064a: {week_p:,} \u0646\u0642\u0637\u0629\n\ud83d\udcc6 \u0634\u0647\u0631\u064a: {month_p:,} \u0646\u0642\u0637\u0629\n\ud83c\udfc6 \u0633\u0646\u0648\u064a: {year_p:,} \u0646\u0642\u0637\u0629\n\n\ud83d\udcde \u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u062f\u0639\u0645: {contact}')
-        try: bot.answer_callback_query(call.id, msg, show_alert=True)
-        except: pass
-        return
     if data == 'football':
         _show_football_menu(call.from_user.id, cid, mid)
         return
 
     # ⚽ رهانات كورة القدم
 
-    if data.startswith('fb_dir_'):
-        _dir_v = data.replace('fb_dir_', '')
-        if _dir_v in ('left', 'center', 'right'):
-            _do_football_direction(call, _dir_v)
-        return
     if data.startswith('fb_bet_'):
         try:
             _bet = int(data.split('_')[-1])
@@ -5450,7 +6083,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc} — {reward:,} نقطة\n'
                 keys.add(btn(f'{"تعطيل" if enabled else "تفع��ل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
                 keys.add(btn(f'🗑️ حذف {desc}', callback_data=f'task_del_{tid}', color='red'))
-        keys.add(btn('🔙 رجوع للأدم��', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -5694,18 +6327,7 @@ def _c_rs_worker(call):
         return
     if data == 'numbers':
         d = len(db.get('accounts') or [])
-        nkeys = mk(row_width=1)
-        nkeys.add(btn('🔙 رجوع', callback_data='back', color='red'))
-        _ntxt = (
-            '┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
-            '   📱 <b>عدد الأرقام</b>\n'
-            '┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
-            f'📞 عدد الأرقام المسجلة في البوت: <b>{d}</b>'
-        )
-        try:
-            bot.edit_message_text(text=_ntxt, chat_id=cid, message_id=mid, reply_markup=nkeys, parse_mode='HTML')
-        except Exception:
-            bot.send_message(cid, _ntxt, reply_markup=nkeys, parse_mode='HTML')
+        bot.answer_callback_query(call.id, text=f'عدد ارقام البوت : {d}', show_alert=True)
         return
     if data == 'addpoints':
         x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
@@ -6094,7 +6716,7 @@ def _c_rs_worker(call):
         keys.add(btn('🏆 توب 5 تسجيل الحسابات', callback_data='rent_top', color='blue'))
         keys.add(btn('رجوع', callback_data='collect', color='blue'))
         txt = (
-            "📱 <b>ت��جيل الحسابات مقابل نقاط</b>\n\n"
+            "📱 <b>تسجيل الحسابات مقابل نقاط</b>\n\n"
             "ملاحظه : الحساب مش بيخرج من عندك ولا بيتحظر ولا بيحصل اي حاجه\n\n"
             "━━━━━━━━━━━━━━━━━━━\n"
             f"💰 مكافأة تسليم حساب واحد : <b>{_rent_reward_val:,} نقطة</b>\n"
@@ -6188,7 +6810,7 @@ def _c_rs_worker(call):
         try:
             txt = leaderboard_rent()
         except Exception as _e:
-            txt = f"⚠️ حدث خطأ أثنا�� تحميل البيانات\n{_e}"
+            txt = f"⚠️ حدث خطأ أثناء تحميل البيانات\n{_e}"
         keys = mk(row_width=1)
         keys.add(btn('رجوع', callback_data='submit_account', color='blue'))
         try:
@@ -6325,7 +6947,7 @@ def _c_rs_worker(call):
                 '<b>مثال:</b>\n'
                 '<code>@mychannel | قناتي الرسمية | https://t.me/+xxxx | 1000</code>\n\n'
                 '• الحد = 0 يعني بلا حد\n'
-                '• لو ��فيش را��ط جوين خاص اكتب 0'
+                '• لو مفيش رابط جوين خاص اكتب 0'
             ),
             reply_markup=bk_cancel, chat_id=cid, message_id=mid, parse_mode='HTML'
         )
@@ -6664,7 +7286,7 @@ def _c_rs_worker(call):
         if stars_post:
             keys.add(btn('⭐ أرسل النجوم الآن', url=stars_post, color='green'))
         keys.add(btn('رجوع', callback_data='buy_force_sub', color='red'))
-        txt = f"⭐ دفع بالنجوم\n\nالم��لغ المطلوب: {fsub_stars} نجمة\n\n"
+        txt = f"⭐ دفع بالنجوم\n\nالمبلغ المطلوب: {fsub_stars} نجمة\n\n"
         if stars_post:
             txt += "اضغط الزر ��دناه لإرسال النجوم\n\nبعد الدفع تواصل مع الأدمن لتأكيد الطلب وإضافة قناتك ✅"
         else:
@@ -6926,7 +7548,7 @@ def _c_rs_worker(call):
                     '👑 لازم تعمل دعوتين عشان تفعل قسم VIP\n\n'
                     f'📊 دعواتك: {_inv_count} من {_vip_thresh} المطلوبة\n'
                     f'🎯 باقي عليك: {_remaining} دعوة فقط للحصول على VIP مجاناً!\n\n'
-                    '💡 شارك رابط الدعوة ��ادعُ أصدقاءك للحصول على VIP تلقائياً'
+                    '💡 شارك رابط الدعوة وادعُ أصدقاءك للحصول على VIP تلقائياً'
                 ),
                 chat_id=cid, message_id=mid, reply_markup=_keys_vip, parse_mode="HTML"
             )
@@ -7390,7 +8012,7 @@ def _c_rs_worker(call):
         ckeys.add(btn(f'سعر السنوي ({vip_yearly:,} نقطة)', callback_data='chset_vip_yearly', color='green'))
         ckeys.add(btn(f'سعر مدى الحياة ({vip_lifetime:,} نقطة)', callback_data='chset_vip_lifetime', color='green'))
         ckeys.add(btn(vip_toggle_lbl, callback_data='chset_vip_toggle', color=vip_toggle_col))
-        ckeys.add(btn('���━���━━━━━━━━━━━', callback_data='none', color='blue'))
+        ckeys.add(btn('━━���━━━━━━━━━━━', callback_data='none', color='blue'))
         ckeys.add(btn(f'📢 قناة الطلبات (ID: {orders_ch})', callback_data='chset_orders_channel', color='blue'))
         ckeys.add(btn('👁 عرض كل الإعدادات', callback_data='chset_view', color='blue'))
         ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
@@ -7745,7 +8367,7 @@ def _c_rs_worker(call):
                     f"📱 الأرقام المستوردة: <b>{res['accounts_imported']:,}</b>\n"
                     f"📱 الأرقام المتجاهلة (موجودة): <b>{res['accounts_skipped']:,}</b>\n"
                     f"⚙️ الإعدادات المستوردة: <b>{res['settings_imported']}</b>\n"
-                    "━━━━━━���━━━━━━━━━━━━\n"
+                    "━━━━━━━━━━━━━━━━━━━\n"
                     "✅ تم استيراد: أسماء الأزرار، ألوانها، إيموجيها\n"
                     "✅ أسعار وحدود وحالة كل خدمة\n"
                     "✅ القنوات الإجبارية وعدد الطلبات\n"
@@ -7992,7 +8614,7 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_set_support_info)
 
-    # 📣 إعداد زر ��ناة البوت
+    # 📣 إعداد زر قناة البوت
 
     if data == 'adm_set_channel_btn':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -8028,8 +8650,6 @@ def _c_rs_worker(call):
         ekeys.add(btn(f'💰 إيموجي الرصيد (حالي: {em_bal})',         callback_data='adm_emoji_bal', color='green'))
         ekeys.add(btn(f'✅ إيموجي الطلبات (حالي: {em_ord})',         callback_data='adm_emoji_ord', color='green'))
         ekeys.add(btn(f'📢 إيموجي قناة البوت (حالي: {em_ch})',       callback_data='adm_emoji_ch',  color='green'))
-        _em_rec = _resolve_btn_emoji('adm_import_db') or '—'
-        ekeys.add(btn(f'🔄 إيموجي زر الاسترداد (حالي: {_em_rec})', callback_data='adm_emoji_restore', color='green'))
         ekeys.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
         bot.edit_message_text(
             text=(
@@ -8042,34 +8662,12 @@ def _c_rs_worker(call):
             chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode='HTML'
         )
 
-    if data == 'adm_emoji_restore':
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        cur_eid = _resolve_btn_emoji('adm_import_db')
-        cur_txt = f'<code>{cur_eid}</code>' if cur_eid else '—'
-        ekeys = mk(row_width=1)
-        if cur_eid:
-            ekeys.add(btn('🗑 حذف الإيموجي', callback_data='emjbtndel_adm_import_db', color='red'))
-        ekeys.add(btn('رجوع', callback_data='adm_set_emojis', color='blue'))
-        x = bot.edit_message_text(
-            text=(
-                '🔄 <b>إيموجي زر الاسترداد (استيراد قاعدة البيانات)</b>\n\n'
-                f'الحالي: {cur_txt}\n\n'
-                '📤 أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
-                'مثال:\n'
-                '<code>5368324170671202286</code>'
-            ),
-            chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode='HTML'
-        )
-        bot.clear_step_handler_by_chat_id(cid)
-        bot.register_next_step_handler(x, _do_set_btn_emoji, 'adm_import_db')
-
     if data == 'adm_emoji_bal':
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         cur = db.get("custom_emoji_balance") if db.exists("custom_emoji_balance") else "—"
         x = bot.edit_message_text(
-            text=f'💰 <b>إيموجي زر الرصيد</b>\n\nالحالي: {cur}\n\nأرسل الإيموجي الجديد (مثل 💎 ��و 🌟)\nأو أرسل <code>0</code> لإزالة الإيموجي:',
+            text=f'💰 <b>إيموجي زر الرصيد</b>\n\nالحالي: {cur}\n\nأرسل الإيموجي الجديد (مثل 💎 أو 🌟)\nأو أرسل <code>0</code> لإزالة الإيموجي:',
             chat_id=cid, message_id=mid, parse_mode='HTML'
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -8475,7 +9073,7 @@ def _c_rs_worker(call):
             f"       ✅ تأكيد الطلب\n"
             f"╚══════════════════════╝\n\n"
             f"📋 <b>النوع</b>    : تفاعلات اختياري {emoji}\n"
-            f"🔢 <b>��لكمية</b>   : {amount:,}\n"
+            f"🔢 <b>الكمية</b>   : {amount:,}\n"
             f"�� <b>الرابط</b>   : <code>{url}</code>\n"
             f"💰 <b>السعر</b>    : {price:,} نقطة\n"
             f"💳 <b>رصيدك</b>   : {coins:,} نقطة\n"
@@ -8579,7 +9177,7 @@ def _c_rs_worker(call):
             return
         cur = db.get("fsub_amount") if db.exists("fsub_amount") else 500
         x = bot.edit_message_text(
-            text=f'🔢 عدد الأعضاء في ��اقة الاشتراك الإجباري\n\nالحالي: {cur}\n\nأرسل العدد الجديد:',
+            text=f'🔢 عدد الأعضاء في باقة الاشتراك الإجباري\n\nالحالي: {cur}\n\nأرسل العدد الجديد:',
             chat_id=cid, message_id=mid
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -8954,7 +9552,7 @@ def _do_svc_edit(message, svc_key, field):
     skeys.add(btn('📋 قائمة الخدمات', callback_data='adm_svc_panel', color='green'))
     bot.reply_to(
         message,
-        f'✅ تم تحديث إع��ادات {svc_info["label"]}\n{label}',
+        f'✅ تم تحديث إعدادات {svc_info["label"]}\n{label}',
         reply_markup=skeys
     )
 
@@ -9016,7 +9614,7 @@ def handle_free_reaction(message):
 
     stop_progress = [False]
     progress_steps = [
-        '🔄 جاري الاتصال بالخادم...       [��▱▱▱▱▱▱▱▱▱] 0%',
+        '🔄 جاري الاتصال بالخادم...       [▱▱▱▱▱▱▱▱▱▱] 0%',
         '📡 جاري إرسال الطلب...           [▰▰▱▱▱▱▱▱▱▱] 20%',
         '⚙️ جاري معالجة الطلب...          [▰▰▰▰▱▱▱▱▱▱] 40%',
         '🚀 جاري إضافة التفاعلات...       [▰▰▰▰▰▰▱▱▱▱] 60%',
@@ -9667,7 +10265,7 @@ def get_amount(message, type_req):
             pr = svc_price('votes_fsub') * amount
             acc = db.get(f'user_{message.from_user.id}')
             if int(pr) > int(acc.get('coins', 0)):
-                bot.reply_to(message, f'��قاطك غير كافية لتنفيذ طلبك ، تحتاج الى {pr - amount} نقطة .')
+                bot.reply_to(message, f'نقاطك غير كافية لتنفيذ طلبك ، تحتاج الى {pr - amount} نقطة .')
                 return
             load_ = db.get('accounts') or []
             if len(load_) < amount:
@@ -9676,9 +10274,9 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       🏆 طلب تصويت مسابقات اشتراك إجباري\n'
-                f'╚════════��══════��══════╝\n\n'
+                f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} صوت\n\n'
-                f'⏱ أرسل الآن وقت الان��ظار بين التصويت (بالثواني)\n'
+                f'⏱ أرسل الآن وقت الانتظار بين التصويت (بالثواني)\n'
                 f'• أرسل 0 لتنفيذ فوري | الحد الأقصى 500\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
             )
@@ -9694,7 +10292,7 @@ def get_amount(message, type_req):
             try:
                 amount = int(message.text)
             except:
-                bot.reply_to(message, f'��� رجاء ارسل عدد فقط ، اعد المحاولة لاحقا', reply_markup=bk_cancel, parse_mode="HTML")
+                bot.reply_to(message, f'• رجاء ارسل عدد فقط ، اعد المحاولة لاحقا', reply_markup=bk_cancel, parse_mode="HTML")
                 return
             load_ = db.get('accounts')
             _min, _max = svc_min('spam'), svc_max('spam')
@@ -9907,7 +10505,7 @@ def get_time_votes_fsub(message, amount):
         bot.reply_to(message, text=f'• رجاء ارسل وقت بين 0 و 500')
         return
     _req_txt = (
-        f'╔════════════════════���═╗\n'
+        f'╔══════════════════════╗\n'
         f'       🏆 طلب تصويت مسابقات اشتراك إجباري\n'
         f'╚══════════════════════╝\n\n'
         f'✅ الكمية المطلوبة : {amount} صوت\n'
@@ -10669,14 +11267,14 @@ def get_react_url_first(message, amount):
     )
 
 def get_react(message, amount):
-    rs = ["👍","����","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨","😐","🖕","😈","👎",
+    rs = ["👍","🤩","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨","😐","🖕","😈","👎",
           "😁","😢","💩","🤮","🤔","🤯","🤬","💯","😍","🕊","🐳","🤝","👨","🦄","🎃","🤓",
           "👀","👻","🗿","🍾","🍓","⚡️","🏆","🤡","🌭","🆒","🙈","🎅","🎄","☃️","💊"]
     if message.text in rs:
         _req_txt = (
             f'╔══════════════════════╗\n'
             f'       ⚡ طلب تفاعلات اختياري جديد\n'
-            f'╚═══��══════════════════╝\n\n'
+            f'╚══════════════════════╝\n\n'
             f'✅ الكمية المطلوبة : {amount} تفاعل\n'
             f'😀 التفاعل المختار : {message.text}\n\n'
             f'🔗 أرسل الآن رابط المنشور\n'
@@ -11822,7 +12420,7 @@ def pre_checkout_stars(pre_checkout_q):
     try:
         bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
     except Exception as e:
-        print(f"[pre_checkout] ��طأ: {e}")
+        print(f"[pre_checkout] خطأ: {e}")
         try:
             bot.answer_pre_checkout_query(pre_checkout_q.id, ok=False,
                                            error_message="حدث خطأ، حاول مجدداً")
@@ -13481,7 +14079,7 @@ if __name__ == "__main__":
     t1.start()
     print("[✅] thread 1: بوت تسجيل الأرقام يعمل")
 
-    print("[✅] main thread: البوت الرئيسي يبدأ ال��ن...")
+    print("[✅] main thread: البوت الرئيسي يبدأ الآن...")
     # main thread: telebot (البوت الرئيسي)
     while True:
         try:
