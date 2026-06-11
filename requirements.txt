@@ -1,0 +1,7 @@
+pyrogram
+pyromod==1.4
+TgCrypto
+pyTelegramBotAPI>=4.21.0
+requests
+schedule
+google-auth
