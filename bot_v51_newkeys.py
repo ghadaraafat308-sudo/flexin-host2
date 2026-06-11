@@ -527,6 +527,101 @@ def _get_btn_label(callback_data, default=None):
         pass
     return default or BTN_KEYS.get(callback_data, "")
 
+# ====== AR/EN language + Captcha system ======
+def _user_lang_raw(uid):
+    try:
+        l = db.get('lang_' + str(uid))
+        if l in ('ar', 'en'):
+            return l
+    except Exception:
+        pass
+    return None
+
+def _user_lang(uid):
+    l = _user_lang_raw(uid)
+    return l if l else 'ar'
+
+def _L(uid, ar, en):
+    return en if _user_lang(uid) == 'en' else ar
+
+def _send_lang_picker(chat_id, uid, mid=None):
+    try:
+        keys = mk(row_width=2)
+        keys.add(btn('🇸🇦 العربية', callback_data='setlang_ar', color='green'),
+                 btn('🇬🇧 English', callback_data='setlang_en', color='blue'))
+        txt = '🌐 اختر لغتك المفضلة | Please choose your language:'
+        if mid:
+            try:
+                bot.edit_message_text(text=txt, chat_id=chat_id, message_id=mid, reply_markup=keys)
+                return
+            except Exception:
+                pass
+        bot.send_message(chat_id, txt, reply_markup=keys)
+    except Exception as _e:
+        print('[lang picker] ' + str(_e))
+
+def _send_captcha(chat_id, uid, mid=None):
+    try:
+        a = random.randint(1, 9)
+        b = random.randint(1, 9)
+        ans = a + b
+        db.set('captcha_ans_' + str(uid), ans)
+        opts = {ans}
+        while len(opts) < 4:
+            opts.add(random.randint(2, 18))
+        opts = list(opts)
+        random.shuffle(opts)
+        keys = mk(row_width=2)
+        keys.add(*[btn(str(o), callback_data='capans_' + str(o), color='blue') for o in opts])
+        _nl = chr(10)
+        if _user_lang(uid) == 'en':
+            txt = ('🤖 Verification' + _nl + _nl +
+                   'To make sure you are human, solve this:' + _nl + _nl +
+                   '      ' + str(a) + ' + ' + str(b) + ' = ?')
+        else:
+            txt = ('🤖 تأكيد بشري' + _nl + _nl +
+                   'علشان نتأكد إنك مش بوت، حل المسألة دي:' + _nl + _nl +
+                   '      ' + str(a) + ' + ' + str(b) + ' = ؟')
+        if mid:
+            try:
+                bot.edit_message_text(text=txt, chat_id=chat_id, message_id=mid, reply_markup=keys)
+                return
+            except Exception:
+                pass
+        bot.send_message(chat_id, txt, reply_markup=keys)
+    except Exception as _e:
+        print('[captcha] ' + str(_e))
+
+def _onboarding_gate(uid, chat_id):
+    try:
+        if _user_lang_raw(uid) is None:
+            _send_lang_picker(chat_id, uid)
+            return True
+        _is_adm = (uid == sudo) or (uid in _get_admins_cached())
+        if (not _is_adm) and (not db.get('captcha_ok_' + str(uid))):
+            _send_captcha(chat_id, uid)
+            return True
+    except Exception as _e:
+        print('[gate] ' + str(_e))
+    return False
+
+def _finish_start(uid, chat_id):
+    try:
+        _is_adm = (uid == sudo) or (uid in _get_admins_cached())
+        if not _is_adm:
+            _ok, _ns = _check_user_subs(uid)
+            if not _ok:
+                _send_force_sub_msg(bot, chat_id, _ns)
+                return
+            try:
+                _settle_pending_referral(uid)
+            except Exception:
+                pass
+        keys = _build_main_keys(uid)
+        bot.send_message(chat_id, get_welcome_msg(uid), reply_markup=keys, parse_mode="HTML")
+    except Exception as _e:
+        print('[finish_start] ' + str(_e))
+
 def _is_btn_visible(callback_data):
     """يتحقق إذا كان الزر مرئي (غير مخفي)"""
     try:
@@ -771,6 +866,26 @@ def get_welcome_msg(user_id):
         _lv_num = int(db.get(f'user_{user_id}_top_level') or 1)
     except:
         _lv_num = 1
+    lang = _user_lang(user_id)
+    if lang == 'en':
+        if buys == 0:
+            rating = "New 🆕"
+        elif buys < 5:
+            rating = "Trusted ✅"
+        elif buys < 20:
+            rating = "Verified 🔰"
+        else:
+            rating = "VIP ⭐"
+        _wnl = chr(10)
+        return (
+            "🎉 Welcome! This is the most powerful bot for all Telegram services 🫡" + _wnl + _wnl +
+            "- 🛰 The only bot that opens the world of Telegram services for you ❤️‍🔥⚡️" + _wnl + _wnl +
+            "- 🏆 Browse the available sections using the buttons below" + _wnl + _wnl +
+            f"- 💸 Your points: {coins:,}" + _wnl +
+            f"- 🆔 Your account ID: {user_id}" + _wnl +
+            f"- 📮 Account rating: {rating}" + _wnl +
+            f"- 🧧 Your level: {_lv_num}"
+        )
     return (
         "🎉 السلام عليكم؛ أهلاً بِكَ في أقوى بوت عربي يقدم لك جميع خدمات تيلجرام  🫡\n\n"
         "- 🛰 البوت العربي الوحيد الذي يجعلك تدخل في عالم خدمات تيليجرام ❤️‍🔥⚡️\n\n"
@@ -2708,6 +2823,35 @@ def _build_main_keys(user_id):
     # زر قناة البوت: callback دائماً (يفتح صفحة داخلية زي الدعم الفني)
     btn6 = btn(ch_label, callback_data='bot_channel_btn', color='blue')
 
+    if _user_lang(user_id) == 'en':
+        ek = mk(row_width=2)
+        ek.add(btn('🤖 BOOSTGRAM Bot Services', callback_data='ps', color='green'))
+        if _is_btn_visible('collect'):
+            ek.add(btn('Collect points', callback_data='collect', color='green'),
+                   btn('Recharge points', callback_data='charge_points', color='green'))
+        if _is_btn_visible('tasks'):
+            ek.add(btn('📋 Daily tasks', callback_data='tasks', color='green'))
+        if _is_btn_visible('register_accounts'):
+            ek.add(btn('📲 Register & manage your accounts', callback_data='register_accounts', color='green'))
+        if _is_btn_visible('account'):
+            ek.add(btn('Account info', callback_data='account', color='blue'),
+                   btn('Transfer points', callback_data='send', color='red'))
+        if _is_btn_visible('channels'):
+            ek.add(btn('Bot channels', callback_data='channels', color='red'),
+                   btn('Support', callback_data='support', color='green'))
+        if _is_btn_visible('user_store'):
+            ek.add(btn('🏪 Users market', callback_data='user_store', color='blue'))
+        if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
+            _lb = btn('Leaderboard', callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
+            _tl = btn('🏅 TOP LEVEL', callback_data='top_level', color='red') if _is_btn_visible('top_level') else None
+            if _lb and _tl:
+                ek.add(_lb, _tl)
+            elif _lb:
+                ek.add(_lb)
+            elif _tl:
+                ek.add(_tl)
+        ek.add(btn(f'Total orders : {total_orders:,}', callback_data='11', color='green'))
+        return ek
     keys = mk(row_width=2)
     keys.add(btn('🤖 خدمات بوت BOOSTGRAM', callback_data='ps',            color='green'))
     if _is_btn_visible('collect'):
@@ -3258,7 +3402,7 @@ def _fsub_check_call(call):
             except:
                 pass
             return False
-        if call.data in ('check_force_sub',):
+        if call.data in ('check_force_sub',) or str(call.data).startswith(('setlang_', 'capans_')):
             return True
         channels = _get_force_channels()
         if not channels:
@@ -3274,6 +3418,13 @@ def _fsub_check_call(call):
         return True
     except Exception:
         return True
+
+@bot.message_handler(commands=['lang', 'language'])
+def _cmd_lang(message):
+    try:
+        _send_lang_picker(message.chat.id, message.from_user.id)
+    except Exception:
+        pass
 
 @bot.message_handler(regexp='^/start$')
 def start_message(message):
@@ -3433,6 +3584,8 @@ def start_message(message):
                 data = {'id': user_id, 'users': [], 'coins': 0, 'premium': False}
                 set_user(user_id, data)
 
+            if _onboarding_gate(user_id, message.chat.id):
+                return
             if not _is_admin:
                 _ok_sub, _not_sub = _check_user_subs(user_id)
                 if not _ok_sub:
@@ -3448,6 +3601,8 @@ def start_message(message):
             bot.reply_to(message, get_welcome_msg(user_id), reply_markup=keys, parse_mode="HTML")
 
         else:
+            if _onboarding_gate(user_id, message.chat.id):
+                return
             if not _is_admin:
                 _ok_sub2, _not_sub2 = _check_user_subs(user_id)
                 if not _ok_sub2:
@@ -4432,7 +4587,7 @@ def _c_rs_worker(call):
     count_ord = db.get('orders')
     count_ord = int(count_ord) if count_ord is not None else 815645
     _is_admin_user = (cid == sudo) or (cid in _get_admins_cached())
-    if do is not None and not _is_admin_user:
+    if do is not None and not _is_admin_user and not str(data).startswith(('setlang_', 'capans_')):
         not_subscribed = []
         for channel in do:
             _cid_clean = str(channel).lstrip('@')
@@ -4492,6 +4647,36 @@ def _c_rs_worker(call):
             db.delete(f'{temp}_{cid}_proccess')
 
 
+    if data.startswith('setlang_'):
+        _lng = data.replace('setlang_', '')
+        if _lng not in ('ar', 'en'):
+            _lng = 'ar'
+        db.set('lang_' + str(cid), _lng)
+        _is_adm_lg = (cid == sudo) or (cid in _get_admins_cached())
+        if (not _is_adm_lg) and (not db.get('captcha_ok_' + str(cid))):
+            _send_captcha(cid, cid, mid=mid)
+        else:
+            _safe_del_msg(cid, mid)
+            _finish_start(cid, cid)
+        return
+    if data.startswith('capans_'):
+        try:
+            _cval = int(data.replace('capans_', ''))
+        except Exception:
+            _cval = None
+        _cans = db.get('captcha_ans_' + str(cid))
+        if _cval is not None and _cans is not None and int(_cval) == int(_cans):
+            db.set('captcha_ok_' + str(cid), True)
+            try:
+                db.delete('captcha_ans_' + str(cid))
+            except Exception:
+                pass
+            _safe_del_msg(cid, mid)
+            _finish_start(cid, cid)
+        else:
+            _cb_alert(call, text=_L(cid, '❌ إجابة غلط، حاول تاني', '❌ Wrong answer, try again'), show_alert=True)
+            _send_captcha(cid, cid, mid=mid)
+        return
     if data == 'check_force_sub':
         _ok, _not_sub = _check_user_subs(cid, force=True)
         if not _ok:
