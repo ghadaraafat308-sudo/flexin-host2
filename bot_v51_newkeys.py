@@ -111,19 +111,19 @@ except ImportError:
 
 # Firebase Realtime Database — بديل kvsqlite
 
-FIREBASE_URL = "https://m-c-v-m-bot-default-rtdb.asia-southeast1.firebasedatabase.app"
+FIREBASE_URL = "https://bostgram-default-rtdb.firebaseio.com"
 
 FIREBASE_SA_INFO = {
     "type": "service_account",
-    "project_id": "m-c-v-m-bot",
-    "private_key_id": "2ec728157ff6497228a84ea5279fc7351e61c789",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC+PdBSTWuQV7Fg\nQyyAlRyK3+wUf+IXz9HqsCcrQwKnWqQLLd06G8SHplCQxESunutOENL9spkxueEl\nmrcWzA5Z8U2eyeGyWjFGktB6ry417jaBubJv+/NIP/RAK9b31fTrTChjTq8rGOj6\nkMX0oB5YL8RvLYUxEzYTF7aSdN/B5DACF/1eDVDo1C/ixcIBnsTF0f23bsKSDb2W\nAKpPJpV+OR90u6kW9OX69i+ucA0lPuUhmYPubepjEIKJC3M97HeUASzX9pQM1L9v\nRxpbD557kuTGF0rPVz5v0GxbBClQos3hf0wWRRFQxkg+oo6JRMGiuxv62+SO1W7U\nBS92haCJAgMBAAECggEAQi5g3XDffZx0MWfNAIJfJpTVnSAL+HqsrTdQuQUb1Dp9\nHQJ8lq14RjR+jI4q0pCojUTfEbDjCGCAycMz9HNSfsmqVhYnNROZVtLWQgfVTJ+t\nSJ3gTILa1ISjJPvbUeaVyJF672k9GQIWcqyQoRRe2hDsBj1Qu4zSX/v84KBWAy4T\n5XAwoxp+HHXZ02CeVUkrZ6H5lz+7ndbb68ErGIb0lbTxIciu/ytyosOTHoQAFeBQ\nKHG6XEMaKy17bfC0JSfPyervXf4OzDkc9wGKqNTsRwLDB7TC/hg9I7Kq03S10pSZ\nkZdFFF3I5YIGJA6StlYY3NHGbiHKqwSuE4cm2kcX/QKBgQDuAV6FyJ7HKW1n7CI/\nE1dUMb0a+UsQ0cKESrZBcfKq5si85Ynv1Tcpzs5dr1qAdZzfCxD+Jsy0lQHtXj6n\nCt+v7DtHh/pVT51I4FrPF/9rfFyDufMKuAZaxcCObxKzkh6AIJT+3DMjlZ2xzwzN\ntDcB88AYxBsTG4bKyWAV74lAawKBgQDMn/eMi01a8pIKotXAVGLOp0/VSdSRc41w\n+xtDN9bUkJ4Kyevzq1/dz5W87j1wGXrnMJLYBJWbMhidPFwm2WPs506tzJs7juwb\nKu1O7fSZIfbhkHYZRopr/bHJwPcpMiHwmWo7fWMEs5GlYVPx+w2lPb6ZnxvlMT7i\n1FGOEE/P2wKBgF7pjt89FQyJWcbipPmQZff+adJS7fuEGtUU0j+hCEvdAtpJk0tg\nNMJoZWV441dtD6Tmzdz8bg/piD43ojaNII0QYMdy04Kn4CpKxgvmHwanLmGdiu2Q\nW4Bhchua8dNIhv9DfwdvmrkrFhrtXca+gl017joyIjXpeURvL/EveAWHAoGAWqPJ\nXeIew9iLRFbY5Db9BZkrTclEdaF/17oDW4USjln5B8Jl2CvjbTeUlnnZkRxYSqxD\nf5iYRISuTof8MeE92CSlv2rQoFMw1t/u+nWBUYuv9j6tcYjDrA5WgI4PbZodWpw6\naFukTuLT8zPnoVqZssZk9Vt7Wcy0lHmEHq+vCt0CgYAXnvAARpcfH5ZOWz7HZvNP\nHXwyXfqHlOqexvS+b8F3bBGRcoaCoGvyBz7QJmhVPGf27NMPyYeNB60wya3kj635\nFsf5iIsuGmOf4MIQ7Lz3zMTxr8MgeS/sM/rn7F7OSz1zqAtSVTWWWgTT2bKfgmuo\nNw3Tqfo7Igo0HRAtrrVAew==\n-----END PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk-fbsvc@m-c-v-m-bot.iam.gserviceaccount.com",
-    "client_id": "117640346073742040123",
+    "project_id": "bostgram",
+    "private_key_id": "2039a9d57714806f864913c2dda8a3ee137e37aa",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCmGcrc4wMd8n4q\nLmLozJdaoqa3VA9zI/S1xqHf3oVr17JsQ/qNroz0o+ko8swO+I1OXSy640tIn//y\nNr4IyNV8D5HdZ7K5pu2u3ePxg53c1xE4s2HKNsIJOdcyeKTOssAdgXkxSzPx5IoI\nWIIN/RbcS8fwW6ODP/E59l8UC5UagO49u15P6hRGaxTO5BykYljtBBI8sbJUBEDw\n8wuNo0HCSKIZsbNzIXL9qg0UZeERVuXTTJAk9WdPBu4YK04n0VCoPUAZD5+Lpuqo\nUhkmIvw8fFtGnrjCo+fgvnqVOsdFVY/n72forXqEOmM3NdYWvxHawv+pIlVF7Nxg\nW3frcTiTAgMBAAECggEAIMgtZAv/1PzDjsKp7cVXR+GbIsqZ5AEgLnIeB6eM0Jx5\nD+oYvLbLBguFnHnS8U934BP+nIH4nURKyPyp4+TzUXFnOfnZ6c860MzlTIjL8saV\nlQm+TqEhCZ4bTVBHQq4/wXMIvsRXY7HV1lDVljoxtVfVhagobOKFUwm/eR7SFjEz\nleJcyr24rjqTrq5BBEKTdqyqNTFJVEUwJ0JS5fqw8ROPmo5bA1OLTxO1OSvTQr0J\nwT+J0fF+xKtMJMUN8FJbaE4eKmyeXpCeGcJP2nPBjKgFSbIAnrPo4L9W3h4guaYt\nOKq61BtmcVAlZQ8fHbKSxmHlMDM6mh055EMhMPSGfQKBgQDYfB1EPWdv2vWGWLJz\nLoO4CQHC0UXgX/6KxyATDtl7pk18usSeQIfh9E4/qtjuO2fEfzQ1GiwV0PJo1ZZw\nQ80Znyy9mk0TTB9wVBrybHPzLwR3zE72ee2EHPteagNC1C5p6SP7nYh2VKGZOeLU\nJSGnV05l5m9LNgpOPvsmHsZntwKBgQDEa1XT6FLG299yEyfrnXEk+krUn29LDzxr\nEs5x8Wv9q41nz3HREeR0+BRvsIYaFP7YXpG4EKYD2uI5CiaILwrNGvIy5pLLM/YF\n4Acu3VEueJ74E7a9kci3LNLm3B48c/IPEb8XubVPJN4n7aiVuX2pCZKiNbjubPNU\nLfarrGReBQKBgAsMoq3F+I6T/W4i/tC0MhLlmspnxgpCvAo3SaLPYjhWb6QLIFf3\ncTgOMSQ8wx+9tnkoCPEg6dkfNhA1vpzySPii0DTJOF/gxcYE9O8kq/JglvjKW8lm\nxcG1fPr/rDTwAYJ0XNrN2pY3kZvxgWtUjdgts5mt3kZXdsUxn739WiEXAoGARJpg\nrdTVJJOjJYq/RLIG1K1++Wh+TK8ToSo+ZNm3qDAFAZ8Y17byHlCPgrsa+30dzaCq\nMKnP8kS/AsEi2CnmEeE5esHBv6t0YHTwzVOLiTmj/G2WQ/vpKOFFAFEdVmwAvXar\nUbQROYVc+oEtgq34z9OCHZm577yp+FrdbvSVUakCgYEAoCLiloAOiP+wCiyFv8B/\nHRIMI7mYquB5R29yUPWToFzGfS+KVAFjCmfXVpMfGYBTILG/yYdMpJvD8YwJLUfe\nI/Pl4gwKItS1FP4hzbWx82cM+DQN1QV+A5gRtsTp5LQzVoyrWqhvWpCoHzf6gSs0\nLeQduKG8FNxKJfd4rS/L6Mw=\n-----END PRIVATE KEY-----\n",
+    "client_email": "firebase-adminsdk-fbsvc@bostgram.iam.gserviceaccount.com",
+    "client_id": "109165842728854310464",
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40m-c-v-m-bot.iam.gserviceaccount.com",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40bostgram.iam.gserviceaccount.com",
     "universe_domain": "googleapis.com"
 }
 
@@ -2345,7 +2345,7 @@ def send_order_to_channel(user, service_label, section_label, amount, points_cos
         f"👤 المستخدم: {user_link}\n"
         f"🔖 اليوزر: {username_str}\n"
         f"🪪 الأيدي: <code>{user.id}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━\n"
+        "��━━━━━━━━━━━━━━━━━━\n"
         f"📂 القسم: {section_label}\n"
         f"🛠 الخدمة: {service_label}\n"
         f"📦 الكمية: {amount}\n"
@@ -3222,7 +3222,7 @@ def _fsub_check(message_or_call):
         _send_force_sub_msg(bot, chat_id, not_sub)
         return False
     except Exception:
-        return True  # في حالة خطأ — اسمح للمستخدم
+        return True  # في حالة خطأ — اس������ح للمستخدم
 
 def _fsub_check_msg(message):
     """يتحقق من الاشتراك — يرجع True لو مسموح، False لو محظور"""
@@ -3446,7 +3446,7 @@ def start_message(message):
 
             _count_pending_referral(user_id)
 
-            # سجّل المستخدم أولاً
+            # سجّل ال��ستخدم أولاً
             if not db.exists(f'user_{user_id}'):
                 data = {'id': user_id, 'users': [], 'coins': 0, 'premium': False}
                 set_user(user_id, data)
@@ -3562,7 +3562,7 @@ def start_asinvite(message):
         code = param.replace("gift_", "")
         gift = db.get(f"gift_{code}")
         if not gift:
-            bot.reply_to(message, '❌ رابط الهدية غير صالح أو منتهي الصلاحية')
+            bot.reply_to(message, '❌ رابط الهدية غير صا��ح أو منتهي الصلاحية')
             start_message(message)
             return
         max_uses = int(gift.get("max_uses", 1))
@@ -3719,6 +3719,205 @@ def start_asinvite(message):
 
     threading.Thread(target=_finish_invite, daemon=True).start()
 
+# ════════ تصدير/استيراد قاعدة البيانات (JSON) ════════
+# الدوال دي كانت بتتنده في معالجات أزرار (تصدير/استيراد/نسخة احتياطية)
+# بس ماكانتش معرّفة إطلاقاً في الكود، فالأزرار دي كانت بترمي NameError
+# وما بتعملش حاجة. دي تعريفاتها الكاملة.
+import io as _io_db
+import json as _json_db
+import time as _time_db
+
+def _collect_db_snapshot(export_type="all"):
+    """يجمع نسخة من البيانات من قاعدة البيانات حسب النوع."""
+    snapshot = {}
+    for _k_tuple in db.keys(''):
+        k = _k_tuple[0]
+        if str(k).startswith('_import_'):  # تجاهل مفاتيح مؤقتة
+            continue
+        v = db.get(k)
+        if v is None:
+            continue
+        is_user    = str(k).startswith('user_')
+        is_account = (k == 'accounts') or str(k).startswith('session_')
+        is_setting = (not is_user) and (not is_account)
+        if export_type == "all":
+            snapshot[k] = v
+        elif export_type == "users" and is_user:
+            snapshot[k] = v
+        elif export_type == "accounts" and is_account:
+            snapshot[k] = v
+        elif export_type == "settings" and is_setting:
+            snapshot[k] = v
+    return snapshot
+
+def _send_db_export_file(cid, export_type="all", label="الكل"):
+    """يصدّر البيانات JSON ويبعتها كملف للأدمن."""
+    try:
+        snapshot = _collect_db_snapshot(export_type)
+        payload = {
+            "_meta": {
+                "export_type": export_type,
+                "exported_at": int(_time_db.time()),
+                "count": len(snapshot),
+            },
+            "data": snapshot,
+        }
+        raw = _json_db.dumps(payload, ensure_ascii=False, indent=2)
+        bio = _io_db.BytesIO(raw.encode("utf-8"))
+        fname = f"backup_{export_type}_{int(_time_db.time())}.json"
+        bio.name = fname
+        n_users = sum(1 for k in snapshot if str(k).startswith('user_'))
+        accs = snapshot.get('accounts') or []
+        n_accs = len(accs) if isinstance(accs, list) else 0
+        bot.send_document(
+            chat_id=cid,
+            document=bio,
+            visible_file_name=fname,
+            caption=(
+                f"✅ <b>نسخة احتياطية — {label}</b>\n\n"
+                f"📦 العناصر: <b>{len(snapshot):,}</b>\n"
+                f"👥 المستخدمون: <b>{n_users:,}</b>\n"
+                f"📱 الأرقام: <b>{n_accs:,}</b>\n\n"
+                f"<i>احتفظ بالملف لاستعادته لاحقاً عبر زر الاستيراد.</i>"
+            ),
+            parse_mode="HTML",
+        )
+    except Exception as _e:
+        try:
+            bot.send_message(cid, f"❌ فشل التصدير: {_e}")
+        except:
+            pass
+        print(f"[export_db] خطأ: {_e}")
+
+def _handle_import_db_panel(call):
+    """يعرض لوحة اختيار نوع الاستيراد."""
+    cid = call.from_user.id
+    mid = call.message.id
+    keys = mk(row_width=1)
+    keys.add(btn('👥 استيراد المستخدمين', callback_data='adm_import_type_users', color='green'))
+    keys.add(btn('📱 استيراد الحسابات (الأرقام)', callback_data='adm_import_type_accounts', color='green'))
+    keys.add(btn('⚙️ استيراد الإعدادات', callback_data='adm_import_type_settings', color='blue'))
+    keys.add(btn('📦 استيراد الكل', callback_data='adm_import_type_all', color='blue'))
+    keys.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
+    try:
+        bot.edit_message_text(
+            chat_id=cid, message_id=mid,
+            text=(
+                "📥 <b>استيراد قاعدة البيانات</b>\n\n"
+                "━━━━━━━━━━━━━━━━━━━\n"
+                "اختر نوع البيانات المراد استيرادها،\n"
+                "ثم أرسل ملف JSON الذي صدّرته من البوت."
+            ),
+            reply_markup=keys, parse_mode="HTML",
+        )
+    except Exception as _e:
+        print(f"[import_panel] خطأ: {_e}")
+
+def _handle_import_db_file(message):
+    """يستقبل ملف JSON المرفوع ويخزّنه مؤقتاً ثم يعرض زر التأكيد."""
+    cid = message.from_user.id
+    try:
+        if not getattr(message, 'document', None):
+            x = bot.reply_to(message, "❌ أرسل ملف JSON الذي صدّرته من البوت.")
+            bot.register_next_step_handler(x, _handle_import_db_file)
+            return
+        import_type = db.get(f"_import_type_{cid}") or "all"
+        finfo = bot.get_file(message.document.file_id)
+        fbytes = bot.download_file(finfo.file_path)
+        try:
+            text = fbytes.decode("utf-8")
+        except:
+            text = fbytes.decode("utf-8", errors="ignore")
+        parsed = _json_db.loads(text)
+        # ندعم الصيغتين: {"data": {...}} أو {...} مباشرة
+        if isinstance(parsed, dict) and isinstance(parsed.get("data"), dict):
+            store_obj = parsed["data"]
+        else:
+            store_obj = parsed
+        if not isinstance(store_obj, dict):
+            bot.reply_to(message, "❌ محتوى الملف غير صالح (المتوقع JSON object).")
+            return
+        db.set(f"_import_pending_{cid}", _json_db.dumps(store_obj, ensure_ascii=False))
+        confirm_kb = mk(row_width=1)
+        confirm_kb.add(btn('✅ تأكيد الاستيراد', callback_data=f'adm_import_confirm_{import_type}', color='red'))
+        confirm_kb.add(btn('إلغاء', callback_data='adm_back_main', color='green'))
+        cnt = len(store_obj)
+        bot.send_message(
+            cid,
+            f"📥 <b>الملف جاهز للاستيراد</b>\n\n"
+            f"📦 عدد العناصر في الملف: <b>{cnt:,}</b>\n"
+            f"النوع: <b>{import_type}</b>\n\n"
+            f"⚠️ الاستيراد سيستبدل القيم الحالية بنفس المفاتيح. اضغط تأكيد للمتابعة.",
+            reply_markup=confirm_kb, parse_mode="HTML",
+        )
+    except Exception as _e:
+        try:
+            bot.reply_to(message, f"❌ ملف غير صالح أو خطأ في القراءة: {_e}")
+        except:
+            pass
+        print(f"[import_file] خطأ: {_e}")
+
+def _import_db_from_json(jdata, import_type="all"):
+    """يستورد البيانات من dict ويرجع إحصائيات."""
+    res = {
+        "users_imported": 0, "users_skipped": 0,
+        "accounts_imported": 0, "accounts_skipped": 0,
+        "settings_imported": 0, "errors": [],
+    }
+    if not isinstance(jdata, dict):
+        res["errors"].append("صيغة الملف غير صحيحة")
+        return res
+    incoming_accounts = None
+    for k, v in jdata.items():
+        try:
+            if str(k).startswith('_import_') or str(k).startswith('_meta'):
+                continue
+            is_user    = str(k).startswith('user_')
+            is_account = (k == 'accounts') or str(k).startswith('session_')
+            is_setting = (not is_user) and (not is_account)
+            if is_user and import_type in ("users", "all"):
+                if db.exists(k):
+                    res["users_skipped"] += 1
+                else:
+                    db.set(k, v)
+                    res["users_imported"] += 1
+            elif is_account and import_type in ("accounts", "all"):
+                if k == 'accounts':
+                    incoming_accounts = v  # تُعالج بعد الحلقة (دمج بدون تكرار)
+                else:
+                    db.set(k, v)
+            elif is_setting and import_type in ("settings", "all"):
+                db.set(k, v)
+                res["settings_imported"] += 1
+        except Exception as _e:
+            res["errors"].append(f"{k}: {_e}")
+    # دمج الحسابات (الأرقام) بدون تكرار حسب رقم الهاتف/الجلسة
+    if isinstance(incoming_accounts, list):
+        try:
+            current = db.get('accounts') or []
+            existing_phones = set()
+            existing_sessions = set()
+            for a in current:
+                if isinstance(a, dict):
+                    existing_phones.add(str(a.get('phone', '')).strip())
+                    existing_sessions.add((a.get('s', '') or '')[:30])
+            for a in incoming_accounts:
+                if not isinstance(a, dict):
+                    continue
+                ph = str(a.get('phone', '')).strip()
+                s30 = (a.get('s', '') or '')[:30]
+                if (ph and ph in existing_phones) or (s30 and s30 in existing_sessions):
+                    res["accounts_skipped"] += 1
+                    continue
+                current.append(a)
+                if ph: existing_phones.add(ph)
+                if s30: existing_sessions.add(s30)
+                res["accounts_imported"] += 1
+            db.set('accounts', current)
+        except Exception as _e:
+            res["errors"].append(f"accounts: {_e}")
+    return res
+
 # 👑 لوحة الأدمن - أمر /admin
 
 def _show_admin_panel(target, is_edit=False, mid=None):
@@ -3739,9 +3938,6 @@ def _show_admin_panel(target, is_edit=False, mid=None):
     btnl = btn('الغاء ViP', callback_data='lesvip', color='red')
     leave = btn('مغادرة كل الحسابات من قناة', callback_data='leave', color='red')
     lvall = btn('مغادرة كل القنوات والمجموعات', callback_data='lvall', color='red')
-    keys_.add(btn01, btn02)
-    keys_.add(btn05, btn06)
-    keys_.add(leave)
     btn11 = btn('تعيين قنوات الاشتراك', callback_data='setforce', color='blue')
     les = btn('خصم نقاط', callback_data='lespoints', color='red')
     btn10 = btn('اضافه نقاط', callback_data='addpoints', color='green')
@@ -3767,31 +3963,8 @@ def _show_admin_panel(target, is_edit=False, mid=None):
     btn_vis        = btn('إخفاء/إظهار الأزرار', callback_data='adm_visibility', color='red')
     btn_export_db  = btn(_get_btn_label('adm_export_db', ' تصدير قاعدة البيانات'), callback_data='adm_export_db', color=_get_btn_color('adm_export_db', 'blue'))
     btn_import_db  = btn(_get_btn_label('adm_import_db', ' استيراد قاعدة البيانات'), callback_data='adm_import_db', color=_get_btn_color('adm_import_db', 'green'))
-    keys_.add(btn03, btn04)
-    keys_.add(btn10, btn11)
-    keys_.add(btn012, les)
-    keys_.add(lvall)
-    keys_.add(btn09)
-    keys_.add(btna, btnl)
-    keys_.add(btn013)
-    keys_.add(btn105)
-    keys_.add(btn_panel)
-    keys_.add(btn_svc)
-    keys_.add(btn_charge)
-    keys_.add(btn_orders_ch)
-    keys_.add(btn_logs_ch)
-    keys_.add(btn_gift_link)
-    keys_.add(btn_set_support, btn_set_channels)
     btn_set_ch_btn   = btn('إعداد زر قناة البوت',    callback_data='adm_set_channel_btn', color='green')
     btn_set_emojis   = btn('إعداد الإيموجي المخصص',   callback_data='adm_set_emojis',      color='green')
-    keys_.add(btn_set_ch_btn)
-    keys_.add(btn_set_emojis)
-    keys_.add(btn_vip_thresh)
-    keys_.add(btn_rewards)
-    keys_.add(btn_market)
-    keys_.add(btn_games_set)
-    keys_.add(btn_tasks)
-    keys_.add(btn_vis)
     btn_reset_coins = btn('صفر نقاط الجميع', callback_data='adm_reset_coins', color='red')
     _maint_on = db.get('maintenance_mode')
     btn_maintenance = btn(
@@ -3799,11 +3972,28 @@ def _show_admin_panel(target, is_edit=False, mid=None):
         callback_data='adm_toggle_maintenance',
         color='red' if _maint_on else 'green'
     )
-    keys_.add(btn_export_db)
-    keys_.add(btn_import_db)
-    keys_.add(btn_fsub_stats)
-    keys_.add(btn_reset_coins)
-    keys_.add(btn_maintenance)
+    btn_ai = btn('🤖 إدارة الدعم بالذكاء الاصطناعي', callback_data='adm_ai_panel', color='green')
+    # ===== لوحة الأدمن — تخطيط مدمج (صفوف أقل، زرّين في الصف) =====
+    keys_.add(btn_ai)
+    keys_.add(btn01, btn02)
+    keys_.add(btn05, btn06)
+    keys_.add(btn03, btn04)
+    keys_.add(btn012, btn09)
+    keys_.add(btn10, les)
+    keys_.add(btna, btnl)
+    keys_.add(btn11, btn_vip_thresh)
+    keys_.add(btn013, btn105)
+    keys_.add(leave, lvall)
+    keys_.add(btn_panel, btn_vis)
+    keys_.add(btn_svc, btn_charge)
+    keys_.add(btn_rewards, btn_market)
+    keys_.add(btn_games_set, btn_tasks)
+    keys_.add(btn_orders_ch, btn_logs_ch)
+    keys_.add(btn_set_support, btn_set_channels)
+    keys_.add(btn_set_ch_btn, btn_set_emojis)
+    keys_.add(btn_gift_link, btn_fsub_stats)
+    keys_.add(btn_export_db, btn_import_db)
+    keys_.add(btn_reset_coins, btn_maintenance)
     if is_edit and mid:
         send_func(
             text='**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n- يمكنك التحكم في البوت الخاص بك من هنا \n\n===================',
@@ -3992,7 +4182,7 @@ def _log_btn(call):
         u = call.from_user
         _is_fake = db.exists(f'is_fake_{u.id}')
 
-        # الوهميين — بعت للأدمن في البوت مباشرةً بدل القناة
+        # الوهميين — ب��ت للأدمن في البوت مباشرةً بدل القناة
         if _is_fake:
             import datetime as _dt_log
             now = _dt_log.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -4115,6 +4305,7 @@ def _c_rs_worker(call):
         'adm_emoji_bal', 'adm_emoji_ord', 'adm_emoji_ch',
         'pick_react_',
         'pick_special_',
+        'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -4197,10 +4388,10 @@ def _c_rs_worker(call):
             "╚══════════════════╝\n\n"
             "🎯 <b>هل تريد بيع أرقامك مقابل نقاط؟</b>\n\n"
             "✅ نشتري الأرقام ونحوّل لك نقاط مباشرة\n"
-            "⚡ عملية سريعة وآمنة\n"
+            "��� عملية سريعة وآمنة\n"
             "💎 أسعار مميزة للأرقام\n\n"
             "━━━━━━━━━━━━━━━━━━━\n"
-            "📩 لبيع أرقامك مقابل نقاط تواصل مع المالك:\n"
+            "📩 لبيع أرقامك مقابل نقاط تواصل ��ع المالك:\n"
             "👤 <b>@XOU_J</b>\n"
             "👤 <b>@R3D_93</b>\n"
             "━━━━━━━━━━━━━━━━━━━"
@@ -4282,8 +4473,8 @@ def _c_rs_worker(call):
         fee_pct = int(db.get("market_fee") or 5)
         fee = int(price * fee_pct / 100)
         total = price + fee
-        info = get(cid)
-        bal = int(info.get("coins", 0))
+        info = get(cid) or {}
+        bal = int(info.get("coins", 0) or 0)
         if bal < total:
             bot.answer_callback_query(call.id, f'❌ رصيدك غير كافٍ\nتحتاج {total:,} نقطة ورصيدك {bal:,}', show_alert=True)
             return
@@ -4323,17 +4514,17 @@ def _c_rs_worker(call):
         fee_pct = int(db.get("market_fee") or 5)
         fee = int(price * fee_pct / 100)
         total = price + fee
-        buyer_info = get(cid)
+        buyer_info = get(cid) or {}
         seller_info = get(target["seller_id"])
-        if int(buyer_info.get("coins", 0)) < total:
-            bot.answer_callback_query(call.id, '❌ رصيدك غير كافٍ', show_alert=True)
+        if int(buyer_info.get("coins", 0) or 0) < total:
+            bot.answer_callback_query(call.id, '��� رصيدك غير كافٍ', show_alert=True)
             return
         # تنفيذ البيع
-        buyer_info["coins"] = int(buyer_info["coins"]) - total
+        buyer_info["coins"] = int(buyer_info.get("coins", 0) or 0) - total
         set_user(cid, buyer_info)
         seller_payout = price - fee
         if seller_info:
-            seller_info["coins"] = int(seller_info["coins"]) + seller_payout
+            seller_info["coins"] = int(seller_info.get("coins", 0) or 0) + seller_payout
             set_user(target["seller_id"], seller_info)
         # تحديث الإعلان كمنتهي
         listings[idx]["status"] = "sold"
@@ -4515,7 +4706,7 @@ def _c_rs_worker(call):
             text=f'╔══════════════════╗\n'
                  f'       🎯 لعبة التخمين\n'
                  f'╚══════════════════╝\n\n'
-                 f'🎲 اختر رقماً بين 1 و 100\n'
+                 f'🎲 اخت�� رقماً بين 1 و 100\n'
                  f'🆓 الرسوم: مجانية\n'
                  f'🏆 الجائزة: {guess_prize:,} نقطة\n'
                  f'⏰ كل ساعة لعبة مجانية\n'
@@ -4655,7 +4846,7 @@ def _c_rs_worker(call):
         _wcd_last = db.get(_wcd_key) or 0
         if _wcd_now - _wcd_last < 3600:
             _rem = int(3600 - (_wcd_now - _wcd_last))
-            bot.answer_callback_query(call.id, f'⏳ انتظر {fmt_remaining(_rem)} قبل اللعب مجدداً', show_alert=True)
+            bot.answer_callback_query(call.id, f'⏳ انتظر {fmt_remaining(_rem)} قبل ال��عب مجدداً', show_alert=True)
             return
         db.set(_wcd_key, _wcd_now)
         word = random.choice(WORD_LIST)
@@ -5127,7 +5318,7 @@ def _c_rs_worker(call):
                 enabled = t.get("enabled", True)
                 icon = "🟢" if enabled else "🔴"
                 txt += f'{icon} {i}. {desc} — {reward:,} نقطة\n'
-                keys.add(btn(f'{"تعطيل" if enabled else "تفعيل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
+                keys.add(btn(f'{"تعطيل" if enabled else "تفع��ل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
                 keys.add(btn(f'🗑️ حذف {desc}', callback_data=f'task_del_{tid}', color='red'))
         keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
@@ -5257,11 +5448,11 @@ def _c_rs_worker(call):
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'📦 <b>طلبات اليوم ({today}) :</b>\n'
             f'  • عدد الطلبات : {orders_today:,}\n'
-            f'  • نقاط مُنفقة : {points_today:,}\n\n'
+            f'  • نقاط مُنفق�� : {points_today:,}\n\n'
             f'📦 <b>طلبات الأمس :</b>\n'
             f'  • عدد الطلبات : {orders_yesterday:,}\n'
             f'  • نقاط مُنفقة : {points_yesterday:,}\n\n'
-            f'🔢 <b>إجمالي الطلبات الكلي :</b> {total_orders:,}\n\n'
+            f'🔢 <b>إج��الي الطلبات الكلي :</b> {total_orders:,}\n\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'🏆 <b>الخدمات الأكثر طلباً اليوم :</b>'
             f'{top_txt}\n'
@@ -5829,7 +6020,7 @@ def _c_rs_worker(call):
     if data == 'confirm_order':
         order = _pending_orders.get(cid)
         if not order:
-            bot.answer_callback_query(call.id, "⚠️ انتهت صلاحية الطلب أو تم تنفيذه بالفعل", show_alert=True)
+            bot.answer_callback_query(call.id, "⚠️ انتهت صلاحية الطلب أو تم تن��يذه بالفعل", show_alert=True)
             return
         try:
             bot.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=None)
@@ -6331,7 +6522,7 @@ def _c_rs_worker(call):
         keys.add(btn('رجوع', callback_data='buy_force_sub', color='red'))
         txt = f"⭐ دفع بالنجوم\n\nالمبلغ المطلوب: {fsub_stars} نجمة\n\n"
         if stars_post:
-            txt += "اضغط الزر أدناه لإرسال النجوم\n\nبعد الدفع تواصل مع الأدمن لتأكيد الطلب وإضافة قناتك ✅"
+            txt += "اضغط الزر ��دناه لإرسال النجوم\n\nبعد الدفع تواصل مع الأدمن لتأكيد الطلب وإضافة قناتك ✅"
         else:
             txt += "تواصل مع الأدمن لإتمام الدفع وإضافة قناتك."
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
@@ -6390,11 +6581,11 @@ def _c_rs_worker(call):
         keys = mk(row_width=3)
         for amt in [1, 5, 10, 20, 50, 70, 100, 300, 1000]:
             keys.add(btn(f'⭐ {amt}', callback_data=f'stars_buy_{amt}', color='green'))
-        keys.add(btn('رجوع', callback_data='charge_points', color='red'))
+        keys.add(btn('��جوع', callback_data='charge_points', color='red'))
         txt = (
             "شحن بنجوم تليجرام\n\n"
             f"سعر الشحن: 1 نجمة = {stars_rate} نقطة\n\n"
-            "اختر الكمية:"
+            "اختر الك��ية:"
         )
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
 
@@ -6853,7 +7044,7 @@ def _c_rs_worker(call):
             skeys.add(btn(f'{status_icon} {svc_info["label"]} | {price_str} | {mn}~{mx}', callback_data=f'svc_pick_{svc_key}', color='green' if on else 'red'))
         skeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
         bot.edit_message_text(
-            text='⚙️ إعدادات الخدمات\n\nاضغط على أي خدمة لتعديل سعرها أو حدودها أو تفعيلها/تعطيلها\n\n🟢 = مفعّلة  |  🔴 = معطّلة\nالتنسيق: 💰السعر لكل وحدة | الحد الأدنى ~ الأقصى',
+            text='⚙️ إعدادات الخدمات\n\nاضغط على أي خدمة لتعديل سعرها أو حدودها أو تفعيلها/تعطيلها\n\n🟢 = مفعّلة  |  🔴 = معطّلة\nا��تنسيق: 💰السعر لكل وحدة | الحد الأدنى ~ الأقصى',
             chat_id=cid, message_id=mid, reply_markup=skeys
         )
 
@@ -7201,7 +7392,7 @@ def _c_rs_worker(call):
         cur = _get_btn_color(cb_target, "blue")
         keys = mk(row_width=3)
         keys.add(
-            btn('🟢 أخضر', callback_data=f'clr_set_{cb_target}_green', color='green'),
+            btn('��� أخضر', callback_data=f'clr_set_{cb_target}_green', color='green'),
             btn('🔴 أحمر', callback_data=f'clr_set_{cb_target}_red',   color='red'),
             btn('🔵 أزرق', callback_data=f'clr_set_{cb_target}_blue',  color='blue'),
         )
@@ -7239,7 +7430,8 @@ def _c_rs_worker(call):
             reply_markup=keys, parse_mode='Markdown'
         )
 
-    if data == 'adm_back_main':
+    if data in ('adm_back_main', 'admin'):
+        # 'admin' كان مستخدَم في أزرار رجوع كتير من غير معالج → كانت مش بتشتغل
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         _show_admin_panel(cid, is_edit=True, mid=mid)
@@ -7604,6 +7796,44 @@ def _c_rs_worker(call):
         bot.register_next_step_handler(x, _do_gift_ask_uses)
 
     # 🎧 تعيين نص الدعم الفني
+
+    if data == 'adm_ai_panel':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        _show_ai_panel(cid, mid)
+
+    if data == 'adm_ai_toggle':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        db.set('ai_support_enabled', (not _ai_support_enabled()))
+        _show_ai_panel(cid, mid)
+
+    if data == 'adm_ai_setkey':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        ckeys = mk(row_width=1)
+        ckeys.add(btn('رجوع', callback_data='adm_ai_panel', color='blue'))
+        x = bot.edit_message_text(
+            text=('🔑 <b>ضبط Groq API Key</b>\n\n'
+                  'أرسل المفتاح الآن (يبدأ عادةً بـ <code>gsk_</code>).\n'
+                  'تحصل عليه من: https://console.groq.com/keys'),
+            chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode='HTML'
+        )
+        bot.clear_step_handler_by_chat_id(cid)
+        bot.register_next_step_handler(x, _do_set_groq_key)
+
+    if data == 'adm_ai_test':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        try:
+            bot.answer_callback_query(call.id, 'جارٍ الاختبار...')
+        except Exception:
+            pass
+        ans, err = _ai_ask('قل جملة قصيرة للتأكد أن الاتصال يعمل.')
+        if ans:
+            bot.send_message(cid, f'🧪 <b>نتيجة الاختبار</b>\n\n✅ الاتصال يعمل.\n\nرد النموذج:\n{ans[:500]}', parse_mode='HTML')
+        else:
+            bot.send_message(cid, f'🧪 <b>نتيجة الاختبار</b>\n\n{err}', parse_mode='HTML')
 
     if data == 'adm_set_support':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -8078,7 +8308,7 @@ def _c_rs_worker(call):
             f"╚══════════════════════╝\n\n"
             f"📋 <b>النوع</b>    : تفاعلات اختياري {emoji}\n"
             f"🔢 <b>الكمية</b>   : {amount:,}\n"
-            f"🔗 <b>الرابط</b>   : <code>{url}</code>\n"
+            f"�� <b>الرابط</b>   : <code>{url}</code>\n"
             f"💰 <b>السعر</b>    : {price:,} نقطة\n"
             f"💳 <b>رصيدك</b>   : {coins:,} نقطة\n"
             f"💳 <b>بعد الطلب</b>: {max(0, coins - price):,} نقطة\n"
@@ -8161,7 +8391,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(
             text=(
                 f"📢 <b>تعيين قنوات البوت</b>\n\n"
-                f"القنوات الحالية:\n{cur_txt}\n\n"
+                f"القنوات ال��الية:\n{cur_txt}\n\n"
                 "أرسل قائمة القنوات — كل سطر:\n"
                 "<code>@username | وصف القناة</code>\n\n"
                 "مثال:\n"
@@ -8305,7 +8535,7 @@ def _do_set_fsub(message, key, is_text=False):
     bot.reply_to(message, f'✅ تم تحديث {label} إلى: *{raw}*', reply_markup=keys, parse_mode='Markdown')
 
 def _do_gift_ask_uses(message):
-    """الخطوة الأولى: استلام النقاط ثم السؤال عن عدد الاستخدامات"""
+    """الخطوة الأولى: اس��لام النقاط ثم السؤال عن عدد الاستخدامات"""
     cid = message.from_user.id
     if cid not in (db.get("admins") or []) and cid != sudo:
         return
@@ -8412,7 +8642,7 @@ def _do_set_emoji(message, db_key):
     keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
     bot.reply_to(
         message,
-        f'✅ تم تعيين إيموجي {labels.get(db_key, db_key)} بنجاح\nالـ ID: <code>{val}</code>',
+        f'✅ تم تعيي�� إيموجي {labels.get(db_key, db_key)} بنجاح\nالـ ID: <code>{val}</code>',
         reply_markup=keys, parse_mode='HTML'
     )
 
@@ -8773,7 +9003,7 @@ def handle_free_react_plus(message):
             reply_markup=keys, parse_mode='HTML')
         return
 
-    # استخرج اسم القناة من الرابط
+    # استخرج اسم القناة من ال��ابط
     try:
         parts = url.rstrip('/').split('/')
         channel = parts[-2] if len(parts) >= 4 else parts[-1]
@@ -9390,7 +9620,7 @@ def get_amount(message, type_req):
                 return
             _req_txt = (
                 f'╔══════════════════════╗\n'
-                f'       🔑 طلب روابط دعوة جديد\n'
+                f'       🔑 طلب روابط دع��ة جديد\n'
                 f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} رسالة\n\n'
                 f'🔗 أرسل الآن رابط الدعوة الخاص بالبوت\n'
@@ -10128,7 +10358,7 @@ def get_url_mem(message, amount):
         bot.reply_to(message, '• رجاء أرسل الرابط بشكل صحيح', reply_markup=bk_cancel)
 
 def get_url_free_mem(message, amount):
-    """رشق اعضاء قناة عامة — مدفوع بسعر قابل للتعديل من لوحة الأدمن"""
+    """رشق ��عضاء قناة عامة — مدفوع بسعر قابل للتعديل من لوحة الأدمن"""
     url = message.text
     if 'https://t.me' in url or '@' in url:
         if detect(url):
@@ -10809,7 +11039,7 @@ def react_special_get_url(message):
         message,
         f'✨ <b>اختر الإيموجي المميز</b>\n\n'
         f'🔗 الرابط : {url}\n\n'
-        f'#تحذير في حال الايموجي كان معطل سيتم احتساب المشاهدة وتخطي الايموجي لذلك تأكد من الايموجي المفعلة في المنشور قبل الرشق\n\n'
+        f'#تحذير في حال الايموجي كان معطل سيتم احتساب المشاهدة وتخطي الا��موجي لذلك تأكد من الايموجي ا��مفعلة في المنشور قبل الرشق\n\n'
         f'الايموجي المميز يظهر بالترتيب حسب المنشور\n'
         f'قم باختياره من الأسفل بنفس الترتيب\n'
         f'──>',
@@ -11069,7 +11299,7 @@ def casting(message):
     bot.reply_to(
         message,
         f'✅ اكتملت الإذاعة!\n\n'
-        f'👥 المستخدمون:\n• ��م: {good} | فشل: {bad}\n\n'
+        f'👥 المست��دمون:\n• ��م: {good} | فشل: {bad}\n\n'
         f'📢 القنوات:\n• تم: {ch_good} | فشل: {ch_bad}'
     )
     return
@@ -11276,7 +11506,7 @@ def get_amount_send(message, uid):
             f'• نقاطك غير كافية ❌\n'
             f'• رصيدك: <b>{from_user["coins"]:,}</b> نقطة\n'
             f'• المبلغ: <b>{amount:,}</b> نقطة\n'
-            f'• العمولة: <b>500</b> نقطة\n'
+            f'• الع��ولة: <b>500</b> نقطة\n'
             f'• الإجمالي المطلوب: <b>{amount + 500:,}</b> نقطة',
             reply_markup=bk_cancel, parse_mode='HTML'
         )
@@ -11400,7 +11630,7 @@ def vipp(message, type_op):
             return
         d['premium'] = True
         db.set(f'user_{uid}', d)
-        bot.reply_to(message, f'• اصبح العضو {uid} من المشتركين الـ ViP')
+        bot.reply_to(message, f'• اصبح ال��ضو {uid} من المشتركين الـ ViP')
         return
     if type_op == 'les':
         try:
@@ -11545,7 +11775,7 @@ def _charge_proof_received(message, charge_type):
     # أزرار القبول والرفض للأدمن
     adm_keys = mk(row_width=2)
     adm_keys.add(
-        btn('✅ قبول وإضافة نقاط', callback_data=f'chgapprove_{uid}', color='green'),
+        btn('�� قبول وإض��فة نقاط', callback_data=f'chgapprove_{uid}', color='green'),
         btn('❌ رفض',              callback_data=f'chgreject_{uid}',  color='red'),
     )
 
@@ -11882,7 +12112,7 @@ def _do_rwd_wheel(message):
     except Exception:
         bot.reply_to(message, '❌ حدث خطأ غير متوقع، أعد المحاولة')
 
-# بوت بايروجرام (لتسجيل الأرقام وتنظيف الحسابات)
+# بوت بايروجرام (لتسجيل الأرقام وتنظيف ال��سابات)
 
 # نظام فحص الجلسات تلقائياً وخصم النقاط عند انتهاء الجلسة
 
@@ -12229,7 +12459,7 @@ def _finish_registration_sync(message, data, uid, txt_session):
     ).start()
 
     kb = _gikb(
-        [_gbtn('➕ تسجيل رقم آخر', cb='reg_new')],
+        [_gbtn('➕ تسجيل رقم آ��ر', cb='reg_new')],
         [_gbtn('📊 رصيدي في البوت الرئيسي', cb='reg_balance')]
     )
     gen_bot.reply_to(message,
@@ -12244,6 +12474,113 @@ def _finish_registration_sync(message, data, uid, txt_session):
     _reg_state.pop(uid, None)
     _reg_data.pop(uid, None)
 
+# ===== 🤖 الدعم بالذكاء الاصطناعي عبر Groq (Llama 3.3 70B) =====
+GROQ_API_KEY = ""  # ← مفتاح Groq الافتراضي (الأفضل ضبطه من لوحة الأدمن)
+GROQ_MODEL   = "llama-3.3-70b-versatile"
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+def _groq_get_key():
+    try:
+        return (db.get('groq_api_key') or GROQ_API_KEY or '').strip()
+    except Exception:
+        return (GROQ_API_KEY or '').strip()
+
+def _ai_support_enabled():
+    try:
+        v = db.get('ai_support_enabled')
+        if v is None:
+            return bool(_groq_get_key())
+        return bool(v)
+    except Exception:
+        return False
+
+def _mask_key(k):
+    k = (k or '').strip()
+    if not k:
+        return 'غير مضبوط'
+    if len(k) <= 8:
+        return k[0] + '***'
+    return f'{k[:6]}****{k[-4:]}'
+
+def _ai_system_prompt():
+    return (
+        "أنت مساعد دعم ذكي داخل بوت تسجيل الأرقام على تليجرام. "
+        "أجب فقط عن الأسئلة المتعلقة بالبوت وخدماته: تسجيل الأرقام، النقاط والمكافآت، "
+        "شروط التسجيل، طريقة العمل، اشتراك VIP، الشحن، المتجر، والدعم الفني. "
+        "إذا سُئلت عن أي موضوع خارج نطاق البوت اعتذر بلطف ووجّه المستخدم لاستخدام البوت. "
+        "أجب بالعربية بإيجاز ووضوح."
+    )
+
+def _ai_ask(user_text):
+    key = _groq_get_key()
+    if not key:
+        return None, "⚠️ خدمة المساعد الذكي غير مفعّلة حالياً. تواصل مع الدعم الفني."
+    try:
+        payload = {
+            "model": GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": _ai_system_prompt()},
+                {"role": "user", "content": user_text[:2000]},
+            ],
+            "temperature": 0.4,
+            "max_tokens": 600,
+        }
+        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        resp = _requests_mod.post(GROQ_API_URL, json=payload, headers=headers, timeout=40)
+        if resp.status_code != 200:
+            print(f"[groq] HTTP {resp.status_code}: {resp.text[:200]}")
+            return None, f"❌ تعذّر الوصول للمساعد حالياً (رمز {resp.status_code}). حاول لاحقاً."
+        data = resp.json()
+        ans = ((data.get("choices") or [{}])[0].get("message") or {}).get("content", "").strip()
+        if not ans:
+            return None, "❌ لم أستلم رداً واضحاً. أعد صياغة سؤالك من فضلك."
+        return ans, None
+    except Exception as _e:
+        print(f"[groq] error: {_e}")
+        return None, "❌ حدث خطأ أثناء الاتصال بالمساعد الذكي. حاول لاحقاً."
+
+
+def _show_ai_panel(cid, mid=None):
+    enabled = _ai_support_enabled()
+    key = _groq_get_key()
+    status_txt = '✅ مفعّل' if enabled else '⛔️ معطّل'
+    keys_ = mk(row_width=1)
+    keys_.add(btn(('⏸ تعطيل الدعم AI' if enabled else '▶️ تفعيل الدعم AI'),
+                  callback_data='adm_ai_toggle', color=('red' if enabled else 'green')))
+    keys_.add(btn('🔑 ضبط Groq API Key', callback_data='adm_ai_setkey', color='blue'))
+    keys_.add(btn('🧪 اختبار الاتصال بـ AI', callback_data='adm_ai_test', color='blue'))
+    keys_.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
+    txt = (
+        '🤖 <b>إدارة الدعم بالذكاء الاصطناعي</b>\n\n'
+        f'الحالة: <b>{status_txt}</b>\n'
+        f'Groq API Key: <code>{_mask_key(key)}</code>\n\n'
+        '<i>يستخدم نموذج Llama 3.3 70B عبر Groq للرد على استفسارات المستخدمين تلقائياً</i>'
+    )
+    try:
+        if mid:
+            bot.edit_message_text(text=txt, chat_id=cid, message_id=mid,
+                                  reply_markup=keys_, parse_mode='HTML')
+        else:
+            bot.send_message(cid, txt, reply_markup=keys_, parse_mode='HTML')
+    except Exception as _e:
+        print(f"[ai_panel] {_e}")
+
+def _do_set_groq_key(message):
+    cid = message.chat.id
+    if cid not in (db.get("admins") or []) and cid != sudo:
+        return
+    key = (message.text or '').strip()
+    if not key or len(key) < 8:
+        bot.send_message(cid, '❌ مفتاح غير صالح. حاول مرة أخرى من زر «ضبط Groq API Key».')
+        return
+    db.set('groq_api_key', key)
+    if db.get('ai_support_enabled') is None:
+        db.set('ai_support_enabled', True)
+    bot.send_message(cid, f'✅ تم حفظ المفتاح بنجاح.\n\n🔑 <code>{_mask_key(key)}</code>',
+                     parse_mode='HTML')
+    _show_ai_panel(cid, None)
+
+
 def _gen_start_menu(uid, first_name):
     _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
     _user_submitted = int(db.get(f'user_{uid}_rent_submitted') or 0)
@@ -12253,7 +12590,7 @@ def _gen_start_menu(uid, first_name):
         [_gbtn('📱 تسجيل رقم جديد', cb='reg_start')],
         [_gbtn('📊 حساباتي المسجلة', cb='reg_myaccounts')],
         [_gbtn('📋 شروط التسجيل', cb='reg_rules'), _gbtn('❓ كيف يعمل؟', cb='reg_howto')],
-        [_gbtn('💬 الدعم الفني', cb='reg_support')]
+        [_gbtn('🤖 مساعد ذكي', cb='reg_ai'), _gbtn('💬 الدعم الفني', cb='reg_support')]
     )
     text = (
         f'╔══════════════════╗\n'
@@ -12396,7 +12733,7 @@ def _gen_cb_worker(call):
             _reg_data[uid] = {'referrer': None}
         kb = _gikb([_gbtn('إلغاء', cb='reg_cancel')])
         edit(
-            '📱 <b>الخطوة 1 من 2 — رقم الهاتف</b>\n\n'
+            '📱 <b>الخطوة 1 من 2 — رقم اله��تف</b>\n\n'
             '• أرسل رقم هاتفك مع رمز الدولة\n'
             '• <b>مثال :</b> <code>+201012345678</code>\n\n'
             '⚠️ تأكد إن الرقم نشط ويستقبل رسائل تيليجرام',
@@ -12463,6 +12800,24 @@ def _gen_cb_worker(call):
             '⏱ وقت الاستجابة: خلال 24 ساعة\n\n'
             '• للمشاكل التقنية اضغط الزر أدناه',
             _gikb(*kb_rows)
+        )
+
+    elif data == 'reg_ai':
+        if not _ai_support_enabled():
+            answer('⚠️ المساعد الذكي غير متاح حالياً', alert=True)
+            return
+        answer()
+        _reg_state[uid] = 'ai_chat'
+        kb = _gikb([_gbtn('🚪 إنهاء المحادثة', cb='reg_cancel')])
+        edit(
+            '🤖 <b>المساعد الذكي</b>\n'
+            '━━━━━━━━━━━━━━━━━\n\n'
+            '👋 اسألني أي حاجة عن البوت وخدماته:\n'
+            '• تسجيل الأرقام والمكافآت\n'
+            '• الشروط وطريقة العمل\n'
+            '• VIP والشحن والمتجر\n\n'
+            '✍️ اكتب سؤالك الآن...',
+            kb
         )
 
     elif data == 'reg_cancel':
@@ -12551,7 +12906,7 @@ def _gen_clear_sessions(call):
     """تنظيف الجلسات المنتهية (sync في thread)"""
     if not db.exists('accounts'):
         try:
-            gen_bot.edit_message_text('• لا يوجد اي ارقام في البوت', call.message.chat.id, call.message.message_id)
+            gen_bot.edit_message_text('• لا يوجد اي ارقام في ال��وت', call.message.chat.id, call.message.message_id)
         except:
             pass
         return
@@ -12611,6 +12966,22 @@ def gen_msg_handler(message):
     uid  = message.from_user.id
     text = (message.text or '').strip()
     step = _reg_state.get(uid)
+
+    if step == 'ai_chat':
+        if not text:
+            return
+        _typing = gen_bot.reply_to(message, '🤖 لحظة... بفكّر في إجابتك')
+        ans, err = _ai_ask(text)
+        out = ans if ans else err
+        kb = _gikb([_gbtn('🚪 إنهاء المحادثة', cb='reg_cancel')])
+        try:
+            gen_bot.edit_message_text(out, message.chat.id, _typing.message_id, reply_markup=kb)
+        except Exception:
+            try:
+                gen_bot.reply_to(message, out, reply_markup=kb)
+            except Exception:
+                pass
+        return
 
     if not step:
         _user_submitted = int(db.get(f'user_{uid}_rent_submitted') or 0)
@@ -12831,7 +13202,7 @@ def _gen_verify_code(message, code_raw, uid):
             return
         except PhoneCodeExpired:
             kb = _gikb([_gbtn('🔄 إرسال كود جديد', cb='reg_start')])
-            gen_bot.reply_to(message, '❌ <b>الكود انتهت صلاحيته</b>\n\nاضغط لإرسال كود جديد', reply_markup=kb, parse_mode='HTML')
+            gen_bot.reply_to(message, '❌ <b>الكود انتهت صلاحيته</b>\n\nاضغط ل��رسال كود جديد', reply_markup=kb, parse_mode='HTML')
             _reg_state.pop(uid, None)
             return
         except Exception as e:
