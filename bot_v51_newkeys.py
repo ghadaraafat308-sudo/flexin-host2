@@ -3856,7 +3856,7 @@ def _import_db_from_json(jdata, import_type="all"):
             if _kk == 'users' and isinstance(_vv, list):
                 for _u in _vv:
                     if isinstance(_u, dict) and _u.get('id') is not None:
-                        _flat[f'user_{_u['id']}'] = _u
+                        _flat['user_' + str(_u['id'])] = _u
                 continue
             if _kk == 'settings' and isinstance(_vv, dict):
                 for _sk, _sv in _vv.items():
@@ -4835,7 +4835,7 @@ def _c_rs_worker(call):
         )
         return
 
-    # 🛰️ /rec خدمة التفاعل التلقائي
+    # 🛰️ /rec خدمة التفاعل التلقائ��
 
     if data == 'rec':
         _show_rec_panel(cid, mid)
@@ -6176,7 +6176,7 @@ def _c_rs_worker(call):
         try:
             txt = leaderboard_rent()
         except Exception as _e:
-            txt = f"⚠️ حدث خطأ أثناء تحميل البيانات\n{_e}"
+            txt = f"⚠️ حدث خطأ أثنا�� تحميل البيانات\n{_e}"
         keys = mk(row_width=1)
         keys.add(btn('رجوع', callback_data='submit_account', color='blue'))
         try:
@@ -6313,7 +6313,7 @@ def _c_rs_worker(call):
                 '<b>مثال:</b>\n'
                 '<code>@mychannel | قناتي الرسمية | https://t.me/+xxxx | 1000</code>\n\n'
                 '• الحد = 0 يعني بلا حد\n'
-                '• لو مفيش رابط جوين خاص اكتب 0'
+                '• لو مفيش را��ط جوين خاص اكتب 0'
             ),
             reply_markup=bk_cancel, chat_id=cid, message_id=mid, parse_mode='HTML'
         )
@@ -7980,7 +7980,7 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_set_support_info)
 
-    # 📣 إعداد زر قناة البوت
+    # 📣 إعداد زر ��ناة البوت
 
     if data == 'adm_set_channel_btn':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -9640,7 +9640,7 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       🏆 طلب تصويت مسابقات اشتراك إجباري\n'
-                f'╚══════════════════════╝\n\n'
+                f'╚═══════════════��══════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} صوت\n\n'
                 f'⏱ أرسل الآن وقت الانتظار بين التصويت (بالثواني)\n'
                 f'• أرسل 0 لتنفيذ فوري | الحد الأقصى 500\n'
@@ -9658,7 +9658,7 @@ def get_amount(message, type_req):
             try:
                 amount = int(message.text)
             except:
-                bot.reply_to(message, f'• رجاء ارسل عدد فقط ، اعد المحاولة لاحقا', reply_markup=bk_cancel, parse_mode="HTML")
+                bot.reply_to(message, f'��� رجاء ارسل عدد فقط ، اعد المحاولة لاحقا', reply_markup=bk_cancel, parse_mode="HTML")
                 return
             load_ = db.get('accounts')
             _min, _max = svc_min('spam'), svc_max('spam')
@@ -10640,7 +10640,7 @@ def get_react(message, amount):
         _req_txt = (
             f'╔══════════════════════╗\n'
             f'       ⚡ طلب تفاعلات اختياري جديد\n'
-            f'╚══════════════════════╝\n\n'
+            f'╚═══��══════════════════╝\n\n'
             f'✅ الكمية المطلوبة : {amount} تفاعل\n'
             f'😀 التفاعل المختار : {message.text}\n\n'
             f'🔗 أرسل الآن رابط المنشور\n'
