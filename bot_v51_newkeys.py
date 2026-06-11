@@ -3847,6 +3847,23 @@ def _import_db_from_json(jdata, import_type="all"):
         res["errors"].append("صيغة الملف غير صحيحة")
         return res
     incoming_accounts = None
+    # unwrap users[]/settings{} export format
+    META_SKIP_IMPORT = {'bot_version', 'export_type', 'exported_at', 'users_count', 'accounts_count', 'settings_count', '_import_meta', '_meta'}
+    if isinstance(jdata, dict):
+        _flat = {}
+        for _kk, _vv in list(jdata.items()):
+            if _kk in META_SKIP_IMPORT: continue
+            if _kk == 'users' and isinstance(_vv, list):
+                for _u in _vv:
+                    if isinstance(_u, dict) and _u.get('id') is not None:
+                        _flat[f'user_{_u['id']}'] = _u
+                continue
+            if _kk == 'settings' and isinstance(_vv, dict):
+                for _sk, _sv in _vv.items():
+                    if _sk not in _flat: _flat[_sk] = _sv
+                continue
+            _flat[_kk] = _vv
+        jdata = _flat
     for k, v in jdata.items():
         try:
             if str(k).startswith('_import_') or str(k).startswith('_meta'):
@@ -4148,30 +4165,77 @@ def cmd_football(message):
     if not _fsub_check_msg(message): return
     _show_football_menu(message.from_user.id, message.chat.id, None)
 
+def _do_football_direction(call, direction):
+    cid = call.from_user.id
+    COOLDOWN = 1800
+    now = int(time.time())
+    last_key = f'fb_last_{cid}'
+    last = int(db.get(last_key) or 0)
+    if now - last < COOLDOWN:
+        remain = COOLDOWN - (now - last)
+        mins = remain // 60 + 1
+        try: bot.answer_callback_query(call.id, f'⏳ انتظر {mins} دقيقة', show_alert=True)
+        except: pass
+        return
+    try: bot.answer_callback_query(call.id)
+    except: pass
+    try:
+        dice_msg = bot.send_dice(cid, emoji='⚽')
+        val = dice_msg.dice.value
+    except Exception as e:
+        try: bot.send_message(cid, f'❌ خطأ: {e}')
+        except: pass
+        return
+    db.set(last_key, now)
+    goal_map = {3: 'left', 4: 'center', 5: 'right'}
+    result_dir = goal_map.get(val)
+    win_amount = int(db.get('fb_win_amount') or 100)
+    dir_ar = {'left': 'يسار', 'center': 'وسط', 'right': 'يمين'}
+    time.sleep(4)
+    try:
+        info = get(cid) or {'coins': 0, 'id': cid, 'premium': False, 'users': []}
+    except Exception:
+        info = {'coins': 0, 'id': cid}
+    if result_dir == direction:
+        info['coins'] = int(info.get('coins', 0)) + win_amount
+        try: set_user(cid, info)
+        except Exception: pass
+        msg = (f'⚽🎉 <b>جووول!</b>\n\n'
+               f'🎯 اخترت: <b>{dir_ar[direction]}</b>\n'
+               f'⚽ الكورة: <b>{dir_ar[result_dir]}</b>\n\n'
+               f'💰 ربحت: <b>+{win_amount:,}</b>\n'
+               f'💳 رصيدك: <b>{int(info["coins"]):,}</b>')
+    else:
+        if result_dir:
+            res_txt = f'⚽ الكورة راحت: <b>{dir_ar[result_dir]}</b>'
+        else:
+            miss = 'left' if val == 1 else 'right'
+            res_txt = f'❌ الكورة خرجت برّا من الـ{dir_ar[miss]}'
+        msg = (f'⚽😔 <b>خسرت</b>\n\n'
+               f'🎯 اخترت: <b>{dir_ar[direction]}</b>\n'
+               f'{res_txt}\n\n'
+               f'🔄 حاول تاني بعد 30 دقيقة')
+    try: bot.send_message(cid, msg, parse_mode='HTML')
+    except: pass
+
 def _show_football_menu(uid, cid, mid):
-    info = get(uid)
-    bal = int(info.get("coins", 0)) if info else 0
-    keys = mk(row_width=2)
-    keys.add(
-        btn('⚽ 50 نقطة',  callback_data='fb_bet_50',  color='green'),
-        btn('⚽ 100 نقطة', callback_data='fb_bet_100', color='green')
-    )
-    keys.add(
-        btn('⚽ 250 نقطة', callback_data='fb_bet_250', color='blue'),
-        btn('⚽ 500 نقطة', callback_data='fb_bet_500', color='blue')
-    )
-    keys.add(btn('🔙 رجوع', callback_data='back', color='red'))
+    win_amount = int(db.get('fb_win_amount') or 100)
     txt = (
-        '┏━━━━━━━━━━━━━━━━━━━┓\n'
-        '   ⚽ <b>كورة القدم</b> ⚽\n'
-        '┗━━━━━━━━━━━━━━━━━━━┛\n\n'
-        '🎯 <b>الفكرة:</b> صوّب عالمرمى وجيب جول!\n\n'
-        '🏆 <b>الجول (3/4/5):</b> تربح ضعف الرهان ×2\n'
-        '❌ <b>الإخفاق (1/2):</b> تخسر الرهان\n\n'
-        '━━━━━━━━━━━━━━━━━━━\n'
-        f'💳 <b>رصيدك:</b> {bal:,} نقطة\n\n'
-        '👇 <b>اختار قيمة الرهان:</b>'
+        '┏━━━━━━━━━━━━━━━━━━┓\n'
+        '   ⚽ ركلة جزاء\n'
+        '┗━━━━━━━━━━━━━━━━━━┛\n\n'
+        f'🎯 <b>اختر اتجاه الكورة:</b>\n\n'
+        f'💰 الجائزة: <b>{win_amount:,}</b> نقطة\n'
+        f'⏱ وقت الانتظار: 30 دقيقة\n\n'
+        '💡 <i>لو توقعت اتجاه الكورة صح ستربح!</i>'
     )
+    keys = mk(row_width=3)
+    keys.add(
+        btn('⬅️ يسار', callback_data='fb_dir_left', color='blue'),
+        btn('⬆️ وسط', callback_data='fb_dir_center', color='green'),
+        btn('➡️ يمين', callback_data='fb_dir_right', color='blue')
+    )
+    keys.add(btn('⬅️ رجوع', callback_data='back', color='red'))
     if mid:
         try:
             bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
@@ -4180,71 +4244,10 @@ def _show_football_menu(uid, cid, mid):
             pass
     bot.send_message(cid, txt, reply_markup=keys, parse_mode='HTML')
 
-def _do_football_bet(call, bet_amount):
-    cid = call.message.chat.id
-    uid = call.from_user.id
-    mid = call.message.message_id
-    info = get(uid) or {'id': uid, 'coins': 0}
-    bal = int(info.get('coins', 0))
-    if bal < bet_amount:
-        bot.answer_callback_query(call.id, f'⚠️ رصيدك غير كافٍ ({bal:,} نقطة)', show_alert=True)
-        return
-    # خصم فوري للرهان
-    info['coins'] = bal - bet_amount
-    set_user(uid, info)
-    bot.answer_callback_query(call.id)
-    # أرسل رسالة تأكيد أولاً
-    try:
-        bot.edit_message_text(
-            chat_id=cid, message_id=mid,
-            text=f'⚽ <b>التصويبة قادمة...</b>\n\n🎯 الرهان: <b>{bet_amount:,} نقطة</b>',
-            parse_mode='HTML'
-        )
-    except Exception:
-        pass
-    # أرسل الدايس ⚽ وخلّ تيليجرام يعرض الأنيميشن
-    try:
-        dice_msg = bot.send_dice(cid, emoji='⚽')
-        val = int(dice_msg.dice.value) if dice_msg and dice_msg.dice else 0
-    except Exception:
-        val = 0
-    # انتظر لحد ما تخلص الأنيميشن (~3 ثواني)
-    time.sleep(3.5)
-    goal = val in (3, 4, 5)
-    if goal:
-        win = bet_amount * 2
-        info['coins'] = int(info.get('coins', 0)) + win
-        set_user(uid, info)
-        result_txt = (
-            '⚽🎉 <b>جوووول!</b> 🎉⚽\n'
-            '━━━━━━━━━━━━━━━━━━━\n\n'
-            f'🏆 ربحت: <b>+{win:,} نقطة</b>\n'
-            f'💰 رصيدك الجديد: <b>{info["coins"]:,} نقطة</b>\n\n'
-            '━━━━━━━━━━━━━━━━━━━\n'
-            '🔥 برافو يا بطل!'
-        )
-    else:
-        result_txt = (
-            '😔 <b>إخفاق!</b>\n'
-            '━━━━━━━━━━━━━━━━━━━\n\n'
-            f'❌ خسرت: <b>-{bet_amount:,} نقطة</b>\n'
-            f'💳 رصيدك: <b>{int(info.get("coins", 0)):,} نقطة</b>\n\n'
-            '━━━━━━━━━━━━━━━━━━━\n'
-            '💪 حظ أوفر المرة الجاية!'
-        )
-    keys = mk(row_width=2)
-    keys.add(
-        btn('⚽ لعب تاني',     callback_data='football', color='green'),
-        btn('🔙 رجوع',       callback_data='back',     color='blue')
-    )
-    try:
-        bot.send_message(cid, result_txt, reply_markup=keys, parse_mode='HTML')
-    except Exception:
-        pass
+def _do_football_bet(call, bet_amount=None):
+    # legacy bet handler now routes to direction-based menu
+    _show_football_menu(call.from_user.id, call.message.chat.id, call.message.message_id)
 
-# 🎮 قائمة الألعاب
-
-@bot.message_handler(commands=['play'])
 def cmd_play(message):
     if not _fsub_check_msg(message): return
     cid = message.from_user.id
@@ -4658,17 +4661,22 @@ def _c_rs_worker(call):
         confirm_keys = mk(row_width=1)
         confirm_keys.add(btn(f'✅ تأكيد الشراء ({total:,} نقطة)', callback_data=f'mkt_confirm_{listing_id}', color='green'))
         confirm_keys.add(btn('🔙 إلغاء', callback_data='mkt_browse', color='red'))
-        bot.edit_message_text(
-            text=f'🛒 <b>تأكيد الشراء</b>\n\n'
-                 f'📱 الحساب: {target.get("phone", "?")}\n'
-                 f'👤 البائع: {target.get("seller_name", "?")}\n'
-                 f'💰 السعر: {price:,} نقطة\n'
-                 f'⚖️ رسوم المتجر ({fee_pct}%): {fee:,} نقطة\n'
-                 f'💳 الإجمالي: <b>{total:,}</b> نقطة\n'
-                 f'━━━━━━━━━━━━━━━━━━━\n'
-                 f'📌 رصيدك الحالي: {bal:,} نقطة',
-            chat_id=cid, message_id=mid, reply_markup=confirm_keys, parse_mode='HTML'
-        )
+        try:
+            bot.edit_message_text(
+                        text=f'🛒 <b>تأكيد الشراء</b>\n\n'
+                             f'📱 الحساب: {target.get("phone", "?")}\n'
+                             f'👤 البائع: {target.get("seller_name", "?")}\n'
+                             f'💰 السعر: {price:,} نقطة\n'
+                             f'⚖️ رسوم المتجر ({fee_pct}%): {fee:,} نقطة\n'
+                             f'💳 الإجمالي: <b>{total:,}</b> نقطة\n'
+                             f'━━━━━━━━━━━━━━━━━━━\n'
+                             f'📌 رصيدك الحالي: {bal:,} نقطة',
+                        chat_id=cid, message_id=mid, reply_markup=confirm_keys, parse_mode='HTML'
+                    )
+        except Exception:
+            try:
+                bot.send_message(call.message.chat.id, confirm_txt, reply_markup=confirm_keys, parse_mode='HTML')  # mkt_buy_fallback_done
+            except Exception: pass
         return
 
     if data.startswith('mkt_confirm_') and data != 'mkt_confirm_add':
@@ -4841,12 +4849,27 @@ def _c_rs_worker(call):
 
     # ⚽ كورة القدم — عرض القائمة
 
+    if data == 'vip_info':
+        week_p  = int(db.get('vip_week_price')  or 5000)
+        month_p = int(db.get('vip_month_price') or 15000)
+        year_p  = int(db.get('vip_year_price')  or 100000)
+        su = (db.get('support_username') or '').lstrip(chr(64))
+        contact = f'@{su}' if su else '@admin'
+        msg = (f'\u270f\ufe0f \u0644\u0644\u0627\u0634\u062a\u0631\u0627\u0643\n\n\ud83d\udcc5 \u0623\u0633\u0628\u0648\u0639\u064a: {week_p:,} \u0646\u0642\u0637\u0629\n\ud83d\udcc6 \u0634\u0647\u0631\u064a: {month_p:,} \u0646\u0642\u0637\u0629\n\ud83c\udfc6 \u0633\u0646\u0648\u064a: {year_p:,} \u0646\u0642\u0637\u0629\n\n\ud83d\udcde \u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u062f\u0639\u0645: {contact}')
+        try: bot.answer_callback_query(call.id, msg, show_alert=True)
+        except: pass
+        return
     if data == 'football':
         _show_football_menu(call.from_user.id, cid, mid)
         return
 
     # ⚽ رهانات كورة القدم
 
+    if data.startswith('fb_dir_'):
+        _dir_v = data.replace('fb_dir_', '')
+        if _dir_v in ('left', 'center', 'right'):
+            _do_football_direction(call, _dir_v)
+        return
     if data.startswith('fb_bet_'):
         try:
             _bet = int(data.split('_')[-1])
