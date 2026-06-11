@@ -1117,254 +1117,6 @@ def _make_profile_image(uid, user_data):
         print(f'[profile] image err: {_e}')
         return None
 
-@bot.message_handler(commands=['profile'])
-def cmd_profile(message):
-    if not _fsub_check_msg(message): return
-    _show_profile(message.from_user, message.chat.id, None)
-
-def _show_profile(from_user, cid, mid):
-    uid  = from_user.id
-    lang = _user_lang(uid)
-    info = get(uid) or {'id': uid, 'coins': 0}
-    coins = int(info.get('coins', 0) or 0)
-    games = int(info.get('games_played', 0) or 0)
-    refs  = len(info.get('users', []) or [])
-    xp    = _get_user_xp(uid)
-    lvl, lvl_label, cur_xp, next_xp = _calc_user_level(xp)
-    streak = int(db.get(f'user_{uid}_streak') or 0)
-    vip_until = db.get(f'user_{uid}_vip_until')
-    vip_txt = '⛔ غير مشترك' if not vip_until else '✅ مفعّل'
-    if lang == 'en':
-        vip_txt = 'Not subscribed' if not vip_until else 'Active'
-    try:
-        bot_username = (bot.get_me().username) if hasattr(bot, 'get_me') else ''
-    except Exception:
-        bot_username = ''
-    ref_link = f't.me/{bot_username}?start={uid}' if bot_username else ''
-    name = from_user.first_name or 'User'
-    if from_user.last_name:
-        name = f'{name} {from_user.last_name}'
-    user_data = {
-        'name': name,
-        'username': (from_user.username or '-'),
-        'coins': coins,
-        'games': games,
-        'refs': refs,
-        'xp': xp,
-        'level_label': lvl_label,
-        'next_xp': next_xp,
-        'streak': streak,
-        'vip': vip_txt,
-        'since': '-',
-        'ref_link': ref_link,
-    }
-    img_buf = _make_profile_image(uid, user_data)
-    keys = mk(row_width=2)
-    keys.add(
-        btn(t('profile_btn_share', uid),    callback_data='ref_link',   color='green'),
-        btn(t('profile_btn_badges', uid),   callback_data='profile_badges', color='blue')
-    )
-    keys.add(
-        btn(t('profile_btn_settings', uid), callback_data='profile_settings', color='blue'),
-        btn(t('language', uid),             callback_data='change_lang', color='blue')
-    )
-    keys.add(btn(t('back', uid), callback_data='back', color='red'))
-    caption_ar = (
-        f'👤 <b>بروفايل {name}</b>\n'
-        f'━━━━━━━━━━━━━━━━━━━\n'
-        f'🏆 {lvl_label} • {xp:,} XP\n'
-        f'💰 الرصيد: <b>{coins:,} نقطة</b>\n'
-        f'💎 VIP: {vip_txt}\n'
-        f'🔥 سلسلة: {streak} يوم\n'
-        f'🎁 إحالات: {refs}\n'
-        f'🎮 ألعاب: {games}\n'
-    )
-    caption_en = (
-        f'👤 <b>{name}\'s Profile</b>\n'
-        f'━━━━━━━━━━━━━━━━━━━\n'
-        f'🏆 {lvl_label} • {xp:,} XP\n'
-        f'💰 Balance: <b>{coins:,} pts</b>\n'
-        f'💎 VIP: {vip_txt}\n'
-        f'🔥 Streak: {streak} days\n'
-        f'🎁 Referrals: {refs}\n'
-        f'🎮 Games: {games}\n'
-    )
-    caption = caption_en if lang == 'en' else caption_ar
-    try:
-        if img_buf:
-            bot.send_photo(cid, photo=img_buf, caption=caption, reply_markup=keys, parse_mode='HTML')
-        else:
-            bot.send_message(cid, caption, reply_markup=keys, parse_mode='HTML')
-    except Exception as _e:
-        print(f'[profile] send err: {_e}')
-        try:
-            bot.send_message(cid, caption, reply_markup=keys, parse_mode='HTML')
-        except Exception: pass
-
-# =====================================================
-# 🔍 /check — فحص قناة تيليجرام
-# =====================================================
-
-@bot.message_handler(commands=['check'])
-def cmd_check(message):
-    if not _fsub_check_msg(message): return
-    uid = message.from_user.id
-    cid = message.chat.id
-    keys = mk(row_width=1)
-    keys.add(btn(t('back', uid), callback_data='back', color='red'))
-    msg = bot.reply_to(
-        message,
-        f'┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
-        f'   {t("check_title", uid)}\n'
-        f'┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
-        f'{t("check_prompt", uid)}',
-        reply_markup=keys, parse_mode='HTML'
-    )
-    bot.register_next_step_handler(msg, _handle_check_input)
-
-def _handle_check_input(message):
-    uid = message.from_user.id
-    cid = message.chat.id
-    if not message.text:
-        bot.reply_to(message, t('check_failed', uid))
-        return
-    target = message.text.strip().lstrip('@')
-    if target.startswith('https://t.me/'):
-        target = target.replace('https://t.me/', '').strip('/')
-    if target.startswith('t.me/'):
-        target = target.replace('t.me/', '').strip('/')
-    if not target:
-        bot.reply_to(message, t('check_failed', uid))
-        return
-    try:
-        chat = bot.get_chat(f'@{target}')
-        try:
-            members_count = bot.get_chat_member_count(chat.id)
-        except Exception:
-            members_count = 0
-        title = chat.title or chat.first_name or '-'
-        username = f'@{chat.username}' if chat.username else '-'
-        chat_type = chat.type or '-'
-        desc = (chat.description or '-')[:200]
-        # تقدير جودة بسيط
-        if members_count >= 100000: quality = '⭐⭐⭐⭐⭐'
-        elif members_count >= 10000: quality = '⭐⭐⭐⭐'
-        elif members_count >= 1000:  quality = '⭐⭐⭐'
-        elif members_count >= 100:   quality = '⭐⭐'
-        else:                         quality = '⭐'
-        keys = mk(row_width=1)
-        keys.add(btn('🔄 ' + ('فحص تاني' if _user_lang(uid)=='ar' else 'Check another'), callback_data='check_again', color='blue'))
-        keys.add(btn(t('back', uid), callback_data='back', color='red'))
-        if _user_lang(uid) == 'en':
-            txt = (
-                f'🔍 <b>Channel Report</b>\n'
-                f'━━━━━━━━━━━━━━━━━━━\n\n'
-                f'📛 <b>Name:</b> {title}\n'
-                f'🔗 <b>Username:</b> {username}\n'
-                f'🆔 <b>ID:</b> <code>{chat.id}</code>\n'
-                f'📂 <b>Type:</b> {chat_type}\n\n'
-                f'👥 <b>Members:</b> {members_count:,}\n'
-                f'🌟 <b>Quality:</b> {quality}\n\n'
-                f'📝 <b>Description:</b>\n<i>{desc}</i>'
-            )
-        else:
-            txt = (
-                f'🔍 <b>تقرير فحص القناة</b>\n'
-                f'━━━━━━━━━━━━━━━━━━━\n\n'
-                f'📛 <b>الاسم:</b> {title}\n'
-                f'🔗 <b>اليوزر:</b> {username}\n'
-                f'🆔 <b>الـ ID:</b> <code>{chat.id}</code>\n'
-                f'📂 <b>النوع:</b> {chat_type}\n\n'
-                f'👥 <b>الأعضاء:</b> {members_count:,}\n'
-                f'🌟 <b>الجودة:</b> {quality}\n\n'
-                f'📝 <b>الوصف:</b>\n<i>{desc}</i>'
-            )
-        bot.reply_to(message, txt, reply_markup=keys, parse_mode='HTML')
-    except Exception as _e:
-        keys = mk(row_width=1)
-        keys.add(btn(t('back', uid), callback_data='back', color='red'))
-        bot.reply_to(message, t('check_failed', uid) + f'\n\n<code>{str(_e)[:200]}</code>', reply_markup=keys, parse_mode='HTML')
-
-# =====================================================
-# 🎨 /design — تصميم منشور بالـ AI
-# =====================================================
-
-@bot.message_handler(commands=['design'])
-def cmd_design(message):
-    if not _fsub_check_msg(message): return
-    uid = message.from_user.id
-    cid = message.chat.id
-    keys = mk(row_width=1)
-    keys.add(btn(t('back', uid), callback_data='back', color='red'))
-    msg = bot.reply_to(
-        message,
-        f'┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
-        f'   {t("design_title", uid)}\n'
-        f'┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
-        f'{t("design_prompt", uid)}',
-        reply_markup=keys, parse_mode='HTML'
-    )
-    bot.register_next_step_handler(msg, _handle_design_topic)
-
-def _handle_design_topic(message):
-    uid = message.from_user.id
-    cid = message.chat.id
-    if not message.text:
-        bot.reply_to(message, '❌ أرسل فكرة بالنص.')
-        return
-    topic = message.text.strip()[:300]
-    db.set(f'user_{uid}_design_topic', topic)
-    keys = mk(row_width=1)
-    keys.add(btn(t('design_style_formal', uid),    callback_data='design_go_formal',    color='blue'))
-    keys.add(btn(t('design_style_friendly', uid),  callback_data='design_go_friendly',  color='green'))
-    keys.add(btn(t('design_style_marketing', uid), callback_data='design_go_marketing', color='red'))
-    keys.add(btn(t('back', uid), callback_data='back', color='red'))
-    bot.reply_to(message, f'✨ <b>{t("design_styles", uid)}</b>\n\n💡 <i>{topic}</i>', reply_markup=keys, parse_mode='HTML')
-
-def _do_design_post(call, style):
-    uid = call.from_user.id
-    cid = call.message.chat.id
-    mid = call.message.message_id
-    topic = db.get(f'user_{uid}_design_topic') or 'عرض عام'
-    lang = _user_lang(uid)
-    style_prompts = {
-        'formal':    ('رسمي ومحترف', 'Formal and professional'),
-        'friendly':  ('ودود وفدودي',  'Friendly and casual'),
-        'marketing': ('تسويقي قوي ومحفّز', 'Strong marketing and persuasive'),
-    }
-    style_ar, style_en = style_prompts.get(style, style_prompts['friendly'])
-    if lang == 'en':
-        prompt = (
-            f"Create a beautiful Telegram channel post in English about: {topic}\n"
-            f"Style: {style_en}. Use emojis, line breaks, bold (via *bold*) and bullet points. "
-            f"Keep it under 200 words and ready to copy-paste."
-        )
-    else:
-        prompt = (
-            f"اصنع منشور جميل لقناة تيليجرام بالعربية عن: {topic}\n"
-            f"الأسلوب: {style_ar}. استخدم إيموجيات وفواصل ونقاط وتدرجات بصرية. "
-            f"أقل من 200 كلمة وجاهز للنسخ والنشر."
-        )
-    bot.answer_callback_query(call.id)
-    try:
-        bot.edit_message_text(chat_id=cid, message_id=mid, text=t('design_loading', uid), parse_mode='HTML')
-    except Exception: pass
-    ans, err = _ai_ask(prompt)
-    keys = mk(row_width=1)
-    keys.add(btn(t('design_again', uid), callback_data=f'design_go_{style}', color='blue'))
-    keys.add(btn(t('back', uid), callback_data='back', color='red'))
-    if err or not ans:
-        try:
-            bot.edit_message_text(chat_id=cid, message_id=mid, text=err or '❌', reply_markup=keys, parse_mode='HTML')
-        except Exception:
-            bot.send_message(cid, err or '❌', reply_markup=keys, parse_mode='HTML')
-        return
-    final_txt = f'✨ <b>{t("design_done", uid)}</b>\n━━━━━━━━━━━━━━━━━━━\n\n{ans[:3500]}'
-    try:
-        bot.edit_message_text(chat_id=cid, message_id=mid, text=final_txt, reply_markup=keys, parse_mode='HTML')
-    except Exception:
-        bot.send_message(cid, final_txt, reply_markup=keys, parse_mode='HTML')
-
 
 # الإعدادات - يمكنك تعديلها هنا مباشرة
 
@@ -1727,6 +1479,260 @@ bk_cancel.add(btn(_get_btn_label('back_cancel', 'إلغاء و رجوع'), callb
 print("[⏳] جارٍ إنشاء البوت...")
 bot = TeleBot(token=BOT_TOKEN, num_threads=16)
 print("[✅] البوت جاهز — BOT_TOKEN صحيح")
+
+
+# ============================================================
+# أوامر v62 (تم نقلها لبعد تعريف bot)
+# ============================================================
+
+
+@bot.message_handler(commands=['profile'])
+def cmd_profile(message):
+    if not _fsub_check_msg(message): return
+    _show_profile(message.from_user, message.chat.id, None)
+
+def _show_profile(from_user, cid, mid):
+    uid  = from_user.id
+    lang = _user_lang(uid)
+    info = get(uid) or {'id': uid, 'coins': 0}
+    coins = int(info.get('coins', 0) or 0)
+    games = int(info.get('games_played', 0) or 0)
+    refs  = len(info.get('users', []) or [])
+    xp    = _get_user_xp(uid)
+    lvl, lvl_label, cur_xp, next_xp = _calc_user_level(xp)
+    streak = int(db.get(f'user_{uid}_streak') or 0)
+    vip_until = db.get(f'user_{uid}_vip_until')
+    vip_txt = '⛔ غير مشترك' if not vip_until else '✅ مفعّل'
+    if lang == 'en':
+        vip_txt = 'Not subscribed' if not vip_until else 'Active'
+    try:
+        bot_username = (bot.get_me().username) if hasattr(bot, 'get_me') else ''
+    except Exception:
+        bot_username = ''
+    ref_link = f't.me/{bot_username}?start={uid}' if bot_username else ''
+    name = from_user.first_name or 'User'
+    if from_user.last_name:
+        name = f'{name} {from_user.last_name}'
+    user_data = {
+        'name': name,
+        'username': (from_user.username or '-'),
+        'coins': coins,
+        'games': games,
+        'refs': refs,
+        'xp': xp,
+        'level_label': lvl_label,
+        'next_xp': next_xp,
+        'streak': streak,
+        'vip': vip_txt,
+        'since': '-',
+        'ref_link': ref_link,
+    }
+    img_buf = _make_profile_image(uid, user_data)
+    keys = mk(row_width=2)
+    keys.add(
+        btn(t('profile_btn_share', uid),    callback_data='ref_link',   color='green'),
+        btn(t('profile_btn_badges', uid),   callback_data='profile_badges', color='blue')
+    )
+    keys.add(
+        btn(t('profile_btn_settings', uid), callback_data='profile_settings', color='blue'),
+        btn(t('language', uid),             callback_data='change_lang', color='blue')
+    )
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    caption_ar = (
+        f'👤 <b>بروفايل {name}</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'🏆 {lvl_label} • {xp:,} XP\n'
+        f'💰 الرصيد: <b>{coins:,} نقطة</b>\n'
+        f'💎 VIP: {vip_txt}\n'
+        f'🔥 سلسلة: {streak} يوم\n'
+        f'🎁 إحالات: {refs}\n'
+        f'🎮 ألعاب: {games}\n'
+    )
+    caption_en = (
+        f'👤 <b>{name}\'s Profile</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'🏆 {lvl_label} • {xp:,} XP\n'
+        f'💰 Balance: <b>{coins:,} pts</b>\n'
+        f'💎 VIP: {vip_txt}\n'
+        f'🔥 Streak: {streak} days\n'
+        f'🎁 Referrals: {refs}\n'
+        f'🎮 Games: {games}\n'
+    )
+    caption = caption_en if lang == 'en' else caption_ar
+    try:
+        if img_buf:
+            bot.send_photo(cid, photo=img_buf, caption=caption, reply_markup=keys, parse_mode='HTML')
+        else:
+            bot.send_message(cid, caption, reply_markup=keys, parse_mode='HTML')
+    except Exception as _e:
+        print(f'[profile] send err: {_e}')
+        try:
+            bot.send_message(cid, caption, reply_markup=keys, parse_mode='HTML')
+        except Exception: pass
+
+# =====================================================
+# 🔍 /check — فحص قناة تيليجرام
+# =====================================================
+
+@bot.message_handler(commands=['check'])
+def cmd_check(message):
+    if not _fsub_check_msg(message): return
+    uid = message.from_user.id
+    cid = message.chat.id
+    keys = mk(row_width=1)
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    msg = bot.reply_to(
+        message,
+        f'┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+        f'   {t("check_title", uid)}\n'
+        f'┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
+        f'{t("check_prompt", uid)}',
+        reply_markup=keys, parse_mode='HTML'
+    )
+    bot.register_next_step_handler(msg, _handle_check_input)
+
+def _handle_check_input(message):
+    uid = message.from_user.id
+    cid = message.chat.id
+    if not message.text:
+        bot.reply_to(message, t('check_failed', uid))
+        return
+    target = message.text.strip().lstrip('@')
+    if target.startswith('https://t.me/'):
+        target = target.replace('https://t.me/', '').strip('/')
+    if target.startswith('t.me/'):
+        target = target.replace('t.me/', '').strip('/')
+    if not target:
+        bot.reply_to(message, t('check_failed', uid))
+        return
+    try:
+        chat = bot.get_chat(f'@{target}')
+        try:
+            members_count = bot.get_chat_member_count(chat.id)
+        except Exception:
+            members_count = 0
+        title = chat.title or chat.first_name or '-'
+        username = f'@{chat.username}' if chat.username else '-'
+        chat_type = chat.type or '-'
+        desc = (chat.description or '-')[:200]
+        # تقدير جودة بسيط
+        if members_count >= 100000: quality = '⭐⭐⭐⭐⭐'
+        elif members_count >= 10000: quality = '⭐⭐⭐⭐'
+        elif members_count >= 1000:  quality = '⭐⭐⭐'
+        elif members_count >= 100:   quality = '⭐⭐'
+        else:                         quality = '⭐'
+        keys = mk(row_width=1)
+        keys.add(btn('🔄 ' + ('فحص تاني' if _user_lang(uid)=='ar' else 'Check another'), callback_data='check_again', color='blue'))
+        keys.add(btn(t('back', uid), callback_data='back', color='red'))
+        if _user_lang(uid) == 'en':
+            txt = (
+                f'🔍 <b>Channel Report</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n\n'
+                f'📛 <b>Name:</b> {title}\n'
+                f'🔗 <b>Username:</b> {username}\n'
+                f'🆔 <b>ID:</b> <code>{chat.id}</code>\n'
+                f'📂 <b>Type:</b> {chat_type}\n\n'
+                f'👥 <b>Members:</b> {members_count:,}\n'
+                f'🌟 <b>Quality:</b> {quality}\n\n'
+                f'📝 <b>Description:</b>\n<i>{desc}</i>'
+            )
+        else:
+            txt = (
+                f'🔍 <b>تقرير فحص القناة</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n\n'
+                f'📛 <b>الاسم:</b> {title}\n'
+                f'🔗 <b>اليوزر:</b> {username}\n'
+                f'🆔 <b>الـ ID:</b> <code>{chat.id}</code>\n'
+                f'📂 <b>النوع:</b> {chat_type}\n\n'
+                f'👥 <b>الأعضاء:</b> {members_count:,}\n'
+                f'🌟 <b>الجودة:</b> {quality}\n\n'
+                f'📝 <b>الوصف:</b>\n<i>{desc}</i>'
+            )
+        bot.reply_to(message, txt, reply_markup=keys, parse_mode='HTML')
+    except Exception as _e:
+        keys = mk(row_width=1)
+        keys.add(btn(t('back', uid), callback_data='back', color='red'))
+        bot.reply_to(message, t('check_failed', uid) + f'\n\n<code>{str(_e)[:200]}</code>', reply_markup=keys, parse_mode='HTML')
+
+# =====================================================
+# 🎨 /design — تصميم منشور بالـ AI
+# =====================================================
+
+@bot.message_handler(commands=['design'])
+def cmd_design(message):
+    if not _fsub_check_msg(message): return
+    uid = message.from_user.id
+    cid = message.chat.id
+    keys = mk(row_width=1)
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    msg = bot.reply_to(
+        message,
+        f'┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+        f'   {t("design_title", uid)}\n'
+        f'┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
+        f'{t("design_prompt", uid)}',
+        reply_markup=keys, parse_mode='HTML'
+    )
+    bot.register_next_step_handler(msg, _handle_design_topic)
+
+def _handle_design_topic(message):
+    uid = message.from_user.id
+    cid = message.chat.id
+    if not message.text:
+        bot.reply_to(message, '❌ أرسل فكرة بالنص.')
+        return
+    topic = message.text.strip()[:300]
+    db.set(f'user_{uid}_design_topic', topic)
+    keys = mk(row_width=1)
+    keys.add(btn(t('design_style_formal', uid),    callback_data='design_go_formal',    color='blue'))
+    keys.add(btn(t('design_style_friendly', uid),  callback_data='design_go_friendly',  color='green'))
+    keys.add(btn(t('design_style_marketing', uid), callback_data='design_go_marketing', color='red'))
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    bot.reply_to(message, f'✨ <b>{t("design_styles", uid)}</b>\n\n💡 <i>{topic}</i>', reply_markup=keys, parse_mode='HTML')
+
+def _do_design_post(call, style):
+    uid = call.from_user.id
+    cid = call.message.chat.id
+    mid = call.message.message_id
+    topic = db.get(f'user_{uid}_design_topic') or 'عرض عام'
+    lang = _user_lang(uid)
+    style_prompts = {
+        'formal':    ('رسمي ومحترف', 'Formal and professional'),
+        'friendly':  ('ودود وفدودي',  'Friendly and casual'),
+        'marketing': ('تسويقي قوي ومحفّز', 'Strong marketing and persuasive'),
+    }
+    style_ar, style_en = style_prompts.get(style, style_prompts['friendly'])
+    if lang == 'en':
+        prompt = (
+            f"Create a beautiful Telegram channel post in English about: {topic}\n"
+            f"Style: {style_en}. Use emojis, line breaks, bold (via *bold*) and bullet points. "
+            f"Keep it under 200 words and ready to copy-paste."
+        )
+    else:
+        prompt = (
+            f"اصنع منشور جميل لقناة تيليجرام بالعربية عن: {topic}\n"
+            f"الأسلوب: {style_ar}. استخدم إيموجيات وفواصل ونقاط وتدرجات بصرية. "
+            f"أقل من 200 كلمة وجاهز للنسخ والنشر."
+        )
+    bot.answer_callback_query(call.id)
+    try:
+        bot.edit_message_text(chat_id=cid, message_id=mid, text=t('design_loading', uid), parse_mode='HTML')
+    except Exception: pass
+    ans, err = _ai_ask(prompt)
+    keys = mk(row_width=1)
+    keys.add(btn(t('design_again', uid), callback_data=f'design_go_{style}', color='blue'))
+    keys.add(btn(t('back', uid), callback_data='back', color='red'))
+    if err or not ans:
+        try:
+            bot.edit_message_text(chat_id=cid, message_id=mid, text=err or '❌', reply_markup=keys, parse_mode='HTML')
+        except Exception:
+            bot.send_message(cid, err or '❌', reply_markup=keys, parse_mode='HTML')
+        return
+    final_txt = f'✨ <b>{t("design_done", uid)}</b>\n━━━━━━━━━━━━━━━━━━━\n\n{ans[:3500]}'
+    try:
+        bot.edit_message_text(chat_id=cid, message_id=mid, text=final_txt, reply_markup=keys, parse_mode='HTML')
+    except Exception:
+        bot.send_message(cid, final_txt, reply_markup=keys, parse_mode='HTML')
 
 # ── cache لـ _get_bot_me() عشان منعملش API call في كل رسالة ──
 _bot_me_cache = None
