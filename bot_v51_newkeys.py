@@ -2064,7 +2064,7 @@ TOP_LEVELS = [
     {
         "level":   25,
         "name":    "عبقري III",
-        "emoji":   "🧠",
+        "emoji":   "���",
         "color":   "🟥",
         "req_refs":    95,
         "req_orders":  90,
@@ -2170,7 +2170,7 @@ def get_next_level(uid: int) -> dict | None:
 def check_and_award_level(uid: int):
     """
     يُشغَّل بعد كل إحالة / طلب / إضافة نقاط.
-    لو المستخدم وصل مستوى جديد يديه المكافأة ويبعتله رسالة.
+    لو المستخدم وصل مستوى جديد يديه المكافأة وي��عتله رسالة.
     """
     current   = get_user_level(uid)
     saved_key = f'user_{uid}_top_level'
@@ -4447,7 +4447,8 @@ def _c_rs_worker(call):
         'adm_import_db', 'adm_import_type_', 'adm_import_confirm_',
         'svc_toggle_',
         'adm_set_channel_btn', 'adm_set_emojis',
-        'adm_emoji_bal', 'adm_emoji_ord', 'adm_emoji_ch',
+        'adm_emoji_bal', 'adm_emoji_ord', 'adm_emoji_ch', 'adm_emoji_restore',
+        'emjbtndel_adm_import_db',
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
@@ -4835,7 +4836,7 @@ def _c_rs_worker(call):
         )
         return
 
-    # 🛰️ /rec خدمة التفاعل التلقائ��
+    # 🛰️ /rec خدمة التفاعل ال��لقائ��
 
     if data == 'rec':
         _show_rec_panel(cid, mid)
@@ -5449,7 +5450,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc} — {reward:,} نقطة\n'
                 keys.add(btn(f'{"تعطيل" if enabled else "تفع��ل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
                 keys.add(btn(f'🗑️ حذف {desc}', callback_data=f'task_del_{tid}', color='red'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدم��', callback_data='adm_back_main', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -5693,7 +5694,18 @@ def _c_rs_worker(call):
         return
     if data == 'numbers':
         d = len(db.get('accounts') or [])
-        bot.answer_callback_query(call.id, text=f'عدد ارقام البوت : {d}', show_alert=True)
+        nkeys = mk(row_width=1)
+        nkeys.add(btn('🔙 رجوع', callback_data='back', color='red'))
+        _ntxt = (
+            '┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
+            '   📱 <b>عدد الأرقام</b>\n'
+            '┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
+            f'📞 عدد الأرقام المسجلة في البوت: <b>{d}</b>'
+        )
+        try:
+            bot.edit_message_text(text=_ntxt, chat_id=cid, message_id=mid, reply_markup=nkeys, parse_mode='HTML')
+        except Exception:
+            bot.send_message(cid, _ntxt, reply_markup=nkeys, parse_mode='HTML')
         return
     if data == 'addpoints':
         x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
@@ -6082,7 +6094,7 @@ def _c_rs_worker(call):
         keys.add(btn('🏆 توب 5 تسجيل الحسابات', callback_data='rent_top', color='blue'))
         keys.add(btn('رجوع', callback_data='collect', color='blue'))
         txt = (
-            "📱 <b>تسجيل الحسابات مقابل نقاط</b>\n\n"
+            "📱 <b>ت��جيل الحسابات مقابل نقاط</b>\n\n"
             "ملاحظه : الحساب مش بيخرج من عندك ولا بيتحظر ولا بيحصل اي حاجه\n\n"
             "━━━━━━━━━━━━━━━━━━━\n"
             f"💰 مكافأة تسليم حساب واحد : <b>{_rent_reward_val:,} نقطة</b>\n"
@@ -6313,7 +6325,7 @@ def _c_rs_worker(call):
                 '<b>مثال:</b>\n'
                 '<code>@mychannel | قناتي الرسمية | https://t.me/+xxxx | 1000</code>\n\n'
                 '• الحد = 0 يعني بلا حد\n'
-                '• لو مفيش را��ط جوين خاص اكتب 0'
+                '• لو ��فيش را��ط جوين خاص اكتب 0'
             ),
             reply_markup=bk_cancel, chat_id=cid, message_id=mid, parse_mode='HTML'
         )
@@ -6652,7 +6664,7 @@ def _c_rs_worker(call):
         if stars_post:
             keys.add(btn('⭐ أرسل النجوم الآن', url=stars_post, color='green'))
         keys.add(btn('رجوع', callback_data='buy_force_sub', color='red'))
-        txt = f"⭐ دفع بالنجوم\n\nالمبلغ المطلوب: {fsub_stars} نجمة\n\n"
+        txt = f"⭐ دفع بالنجوم\n\nالم��لغ المطلوب: {fsub_stars} نجمة\n\n"
         if stars_post:
             txt += "اضغط الزر ��دناه لإرسال النجوم\n\nبعد الدفع تواصل مع الأدمن لتأكيد الطلب وإضافة قناتك ✅"
         else:
@@ -6914,7 +6926,7 @@ def _c_rs_worker(call):
                     '👑 لازم تعمل دعوتين عشان تفعل قسم VIP\n\n'
                     f'📊 دعواتك: {_inv_count} من {_vip_thresh} المطلوبة\n'
                     f'🎯 باقي عليك: {_remaining} دعوة فقط للحصول على VIP مجاناً!\n\n'
-                    '💡 شارك رابط الدعوة وادعُ أصدقاءك للحصول على VIP تلقائياً'
+                    '💡 شارك رابط الدعوة ��ادعُ أصدقاءك للحصول على VIP تلقائياً'
                 ),
                 chat_id=cid, message_id=mid, reply_markup=_keys_vip, parse_mode="HTML"
             )
@@ -7378,7 +7390,7 @@ def _c_rs_worker(call):
         ckeys.add(btn(f'سعر السنوي ({vip_yearly:,} نقطة)', callback_data='chset_vip_yearly', color='green'))
         ckeys.add(btn(f'سعر مدى الحياة ({vip_lifetime:,} نقطة)', callback_data='chset_vip_lifetime', color='green'))
         ckeys.add(btn(vip_toggle_lbl, callback_data='chset_vip_toggle', color=vip_toggle_col))
-        ckeys.add(btn('━━���━━━━━━━━━━━', callback_data='none', color='blue'))
+        ckeys.add(btn('���━���━━━━━━━━━━━', callback_data='none', color='blue'))
         ckeys.add(btn(f'📢 قناة الطلبات (ID: {orders_ch})', callback_data='chset_orders_channel', color='blue'))
         ckeys.add(btn('👁 عرض كل الإعدادات', callback_data='chset_view', color='blue'))
         ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
@@ -7733,7 +7745,7 @@ def _c_rs_worker(call):
                     f"📱 الأرقام المستوردة: <b>{res['accounts_imported']:,}</b>\n"
                     f"📱 الأرقام المتجاهلة (موجودة): <b>{res['accounts_skipped']:,}</b>\n"
                     f"⚙️ الإعدادات المستوردة: <b>{res['settings_imported']}</b>\n"
-                    "━━━━━━━━━━━━━━━━━━━\n"
+                    "━━━━━━���━━━━━━━━━━━━\n"
                     "✅ تم استيراد: أسماء الأزرار، ألوانها، إيموجيها\n"
                     "✅ أسعار وحدود وحالة كل خدمة\n"
                     "✅ القنوات الإجبارية وعدد الطلبات\n"
@@ -8016,6 +8028,8 @@ def _c_rs_worker(call):
         ekeys.add(btn(f'💰 إيموجي الرصيد (حالي: {em_bal})',         callback_data='adm_emoji_bal', color='green'))
         ekeys.add(btn(f'✅ إيموجي الطلبات (حالي: {em_ord})',         callback_data='adm_emoji_ord', color='green'))
         ekeys.add(btn(f'📢 إيموجي قناة البوت (حالي: {em_ch})',       callback_data='adm_emoji_ch',  color='green'))
+        _em_rec = _resolve_btn_emoji('adm_import_db') or '—'
+        ekeys.add(btn(f'🔄 إيموجي زر الاسترداد (حالي: {_em_rec})', callback_data='adm_emoji_restore', color='green'))
         ekeys.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
         bot.edit_message_text(
             text=(
@@ -8028,12 +8042,34 @@ def _c_rs_worker(call):
             chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode='HTML'
         )
 
+    if data == 'adm_emoji_restore':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        cur_eid = _resolve_btn_emoji('adm_import_db')
+        cur_txt = f'<code>{cur_eid}</code>' if cur_eid else '—'
+        ekeys = mk(row_width=1)
+        if cur_eid:
+            ekeys.add(btn('🗑 حذف الإيموجي', callback_data='emjbtndel_adm_import_db', color='red'))
+        ekeys.add(btn('رجوع', callback_data='adm_set_emojis', color='blue'))
+        x = bot.edit_message_text(
+            text=(
+                '🔄 <b>إيموجي زر الاسترداد (استيراد قاعدة البيانات)</b>\n\n'
+                f'الحالي: {cur_txt}\n\n'
+                '📤 أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
+                'مثال:\n'
+                '<code>5368324170671202286</code>'
+            ),
+            chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode='HTML'
+        )
+        bot.clear_step_handler_by_chat_id(cid)
+        bot.register_next_step_handler(x, _do_set_btn_emoji, 'adm_import_db')
+
     if data == 'adm_emoji_bal':
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         cur = db.get("custom_emoji_balance") if db.exists("custom_emoji_balance") else "—"
         x = bot.edit_message_text(
-            text=f'💰 <b>إيموجي زر الرصيد</b>\n\nالحالي: {cur}\n\nأرسل الإيموجي الجديد (مثل 💎 أو 🌟)\nأو أرسل <code>0</code> لإزالة الإيموجي:',
+            text=f'💰 <b>إيموجي زر الرصيد</b>\n\nالحالي: {cur}\n\nأرسل الإيموجي الجديد (مثل 💎 ��و 🌟)\nأو أرسل <code>0</code> لإزالة الإيموجي:',
             chat_id=cid, message_id=mid, parse_mode='HTML'
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -8439,7 +8475,7 @@ def _c_rs_worker(call):
             f"       ✅ تأكيد الطلب\n"
             f"╚══════════════════════╝\n\n"
             f"📋 <b>النوع</b>    : تفاعلات اختياري {emoji}\n"
-            f"🔢 <b>الكمية</b>   : {amount:,}\n"
+            f"🔢 <b>��لكمية</b>   : {amount:,}\n"
             f"�� <b>الرابط</b>   : <code>{url}</code>\n"
             f"💰 <b>السعر</b>    : {price:,} نقطة\n"
             f"💳 <b>رصيدك</b>   : {coins:,} نقطة\n"
@@ -8543,7 +8579,7 @@ def _c_rs_worker(call):
             return
         cur = db.get("fsub_amount") if db.exists("fsub_amount") else 500
         x = bot.edit_message_text(
-            text=f'🔢 عدد الأعضاء في باقة الاشتراك الإجباري\n\nالحالي: {cur}\n\nأرسل العدد الجديد:',
+            text=f'🔢 عدد الأعضاء في ��اقة الاشتراك الإجباري\n\nالحالي: {cur}\n\nأرسل العدد الجديد:',
             chat_id=cid, message_id=mid
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -8918,7 +8954,7 @@ def _do_svc_edit(message, svc_key, field):
     skeys.add(btn('📋 قائمة الخدمات', callback_data='adm_svc_panel', color='green'))
     bot.reply_to(
         message,
-        f'✅ تم تحديث إعدادات {svc_info["label"]}\n{label}',
+        f'✅ تم تحديث إع��ادات {svc_info["label"]}\n{label}',
         reply_markup=skeys
     )
 
@@ -8980,7 +9016,7 @@ def handle_free_reaction(message):
 
     stop_progress = [False]
     progress_steps = [
-        '🔄 جاري الاتصال بالخادم...       [▱▱▱▱▱▱▱▱▱▱] 0%',
+        '🔄 جاري الاتصال بالخادم...       [��▱▱▱▱▱▱▱▱▱] 0%',
         '📡 جاري إرسال الطلب...           [▰▰▱▱▱▱▱▱▱▱] 20%',
         '⚙️ جاري معالجة الطلب...          [▰▰▰▰▱▱▱▱▱▱] 40%',
         '🚀 جاري إضافة التفاعلات...       [▰▰▰▰▰▰▱▱▱▱] 60%',
@@ -9631,7 +9667,7 @@ def get_amount(message, type_req):
             pr = svc_price('votes_fsub') * amount
             acc = db.get(f'user_{message.from_user.id}')
             if int(pr) > int(acc.get('coins', 0)):
-                bot.reply_to(message, f'نقاطك غير كافية لتنفيذ طلبك ، تحتاج الى {pr - amount} نقطة .')
+                bot.reply_to(message, f'��قاطك غير كافية لتنفيذ طلبك ، تحتاج الى {pr - amount} نقطة .')
                 return
             load_ = db.get('accounts') or []
             if len(load_) < amount:
@@ -9640,9 +9676,9 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       🏆 طلب تصويت مسابقات اشتراك إجباري\n'
-                f'╚═══════════════��══════╝\n\n'
+                f'╚════════��══════��══════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} صوت\n\n'
-                f'⏱ أرسل الآن وقت الانتظار بين التصويت (بالثواني)\n'
+                f'⏱ أرسل الآن وقت الان��ظار بين التصويت (بالثواني)\n'
                 f'• أرسل 0 لتنفيذ فوري | الحد الأقصى 500\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
             )
@@ -9871,7 +9907,7 @@ def get_time_votes_fsub(message, amount):
         bot.reply_to(message, text=f'• رجاء ارسل وقت بين 0 و 500')
         return
     _req_txt = (
-        f'╔══════════════════════╗\n'
+        f'╔════════════════════���═╗\n'
         f'       🏆 طلب تصويت مسابقات اشتراك إجباري\n'
         f'╚══════════════════════╝\n\n'
         f'✅ الكمية المطلوبة : {amount} صوت\n'
@@ -10633,7 +10669,7 @@ def get_react_url_first(message, amount):
     )
 
 def get_react(message, amount):
-    rs = ["👍","🤩","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨","😐","🖕","😈","👎",
+    rs = ["👍","����","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨","😐","🖕","😈","👎",
           "😁","😢","💩","🤮","🤔","🤯","🤬","💯","😍","🕊","🐳","🤝","👨","🦄","🎃","🤓",
           "👀","👻","🗿","🍾","🍓","⚡️","🏆","🤡","🌭","🆒","🙈","🎅","🎄","☃️","💊"]
     if message.text in rs:
@@ -11786,7 +11822,7 @@ def pre_checkout_stars(pre_checkout_q):
     try:
         bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
     except Exception as e:
-        print(f"[pre_checkout] خطأ: {e}")
+        print(f"[pre_checkout] ��طأ: {e}")
         try:
             bot.answer_pre_checkout_query(pre_checkout_q.id, ok=False,
                                            error_message="حدث خطأ، حاول مجدداً")
@@ -13445,7 +13481,7 @@ if __name__ == "__main__":
     t1.start()
     print("[✅] thread 1: بوت تسجيل الأرقام يعمل")
 
-    print("[✅] main thread: البوت الرئيسي يبدأ الآن...")
+    print("[✅] main thread: البوت الرئيسي يبدأ ال��ن...")
     # main thread: telebot (البوت الرئيسي)
     while True:
         try:
