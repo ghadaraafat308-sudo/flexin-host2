@@ -1057,6 +1057,9 @@ bk.add(btn(_get_btn_label('back', 'رجوع'), callback_data='back', color='blue
 bk_cancel = TelebotMarkup(row_width=1)
 bk_cancel.add(btn(_get_btn_label('back_cancel', 'إلغاء و رجوع'), callback_data='back', color='red'))
 
+bk_cancel_adm = TelebotMarkup(row_width=1)
+bk_cancel_adm.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+
 print("[⏳] جارٍ إنشاء البوت...")
 bot = TeleBot(token=BOT_TOKEN, num_threads=16)
 print("[✅] البوت جاهز — BOT_TOKEN صحيح")
@@ -1091,7 +1094,7 @@ if _existing_accounts is None:
         # كان موجود لكن الـ cache لم يحمّله — نحدث الـ cache
         with db._lock:
             db._cache['accounts'] = _existing_accounts
-        print(f"[✅] تم استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
+        print(f"[��] تم استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
 
 # db.delete("force")  # تم التعطيل — كان يمسح القنوات الإجبارية عند كل تشغيل
 
@@ -2170,7 +2173,7 @@ def get_next_level(uid: int) -> dict | None:
 def check_and_award_level(uid: int):
     """
     يُشغَّل بعد كل إحالة / طلب / إضافة نقاط.
-    لو المستخدم وصل مستوى جديد يديه المكافأة ويبعتله رسالة.
+    لو المستخدم وصل مستوى جديد يديه المكافأة ويبعتله ر��الة.
     """
     current   = get_user_level(uid)
     saved_key = f'user_{uid}_top_level'
@@ -3248,7 +3251,7 @@ def _fsub_check_call(call):
         # ── وضع الصيانة ──
         if db.get('maintenance_mode'):
             try:
-                bot.answer_callback_query(call.id,
+                _cb_alert(call,
                     '🔧 البوت في وضع الصيانة حالياً، يرجى الانتظار.',
                     show_alert=True
                 )
@@ -3263,7 +3266,7 @@ def _fsub_check_call(call):
         ok, not_sub = _check_user_subs(user_id)
         if not ok:
             try:
-                bot.answer_callback_query(call.id, '❌ يجب الاشتراك أولاً', show_alert=True)
+                _cb_alert(call, '❌ يجب الاشتراك أولاً', show_alert=True)
             except:
                 pass
             _send_force_sub_msg(bot, call.message.chat.id, not_sub)
@@ -4145,32 +4148,28 @@ def _show_shop_panel(cid, mid):
 
 @bot.message_handler(commands=['football'])
 def cmd_football(message):
-    if not _fsub_check_msg(message): return
+    if not _fsub_check_msg(message):
+        return
     _show_football_menu(message.from_user.id, message.chat.id, None)
 
+
 def _show_football_menu(uid, cid, mid):
-    info = get(uid)
-    bal = int(info.get("coins", 0)) if info else 0
-    keys = mk(row_width=2)
+    prize = int(db.get("football_prize") or 300)
+    keys = mk(row_width=3)
     keys.add(
-        btn('⚽ 50 نقطة',  callback_data='fb_bet_50',  color='green'),
-        btn('⚽ 100 نقطة', callback_data='fb_bet_100', color='green')
+        btn('⬅️ يسار', callback_data='fb_guess_left', color='green'),
+        btn('🎯 وسط', callback_data='fb_guess_center', color='blue'),
+        btn('➡️ يمين', callback_data='fb_guess_right', color='green'),
     )
-    keys.add(
-        btn('⚽ 250 نقطة', callback_data='fb_bet_250', color='blue'),
-        btn('⚽ 500 نقطة', callback_data='fb_bet_500', color='blue')
-    )
-    keys.add(btn('🔙 رجوع', callback_data='back', color='red'))
+    keys.add(btn('🔙 رجوع', callback_data='show_games', color='red'))
     txt = (
-        '┏━━━━━━━━━━━━━━━━━━━┓\n'
-        '   ⚽ <b>كورة القدم</b> ⚽\n'
-        '┗━━━━━━━━━━━━━━━━━━━┛\n\n'
-        '🎯 <b>الفكرة:</b> صوّب عالمرمى وجيب جول!\n\n'
-        '🏆 <b>الجول (3/4/5):</b> تربح ضعف الرهان ×2\n'
-        '❌ <b>الإخفاق (1/2):</b> تخسر الرهان\n\n'
-        '━━━━━━━━━━━━━━━━━━━\n'
-        f'💳 <b>رصيدك:</b> {bal:,} نقطة\n\n'
-        '👇 <b>اختار قيمة الرهان:</b>'
+        '⚽ <b>خمّن الجول</b> ⚽\n'
+        '━━━━━━━━━━━━━━━\n\n'
+        '🧤 إنت حارس المرمى! خمّن الكورة جاية منين.\n\n'
+        f'🏆 لو خمّنت صح تكسب <b>{prize:,} نقطة</b> مجاناً.\n'
+        '🆓 اللعبة مجانية تمامًا — مفيش أي رهان.\n'
+        '⏰ محاولة كل ساعة.\n\n'
+        '👇 <b>اختار مكان تصويبتك:</b>'
     )
     if mid:
         try:
@@ -4180,62 +4179,63 @@ def _show_football_menu(uid, cid, mid):
             pass
     bot.send_message(cid, txt, reply_markup=keys, parse_mode='HTML')
 
-def _do_football_bet(call, bet_amount):
+
+def _do_football_guess(call, guess):
     cid = call.message.chat.id
     uid = call.from_user.id
     mid = call.message.message_id
-    info = get(uid) or {'id': uid, 'coins': 0}
-    bal = int(info.get('coins', 0))
-    if bal < bet_amount:
-        bot.answer_callback_query(call.id, f'⚠️ رصيدك غير كافٍ ({bal:,} نقطة)', show_alert=True)
+    _fcd_key = f"user_{uid}_fb_cd"
+    _now = time.time()
+    try:
+        _last = float(db.get(_fcd_key) or 0)
+    except Exception:
+        _last = 0
+    if _now - _last < 3600:
+        _rem = int(3600 - (_now - _last))
+        _cb_alert(call, f'⏳ استنى {fmt_remaining(_rem)} قبل ما تلعب تاني', show_alert=True)
         return
-    # خصم فوري للرهان
-    info['coins'] = bal - bet_amount
-    set_user(uid, info)
-    bot.answer_callback_query(call.id)
-    # أرسل رسالة تأكيد أولاً
+    db.set(_fcd_key, _now)
+    prize = int(db.get("football_prize") or 300)
+    info = get(uid) or {'id': uid, 'coins': 0}
     try:
         bot.edit_message_text(
             chat_id=cid, message_id=mid,
-            text=f'⚽ <b>التصويبة قادمة...</b>\n\n🎯 الرهان: <b>{bet_amount:,} نقطة</b>',
+            text='⚽ <b>التصويبة جاية...</b>\n\n🧤 جاهز يا حارس؟',
             parse_mode='HTML'
         )
     except Exception:
         pass
-    # أرسل الدايس ⚽ وخلّ تيليجرام يعرض الأنيميشن
     try:
-        dice_msg = bot.send_dice(cid, emoji='⚽')
-        val = int(dice_msg.dice.value) if dice_msg and dice_msg.dice else 0
+        bot.send_dice(cid, emoji='⚽')
     except Exception:
-        val = 0
-    # انتظر لحد ما تخلص الأنيميشن (~3 ثواني)
+        pass
     time.sleep(3.5)
-    goal = val in (3, 4, 5)
-    if goal:
-        win = bet_amount * 2
-        info['coins'] = int(info.get('coins', 0)) + win
+    actual = random.choice(['left', 'center', 'right'])
+    names = {'left': '⬅️ يسار', 'center': '🎯 وسط', 'right': '➡️ يمين'}
+    win = (guess == actual)
+    if win:
+        info['coins'] = int(info.get('coins', 0) or 0) + prize
         set_user(uid, info)
         result_txt = (
-            '⚽🎉 <b>جوووول!</b> 🎉⚽\n'
-            '━━━━━━━━━━━━━━━━━━━\n\n'
-            f'🏆 ربحت: <b>+{win:,} نقطة</b>\n'
-            f'💰 رصيدك الجديد: <b>{info["coins"]:,} نقطة</b>\n\n'
-            '━━━━━━━━━━━━━━━━━━━\n'
-            '🔥 برافو يا بطل!'
+            '🧤🎉 <b>مسكتها يا وحش!</b> 🎉🧤\n'
+            '━━━━━━━━━━━━━━━\n\n'
+            f'🎯 تخمينك: <b>{names[guess]}</b>\n'
+            f'⚽ الكورة راحت: <b>{names[actual]}</b>\n\n'
+            f'🏆 ربحت: <b>+{prize:,} نقطة</b>\n'
+            f'💰 رصيدك: <b>{int(info.get("coins", 0) or 0):,} نقطة</b>'
         )
     else:
         result_txt = (
-            '😔 <b>إخفاق!</b>\n'
-            '━━━━━━━━━━━━━━━━━━━\n\n'
-            f'❌ خسرت: <b>-{bet_amount:,} نقطة</b>\n'
-            f'💳 رصيدك: <b>{int(info.get("coins", 0)):,} نقطة</b>\n\n'
-            '━━━━━━━━━━━━━━━━━━━\n'
-            '💪 حظ أوفر المرة الجاية!'
+            '⚽😅 <b>جووول عليك!</b>\n'
+            '━━━━━━━━━━━━━━━\n\n'
+            f'🎯 تخمينك: <b>{names[guess]}</b>\n'
+            f'⚽ الكورة راحت: <b>{names[actual]}</b>\n\n'
+            '💪 حاول تاني بعد ساعة — ومخسرتش أي نقطة!'
         )
     keys = mk(row_width=2)
     keys.add(
-        btn('⚽ لعب تاني',     callback_data='football', color='green'),
-        btn('🔙 رجوع',       callback_data='back',     color='blue')
+        btn('⚽ العب تاني', callback_data='football', color='green'),
+        btn('🔙 رجوع', callback_data='show_games', color='blue'),
     )
     try:
         bot.send_message(cid, result_txt, reply_markup=keys, parse_mode='HTML')
@@ -4273,11 +4273,15 @@ xo_games: dict = {}  # cid -> {"board": list, "turn": "X"|"O", "player": "X", "b
 def _build_xo_board(game):
     board = game["board"]
     keys = mk(row_width=3)
+    _cells = []
     for i in range(9):
         cell = board[i]
         label = "❌" if cell == "X" else "⭕" if cell == "O" else "⬜"
         cb = f'xo_move_{i}' if cell == " " else "xo_noop"
-        keys.add(btn(label, callback_data=cb, color='blue' if cell == " " else 'red'))
+        _cells.append(btn(label, callback_data=cb, color='blue' if cell == " " else 'red'))
+    keys.add(_cells[0], _cells[1], _cells[2])
+    keys.add(_cells[3], _cells[4], _cells[5])
+    keys.add(_cells[6], _cells[7], _cells[8])
     return keys
 
 def _check_xo_winner(board):
@@ -4381,6 +4385,38 @@ def _log_btn(call):
 def c_rs(call):
     threading.Thread(target=_c_rs_worker, args=(call,), daemon=True).start()
 
+def _safe_del_msg(chat_id, message_id):
+    try:
+        bot.delete_message(chat_id, message_id)
+    except Exception:
+        pass
+
+
+def _cb_alert(call, text=None, show_alert=False):
+    # رد مضمون: الزر اترد عليه فوراً فبنبعت رسالة قصيرة تتمسح لوحدها
+    if not text:
+        try:
+            bot.answer_callback_query(callback_query_id=call.id, show_alert=show_alert)
+        except Exception:
+            pass
+        return
+    try:
+        chat_id = call.message.chat.id
+    except Exception:
+        try:
+            chat_id = call.from_user.id
+        except Exception:
+            return
+    try:
+        _m = bot.send_message(chat_id, str(text))
+    except Exception:
+        return
+    try:
+        threading.Timer(7.0, _safe_del_msg, args=(chat_id, _m.message_id)).start()
+    except Exception:
+        pass
+
+
 def _c_rs_worker(call):
     # ✅ رد فوري على Telegram لإزالة دوران الزر — قبل أي عملية
     try:
@@ -4459,7 +4495,7 @@ def _c_rs_worker(call):
     if data == 'check_force_sub':
         _ok, _not_sub = _check_user_subs(cid, force=True)
         if not _ok:
-            bot.answer_callback_query(call.id,
+            _cb_alert(call,
                 text=f'❌ لم تشترك في {len(_not_sub)} قناة بعد!', show_alert=True)
             _edit_force_sub_msg(bot, cid, mid, _not_sub)
             return
@@ -4498,7 +4534,7 @@ def _c_rs_worker(call):
             bot.send_message(int(sudo), _notif, parse_mode='HTML')
         except Exception:
             pass
-        bot.answer_callback_query(call.id, text='✅ تم التحقق! أهلاً بك في البوت 🎉', show_alert=True)
+        _cb_alert(call, text='✅ تم التحقق! أهلاً بك في البوت 🎉', show_alert=True)
         start_message(call.message)
         return
 
@@ -4529,10 +4565,10 @@ def _c_rs_worker(call):
     if data == 'ai_support_chat':
         try:
             if not _ai_support_enabled():
-                bot.answer_callback_query(call.id, text='⚠️ المساعد الذكي غير متاح حالياً', show_alert=True)
+                _cb_alert(call, text='⚠️ المساعد الذكي غير متاح حالياً', show_alert=True)
                 return
         except Exception:
-            bot.answer_callback_query(call.id, text='⚠️ خطأ في المساعد الذكي', show_alert=True)
+            _cb_alert(call, text='⚠️ خطأ في المساعد الذكي', show_alert=True)
             return
         ai_keys = mk(row_width=1)
         ai_keys.add(btn('🚪 إنهاء المحادثة', callback_data='support', color='red'))
@@ -4641,10 +4677,10 @@ def _c_rs_worker(call):
                 target = l
                 break
         if not target or target.get("status") != "active":
-            bot.answer_callback_query(call.id, '❌ هذا الإعلان غير متاح', show_alert=True)
+            _cb_alert(call, '❌ هذا الإعلان غير متاح', show_alert=True)
             return
         if target.get("seller_id") == cid:
-            bot.answer_callback_query(call.id, '❌ لا يمكنك شراء إعلانك الخاص', show_alert=True)
+            _cb_alert(call, '❌ لا يمكنك شراء إعلانك الخاص', show_alert=True)
             return
         price = int(target.get("price", 0))
         fee_pct = int(db.get("market_fee") or 5)
@@ -4653,7 +4689,7 @@ def _c_rs_worker(call):
         info = get(cid) or {}
         bal = int(info.get("coins", 0) or 0)
         if bal < total:
-            bot.answer_callback_query(call.id, f'❌ رصيدك غير كافٍ\nتحتاج {total:,} نقطة ورصيدك {bal:,}', show_alert=True)
+            _cb_alert(call, f'❌ رصيدك غير كافٍ\nتحتاج {total:,} نقطة ورصيدك {bal:,}', show_alert=True)
             return
         confirm_keys = mk(row_width=1)
         confirm_keys.add(btn(f'✅ تأكيد الشراء ({total:,} نقطة)', callback_data=f'mkt_confirm_{listing_id}', color='green'))
@@ -4682,10 +4718,10 @@ def _c_rs_worker(call):
                 idx = i
                 break
         if not target or target.get("status") != "active":
-            bot.answer_callback_query(call.id, '❌ الإعلان ملغي أو تم بيعه', show_alert=True)
+            _cb_alert(call, '❌ الإعلان ملغي أو تم بيعه', show_alert=True)
             return
         if target.get("seller_id") == cid:
-            bot.answer_callback_query(call.id, '❌ لا يمكنك شراء حسابك', show_alert=True)
+            _cb_alert(call, '❌ لا يمكنك شراء حسابك', show_alert=True)
             return
         price = int(target.get("price", 0))
         fee_pct = int(db.get("market_fee") or 5)
@@ -4694,7 +4730,7 @@ def _c_rs_worker(call):
         buyer_info = get(cid) or {}
         seller_info = get(target["seller_id"])
         if int(buyer_info.get("coins", 0) or 0) < total:
-            bot.answer_callback_query(call.id, '��� رصيدك غير كافٍ', show_alert=True)
+            _cb_alert(call, '��� رصيدك غير كافٍ', show_alert=True)
             return
         # تنفيذ البيع
         buyer_info["coins"] = int(buyer_info.get("coins", 0) or 0) - total
@@ -4736,7 +4772,7 @@ def _c_rs_worker(call):
     if data == 'mkt_add':
         market_enabled = db.get("market_enabled")
         if market_enabled is False:
-            bot.answer_callback_query(call.id, '❌ المتجر مغلق، لا يمكن إضافة إعلانات', show_alert=True)
+            _cb_alert(call, '❌ المتجر مغلق، لا يمكن إضافة إعلانات', show_alert=True)
             return
         pending_market_data[cid] = {"step": "phone"}
         keys = mk(row_width=1)
@@ -4780,20 +4816,20 @@ def _c_rs_worker(call):
             if l.get("id") == listing_id and l.get("seller_id") == cid:
                 listings[i]["status"] = "cancelled"
                 db.set("market_listings", listings)
-                bot.answer_callback_query(call.id, '✅ تم إلغاء الإعلان', show_alert=True)
+                _cb_alert(call, '✅ تم إلغاء الإعلان', show_alert=True)
                 # إعادة عرض إعلاناتي
                 bot.edit_message_text(
                     text='📭 تم إلغاء الإعلان.',
                     chat_id=cid, message_id=mid, reply_markup=bk, parse_mode='HTML'
                 )
                 return
-        bot.answer_callback_query(call.id, '❌ الإعلان غير موجود', show_alert=True)
+        _cb_alert(call, '❌ الإعلان غير موجود', show_alert=True)
         return
 
     if data == 'mkt_confirm_add':
         md = pending_market_data.get(cid)
         if not md or md.get("step") != "confirm":
-            bot.answer_callback_query(call.id, '❌ انتهت صلاحية الجلسة، حاول مرة أخرى', show_alert=True)
+            _cb_alert(call, '❌ انتهت صلاحية الجلسة، حاول مرة أخرى', show_alert=True)
             return
         phone = md.get("phone", "?")
         price = int(md.get("price", 0))
@@ -4847,12 +4883,11 @@ def _c_rs_worker(call):
 
     # ⚽ رهانات كورة القدم
 
-    if data.startswith('fb_bet_'):
-        try:
-            _bet = int(data.split('_')[-1])
-        except Exception:
+    if data.startswith('fb_guess_'):
+        _g = data.replace('fb_guess_', '')
+        if _g not in ('left', 'center', 'right'):
             return
-        _do_football_bet(call, _bet)
+        _do_football_guess(call, _g)
         return
 
     # ❌ لعبة XO
@@ -4868,7 +4903,7 @@ def _c_rs_worker(call):
                  '╚══════════════════╝\n\n'
                  '🆓 جميع الألعاب مجانية!\n'
                  '⏰ يمكنك اللعب مرة كل ساعة\n\n'
-                 'اختر اللعبة التي تريد لعبها:',
+                 'اختر ا��لعبة التي تريد لعبها:',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
         )
         return
@@ -4891,7 +4926,7 @@ def _c_rs_worker(call):
         _xcd_last = db.get(_xcd_key) or 0
         if _xcd_now - _xcd_last < 3600:
             _rem = int(3600 - (_xcd_now - _xcd_last))
-            bot.answer_callback_query(call.id, f'⏳ انتظر {fmt_remaining(_rem)} قبل اللعب مجدداً', show_alert=True)
+            _cb_alert(call, f'⏳ انتظر {fmt_remaining(_rem)} قبل اللعب مجدداً', show_alert=True)
             return
         db.set(_xcd_key, _xcd_now)
         board = [" "] * 9
@@ -4905,18 +4940,18 @@ def _c_rs_worker(call):
 
     if data.startswith('xo_move_'):
         if cid not in xo_games:
-            bot.answer_callback_query(call.id, '❌ لا توجد لعبة نشطة، استخدم /xo', show_alert=True)
+            _cb_alert(call, '❌ لا توجد لعبة نشطة، استخدم /xo', show_alert=True)
             return
         game = xo_games[cid]
         if game["turn"] != "X":
-            bot.answer_callback_query(call.id, '⏳ دور البوت الآن...', show_alert=True)
+            _cb_alert(call, '⏳ دور البوت الآن...', show_alert=True)
             return
         try:
             idx = int(data.replace('xo_move_', ''))
         except:
             return
         if game["board"][idx] != " ":
-            bot.answer_callback_query(call.id, '❌ هذه الخانة مشغولة', show_alert=True)
+            _cb_alert(call, '❌ هذه الخانة مشغولة', show_alert=True)
             return
         game["board"][idx] = "X"
         result = _check_xo_winner(game["board"])
@@ -4969,7 +5004,7 @@ def _c_rs_worker(call):
         return
 
     if data == 'xo_noop':
-        bot.answer_callback_query(call.id, '❌ هذه الخانة مشغولة', show_alert=True)
+        _cb_alert(call, '❌ هذه الخانة مشغولة', show_alert=True)
         return
 
     # ✅ تنفيذ مهمة
@@ -4983,13 +5018,13 @@ def _c_rs_worker(call):
                 target_task = t
                 break
         if not target_task:
-            bot.answer_callback_query(call.id, '❌ المهمة غير موجودة', show_alert=True)
+            _cb_alert(call, '❌ المهمة غير موجودة', show_alert=True)
             return
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         completed_key = f"user_{cid}_tasks_{today}"
         completed = db.get(completed_key) or []
         if task_id in completed:
-            bot.answer_callback_query(call.id, '✅ لقد أكملت هذه المهمة مسبقاً!', show_alert=True)
+            _cb_alert(call, '✅ لقد أكملت هذه المهمة مسبقاً!', show_alert=True)
             return
         task_type   = target_task.get("type", "")
         task_target = target_task.get("target", "").strip()
@@ -5036,7 +5071,7 @@ def _c_rs_worker(call):
             )
             return
         # نوع غير معروف — لا نعطي نقاط
-        bot.answer_callback_query(call.id, '❌ نوع المهمة غير مدعوم', show_alert=True)
+        _cb_alert(call, '❌ نوع المهمة غير مدعوم', show_alert=True)
         return
 
     if data.startswith('task_verify_'):
@@ -5048,13 +5083,13 @@ def _c_rs_worker(call):
                 target_task = t
                 break
         if not target_task:
-            bot.answer_callback_query(call.id, '❌ المهمة غير موجودة', show_alert=True)
+            _cb_alert(call, '❌ المهمة غير موجودة', show_alert=True)
             return
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         completed_key = f"user_{cid}_tasks_{today}"
         completed = db.get(completed_key) or []
         if task_id in completed:
-            bot.answer_callback_query(call.id, '✅ لقد أكملت هذه المهمة مسبقاً!', show_alert=True)
+            _cb_alert(call, '✅ لقد أكملت هذه المهمة مسبقاً!', show_alert=True)
             return
         task_type   = target_task.get("type", "")
         task_target = target_task.get("target", "").strip()
@@ -5083,7 +5118,7 @@ def _c_rs_worker(call):
             info = get(cid)
             info["coins"] = int(info.get("coins", 0)) + reward
             set_user(cid, info)
-            bot.answer_callback_query(call.id, f'✅ تم إكمال المهمة! +{reward:,} نقطة', show_alert=True)
+            _cb_alert(call, f'✅ تم إكمال المهمة! +{reward:,} نقطة', show_alert=True)
             back_keys = mk(row_width=1)
             back_keys.add(btn('🔙 رجوع للمهام', callback_data='tasks', color='blue'))
             bot.edit_message_text(
@@ -5098,7 +5133,7 @@ def _c_rs_worker(call):
             back_keys = mk(row_width=1)
             back_keys.add(btn('🔄 حاول مرة أخرى', callback_data=f'task_do_{task_id}', color='green'))
             back_keys.add(btn('🔙 رجوع', callback_data='tasks', color='blue'))
-            bot.answer_callback_query(call.id, '❌ لم يتم التحقق — تأكد من تنفيذ المطلوب أولاً', show_alert=True)
+            _cb_alert(call, '❌ لم يتم التحقق — تأكد من تنفيذ المطلوب أولاً', show_alert=True)
             bot.edit_message_text(
                 text=(
                     f'❌ <b>لم يتم التحقق بعد</b>\n\n'
@@ -5169,7 +5204,7 @@ def _c_rs_worker(call):
             return
         cb_target = data.replace('vis_toggle_', '')
         visible = _toggle_btn_visibility(cb_target)
-        bot.answer_callback_query(call.id, f'✅ تم {"إظهار" if visible else "إخفاء"} الزر', show_alert=True)
+        _cb_alert(call, f'✅ تم {"إظهار" if visible else "إخفاء"} الزر', show_alert=True)
         # إعادة عرض اللوحة
         keys = mk(row_width=1)
         txt = '👁 <b>إخفاء / إظهار الأزرار</b>\n\n🟢 = ظاهر | 🔴 = مخفي\n\n'
@@ -5257,7 +5292,7 @@ def _c_rs_worker(call):
         if current is None:
             current = True
         db.set("market_enabled", not current)
-        bot.answer_callback_query(call.id, f'✅ تم {"تعطيل" if current else "تفعيل"} المتجر', show_alert=True)
+        _cb_alert(call, f'✅ تم {"تعطيل" if current else "تفعيل"} المتجر', show_alert=True)
         # فتح إعدادات المتجر
         market_enabled = db.get("market_enabled")
         if market_enabled is None:
@@ -5379,7 +5414,7 @@ def _c_rs_worker(call):
                 t["enabled"] = not t.get("enabled", True)
                 break
         db.set("tasks_list", tasks_list)
-        bot.answer_callback_query(call.id, '✅ تم تبديل حالة المهمة', show_alert=True)
+        _cb_alert(call, '✅ تم تبديل حالة المهمة', show_alert=True)
         # إعادة عرض لوحة المهام
         tasks_list = db.get("tasks_list") or []
         keys = mk(row_width=1)
@@ -5408,7 +5443,7 @@ def _c_rs_worker(call):
         tasks_list = db.get("tasks_list") or []
         tasks_list = [t for t in tasks_list if t.get("id") != task_id]
         db.set("tasks_list", tasks_list)
-        bot.answer_callback_query(call.id, '✅ تم حذف المهمة', show_alert=True)
+        _cb_alert(call, '✅ تم حذف المهمة', show_alert=True)
         # إعادة عرض لوحة المهام
         tasks_list = db.get("tasks_list") or []
         keys = mk(row_width=1)
@@ -5581,7 +5616,7 @@ def _c_rs_worker(call):
             noww = datetime.datetime.now()
             target_datetime = noww + duration
             date_str2 = target_datetime.strftime('%I:%M:%S %p')
-            bot.answer_callback_query(call.id, text=f'طالب بالهدية غدا في: {date_str2}', show_alert=True)
+            _cb_alert(call, text=f'طالب بالهدية غدا في: {date_str2}', show_alert=True)
         else:
             info = db.get(f'user_{call.from_user.id}')
             if not info:
@@ -5670,38 +5705,38 @@ def _c_rs_worker(call):
         return
     if data == 'numbers':
         d = len(db.get('accounts') or [])
-        bot.answer_callback_query(call.id, text=f'عدد ارقام البوت : {d}', show_alert=True)
+        _cb_alert(call, text=f'عدد ارقام البوت : {d}', show_alert=True)
         return
     if data == 'addpoints':
-        x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+        x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, addpoints)
     if data == 'send':
         if cid in (db.get("admins") or []) or cid == sudo:
-            x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد تحويل النقاط له.', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+            x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد تحويل النقاط له.', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
             bot.register_next_step_handler(x, send)
         else:
             keys = mk(row_width=2)
             keys.add(btn('رجوع', callback_data='back'))
             bot.edit_message_text(text='• عذرا ، التحويل مقفل للاعضاء ، يمكن للادمنية فقط تحويل النقاط', chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
     if data == 'addadmin':
-        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد اضافته ادمن بالبوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد اضافته ادمن بالبوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, adminss, 'add')
     if data == 'addvip':
-        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد تفعيل vip له', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد تفعيل vip له', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, vipp, 'add')
     if data == 'lesvip':
-        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد ازالة vip منه', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد ازالة vip منه', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, vipp, 'les')
     if data == 'deladmin':
-        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد ازالته من الادمن', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد ازالته من الادمن', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, adminss, 'delete')
     if data == 'banone':
         if cid in (db.get("admins") or []) or cid == sudo:
-            x = bot.edit_message_text(text=f'• ارسل ايدي العضو لمراد حظرة من استخدام البوت', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+            x = bot.edit_message_text(text=f'• ارسل ايدي العضو لمراد حظرة من استخدام البوت', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
             bot.register_next_step_handler(x, banned, 'ban')
     if data == 'unbanone':
         if cid in (db.get("admins") or []) or cid == sudo:
-            x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد الغاء حظره من استخدام البوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+            x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد الغاء حظره من استخدام البوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
             bot.register_next_step_handler(x, banned, 'unban')
     if data == 'cast':
         if cid in (db.get("admins") or []) or cid == sudo:
@@ -5739,7 +5774,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(
             text='📝 أرسل الرسالة التي تريد إذاعتها (نص، صورة، فيديو، ملصق...):',
             chat_id=cid, message_id=mid
-        , reply_markup=bk_cancel)
+        , reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, casting)
     if data == 'cast_link':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -5747,7 +5782,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(
             text='🔗 أرسل الرسالة التي تريد إذاعتها مع زر رابط:',
             chat_id=cid, message_id=mid
-        , reply_markup=bk_cancel)
+        , reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, casting_with_link)
     if data == 'cast_add_ch':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -5755,7 +5790,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(
             text='➕ أرسل معرف القناة أو يوزرها (مثال: @channel أو -1001234567890):',
             chat_id=cid, message_id=mid
-        , reply_markup=bk_cancel)
+        , reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, _cast_add_channel_manual)
     if data == 'cast_discovered':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -5791,7 +5826,7 @@ def _c_rs_worker(call):
             return
         accounts = db.get('accounts') or []
         if not accounts:
-            bot.answer_callback_query(call.id, text='❌ لا توجد حسابات في البوت', show_alert=True)
+            _cb_alert(call, text='❌ لا توجد حسابات في البوت', show_alert=True)
             return
         bot.edit_message_text(text='🔍 جاري مسح القنوات تلقائياً من الحسابات...', chat_id=cid, message_id=mid)
         found = set(db.get('cast_channels') or [])
@@ -5949,7 +5984,7 @@ def _c_rs_worker(call):
         return
     if data == 'free_member':
         if not svc_enabled('member'):
-            bot.answer_callback_query(call.id, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
+            _cb_alert(call, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
             return
         db.set(f'free_member_{cid}_proccess', True)
         _min = svc_min('free_member')
@@ -6073,7 +6108,7 @@ def _c_rs_worker(call):
     if data == 'confirm_transfer':
         order = _pending_orders.pop(cid, None)
         if not order or order.get('type') != 'transfer':
-            bot.answer_callback_query(call.id, "⚠️ انتهت صلاحية الطلب", show_alert=True)
+            _cb_alert(call, "⚠️ انتهت صلاحية الطلب", show_alert=True)
             return
         uid    = order['uid']
         amount = order['amount']
@@ -6081,7 +6116,7 @@ def _c_rs_worker(call):
         from_user = db.get(f'user_{cid}') or {}
         to_user   = db.get(f'user_{uid}')  or {}
         if int(from_user.get('coins', 0)) < amount + 500:
-            bot.answer_callback_query(call.id, "❌ نقاطك غير كافية (المبلغ + 500 عمولة)", show_alert=True)
+            _cb_alert(call, "❌ نقاطك غير كافية (المبلغ + 500 عمولة)", show_alert=True)
             return
         old_to = int(to_user.get('coins', 0))
         from_user['coins'] = int(from_user.get('coins', 0)) - amount - 500
@@ -6113,7 +6148,7 @@ def _c_rs_worker(call):
         # تحديث عداد التحويلات
         trans = int(db.get(f'user_{cid}_trans') or 0) + 1
         db.set(f'user_{cid}_trans', trans)
-        bot.answer_callback_query(call.id, "✅ تم التحويل بنجاح!")
+        _cb_alert(call, "✅ تم التحويل بنجاح!")
         keys = mk(row_width=1)
         keys.add(btn('🔙 رجوع للقائمة', callback_data='back', color='blue'))
         bot.send_message(cid,
@@ -6129,12 +6164,12 @@ def _c_rs_worker(call):
     if data == 'confirm_order':
         order = _pending_orders.get(cid)
         if not order:
-            bot.answer_callback_query(call.id, "⚠️ انتهت صلاحية الطلب أو تم تن��يذه بالفعل", show_alert=True)
+            _cb_alert(call, "⚠️ انتهت صلاحية الطلب أو تم تن��يذه بالفعل", show_alert=True)
             return
         try:
             bot.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=None)
         except: pass
-        bot.answer_callback_query(call.id, "⏳ جارٍ تنفيذ الطلب...")
+        _cb_alert(call, "⏳ جارٍ تنفيذ الطلب...")
         def_execute_order(cid, call)
         return
 
@@ -6143,7 +6178,7 @@ def _c_rs_worker(call):
         try:
             bot.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=None)
         except: pass
-        bot.answer_callback_query(call.id, "✅ تم إلغاء الطلب", show_alert=False)
+        _cb_alert(call, "✅ تم إلغاء الطلب", show_alert=False)
         keys = mk(row_width=1)
         keys.add(btn('🔙 رجوع للقائمة', callback_data='back', color='blue'))
         bot.send_message(cid, "❌ <b>تم إلغاء الطلب</b>", reply_markup=keys, parse_mode='HTML')
@@ -6316,7 +6351,7 @@ def _c_rs_worker(call):
         _raw = db.get('force') or []
         _upd = [c for c in _raw if (_ch_id(c) if isinstance(c, dict) else c.lstrip('@')) != del_id]
         db.set('force', _upd)
-        bot.answer_callback_query(call.id, f'✅ تم حذف @{del_id}', show_alert=True)
+        _cb_alert(call, f'✅ تم حذف @{del_id}', show_alert=True)
         _fc2 = _get_force_channels()
         _cl2 = '\n'.join([f'• {_ch_name(c)} → {_ch_url(c)}' for c in _fc2]) if _fc2 else 'لا توجد قنوات'
         _ck2 = mk(row_width=1)
@@ -6356,7 +6391,7 @@ def _c_rs_worker(call):
             return
         new_emo = data.replace('fsub_sub_emo_', '')
         db.set('fsub_sub_emoji', new_emo)
-        bot.answer_callback_query(call.id, f'تم تغيير الإيموجي إلى {new_emo}', show_alert=False)
+        _cb_alert(call, f'تم تغيير الإيموجي إلى {new_emo}', show_alert=False)
         _st = (db.get('fsub_sub_text') or 'اشترك').strip()
         _ek = mk(row_width=2)
         for _em in ['📢','🔔','📣','⚡','🚀','🔥','💎','👑','✨','🌟','📡','🎯']:
@@ -6418,7 +6453,7 @@ def _c_rs_worker(call):
             return
         new_emo = data.replace('fsub_chk_emo_', '')
         db.set('fsub_check_emoji', new_emo)
-        bot.answer_callback_query(call.id, f'تم تغيير الإيموجي الى {new_emo}', show_alert=False)
+        _cb_alert(call, f'تم تغيير الإيموجي الى {new_emo}', show_alert=False)
         _ct = (db.get('fsub_check_text') or 'تحققت من الاشتراك').strip()
         _ck = mk(row_width=2)
         for _em in ['✅','☑️','✔️','💯','🎯','🏆','🥇','⭐','🔓','🎉','👍','💪']:
@@ -6552,7 +6587,7 @@ def _c_rs_worker(call):
     if data == 'votes_fsub':
         info = db.get(f'user_{cid}')
         if not (info and info.get('premium')):
-            bot.answer_callback_query(call.id, '⛔ هذه الخدمة للمشتركين VIP فقط!', show_alert=True)
+            _cb_alert(call, '⛔ هذه الخدمة للمشتركين VIP فقط!', show_alert=True)
             return
         _pr = svc_price('votes_fsub'); _mn = svc_min('votes_fsub'); _mx = svc_max('votes_fsub')
         _svc_txt = (
@@ -6717,7 +6752,7 @@ def _c_rs_worker(call):
             bot.answer_callback_query(call.id)
         except Exception as e:
             print(f"[stars_invoice] خطأ: {e}")
-            bot.answer_callback_query(call.id, text="❌ حدث خطأ، حاول مجدداً", show_alert=True)
+            _cb_alert(call, text="❌ حدث خطأ، حاول مجدداً", show_alert=True)
 
 
     if data == 'charge_cash':
@@ -6806,7 +6841,7 @@ def _c_rs_worker(call):
         return
     if data == 'members':
         if not svc_enabled('member'):
-            bot.answer_callback_query(call.id, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
+            _cb_alert(call, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
             return
         _vip_info = db.get(f'user_{cid}')
         _is_prem = _vip_info.get('premium', False) if _vip_info else False
@@ -6875,7 +6910,7 @@ def _c_rs_worker(call):
         bot.register_next_step_handler(x, get_amount, 'membersp')
     if data == 'spams':
         if not svc_enabled('spam'):
-            bot.answer_callback_query(call.id, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
+            _cb_alert(call, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
             return
         _vip_info = db.get(f'user_{cid}')
         _is_prem = _vip_info.get('premium', False) if _vip_info else False
@@ -6939,7 +6974,7 @@ def _c_rs_worker(call):
         bot.register_next_step_handler(x, get_amount, 'reactsrandom')
     if data == 'react_special':
         if not svc_enabled('react_special'):
-            bot.answer_callback_query(call.id, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
+            _cb_alert(call, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
             return
         _pr = svc_price('react_special'); _mn = svc_min('react_special'); _mx = svc_max('react_special')
         _svc_txt = (
@@ -7292,7 +7327,7 @@ def _c_rs_worker(call):
         db.set(ekey, new_state)
         state_txt = '🟢 مفعّلة' if new_state else '🔴 معطّلة'
         try:
-            bot.answer_callback_query(call.id, text=f'تم تغيير حالة {svc_info["label"]} إلى: {state_txt}', show_alert=True)
+            _cb_alert(call, text=f'تم تغيير حالة {svc_info["label"]} إلى: {state_txt}', show_alert=True)
         except:
             pass
         # أعد تحميل صفحة الخدمة
@@ -7377,7 +7412,7 @@ def _c_rs_worker(call):
         current = db.get("vip_sub_enabled") if db.exists("vip_sub_enabled") else True
         db.set("vip_sub_enabled", not current)
         new_state = '✅ مفعّل' if not current else '❌ معطّل'
-        bot.answer_callback_query(call.id, text=f'تم تغيير حالة شراء VIP إلى: {new_state}', show_alert=True)
+        _cb_alert(call, text=f'تم تغيير حالة شراء VIP إلى: {new_state}', show_alert=True)
         # أعد تحميل اللوحة
         call.data = 'adm_charge_panel'
         data = 'adm_charge_panel'
@@ -7543,17 +7578,21 @@ def _c_rs_worker(call):
         # 'admin' كان مستخدَم في أزرار رجوع كتير من غير معالج → كانت مش بتشتغل
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
+        try:
+            bot.clear_step_handler_by_chat_id(cid)
+        except Exception:
+            pass
         _show_admin_panel(cid, is_edit=True, mid=mid)
 
     elif data == 'adm_toggle_maintenance':
         if cid not in (db.get("admins") or []) and cid != sudo:
-            bot.answer_callback_query(call.id, '❌ غير مصرح', show_alert=True)
+            _cb_alert(call, '❌ غير مصرح', show_alert=True)
             return
         current = db.get('maintenance_mode')
         db.set('maintenance_mode', not current)
         status = 'مفعّل 🔴' if not current else 'معطّل 🟢'
         try:
-            bot.answer_callback_query(call.id, f'وضع الصيانة {status}', show_alert=True)
+            _cb_alert(call, f'وضع الصيانة {status}', show_alert=True)
         except:
             pass
         _show_admin_panel(cid, is_edit=True, mid=mid)
@@ -7564,7 +7603,7 @@ def _c_rs_worker(call):
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         try:
-            bot.answer_callback_query(call.id, "⏳ جارٍ التصدير...", show_alert=False)
+            _cb_alert(call, "⏳ جارٍ التصدير...", show_alert=False)
         except:
             pass
         _send_db_export_file(cid, export_type="all", label="الكل")
@@ -7580,7 +7619,7 @@ def _c_rs_worker(call):
         }
         exp_type, exp_label = _labels[data]
         try:
-            bot.answer_callback_query(call.id, "⏳ جارٍ التصدير...", show_alert=False)
+            _cb_alert(call, "⏳ جارٍ التصدير...", show_alert=False)
         except:
             pass
         _send_db_export_file(cid, export_type=exp_type, label=exp_label)
@@ -7610,7 +7649,7 @@ def _c_rs_worker(call):
     if data == 'adm_reset_coins_confirm':
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
-        bot.answer_callback_query(call.id, '⏳ جارٍ التصفير...', show_alert=False)
+        _cb_alert(call, '⏳ جارٍ التصفير...', show_alert=False)
         try:
             count = 0
             all_keys = db.keys('user_%')
@@ -7651,7 +7690,7 @@ def _c_rs_worker(call):
         }
         label = _type_labels.get(import_type, import_type)
         try:
-            bot.answer_callback_query(call.id, f"✅ اخترت: {label}", show_alert=False)
+            _cb_alert(call, f"✅ اخترت: {label}", show_alert=False)
         except:
             pass
         bot.edit_message_text(
@@ -7673,19 +7712,19 @@ def _c_rs_worker(call):
         import_type = data.replace('adm_import_confirm_', '')
         pending_key = f"_import_pending_{cid}"
         if not db.exists(pending_key):
-            bot.answer_callback_query(call.id, "❌ انتهت صلاحية الاستيراد، أعد إرسال الملف", show_alert=True)
+            _cb_alert(call, "❌ انتهت صلاحية الاستيراد، أعد إرسال الملف", show_alert=True)
             return
         import json as _json
         try:
             raw   = db.get(pending_key)
             jdata = _json.loads(raw)
         except Exception as e:
-            bot.answer_callback_query(call.id, f"❌ خطأ في قراءة البيانات: {e}", show_alert=True)
+            _cb_alert(call, f"❌ خطأ في قراءة البيانات: {e}", show_alert=True)
             db.delete(pending_key)
             return
         db.delete(pending_key)
         try:
-            bot.answer_callback_query(call.id, "⏳ جارٍ الاستيراد...", show_alert=False)
+            _cb_alert(call, "⏳ جارٍ الاستيراد...", show_alert=False)
         except:
             pass
         bot.edit_message_text(
@@ -7935,7 +7974,7 @@ def _c_rs_worker(call):
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         try:
-            bot.answer_callback_query(call.id, 'جارٍ الاختبار...')
+            _cb_alert(call, 'جارٍ الاختبار...')
         except Exception:
             pass
         ans, err = _ai_ask('قل جملة قصيرة للتأكد أن الاتصال يعمل.')
@@ -8117,10 +8156,10 @@ def _c_rs_worker(call):
         phon = data.replace('restore_session_', '')
         broken = db.get(f'session_broken_{phon}') if db.exists(f'session_broken_{phon}') else None
         if not broken:
-            bot.answer_callback_query(call.id, text='❌ لا توجد جلسة معلقة لهذا الرقم', show_alert=True)
+            _cb_alert(call, text='❌ لا توجد جلسة معلقة لهذا الرقم', show_alert=True)
             return
         if broken.get('owner_id') != cid:
-            bot.answer_callback_query(call.id, text='❌ هذا الطلب ليس لك', show_alert=True)
+            _cb_alert(call, text='❌ هذا الطلب ليس لك', show_alert=True)
             return
         # إخفاء الزر
         try:
@@ -8151,15 +8190,15 @@ def _c_rs_worker(call):
             p_uid = int(parts_n[0])
             idx   = int(parts_n[1])
         except:
-            bot.answer_callback_query(call.id, text='❌ خطأ، ابدأ الطلب من جديد', show_alert=True)
+            _cb_alert(call, text='❌ خطأ، ابدأ الطلب من جديد', show_alert=True)
             return
         if cid != p_uid:
-            bot.answer_callback_query(call.id, text='❌ هذا الطلب ليس لك', show_alert=True)
+            _cb_alert(call, text='❌ هذا الطلب ليس لك', show_alert=True)
             return
 
         emoji_list = db.get(f'react_special_list_{cid}') or []
         if idx >= len(emoji_list):
-            bot.answer_callback_query(call.id, text='❌ اختيار غير صحيح', show_alert=True)
+            _cb_alert(call, text='❌ اختيار غير صحيح', show_alert=True)
             return
 
         emoji_char, custom_emoji_id = emoji_list[idx]
@@ -8167,7 +8206,7 @@ def _c_rs_worker(call):
         amount = int(db.get(f'react_special_amount_{cid}') or 0)
 
         if not url or not amount:
-            bot.answer_callback_query(call.id, text='❌ انتهت صلاحية الطلب', show_alert=True)
+            _cb_alert(call, text='❌ انتهت صلاحية الطلب', show_alert=True)
             return
 
         try:
@@ -8180,7 +8219,7 @@ def _c_rs_worker(call):
         else:
             emoji_display = emoji_char or '⭐'
 
-        bot.answer_callback_query(call.id, text='✅ تم اختيار الإيموجي')
+        _cb_alert(call, text='✅ تم اختيار الإيموجي')
         db.set(f'react_special_chosen_{cid}', f'{emoji_char}|||{custom_emoji_id or ""}|||{url}|||{amount}')
 
         _svc_price = svc_price('react_special')
@@ -8214,16 +8253,16 @@ def _c_rs_worker(call):
             emoji_char = em_parts[0]
             custom_emoji_id = em_parts[1] if len(em_parts) > 1 else ''
         except:
-            bot.answer_callback_query(call.id, text='❌ خطأ، ابدأ الطلب من جديد', show_alert=True)
+            _cb_alert(call, text='❌ خطأ، ابدأ الطلب من جديد', show_alert=True)
             return
         if cid != p_uid:
-            bot.answer_callback_query(call.id, text='❌ هذا الطلب ليس لك', show_alert=True)
+            _cb_alert(call, text='❌ هذا الطلب ليس لك', show_alert=True)
             return
 
         url = db.get(f'react_special_url_{cid}') if db.exists(f'react_special_url_{cid}') else ''
         amount = int(db.get(f'react_special_amount_{cid}') or 0)
         if not url or not amount:
-            bot.answer_callback_query(call.id, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
+            _cb_alert(call, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
             return
 
         try:
@@ -8237,7 +8276,7 @@ def _c_rs_worker(call):
             emoji_display = emoji_char
 
         try:
-            bot.answer_callback_query(call.id, text='✅ تم اختيار الإيموجي')
+            _cb_alert(call, text='✅ تم اختيار الإيموجي')
         except:
             pass
 
@@ -8271,7 +8310,7 @@ def _c_rs_worker(call):
     if data == 'react_special_confirm':
         chosen = db.get(f'react_special_chosen_{cid}')
         if not chosen:
-            bot.answer_callback_query(call.id, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
+            _cb_alert(call, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
             return
 
         parts = chosen.split('|||')
@@ -8281,7 +8320,7 @@ def _c_rs_worker(call):
         amount          = int(parts[3]) if len(parts) > 3 else 0
 
         if not url or not amount:
-            bot.answer_callback_query(call.id, text='❌ انتهت صلاحية الطلب', show_alert=True)
+            _cb_alert(call, text='❌ انتهت صلاحية الطلب', show_alert=True)
             return
 
         _svc_price = svc_price('react_special')
@@ -8379,14 +8418,14 @@ def _c_rs_worker(call):
             amount = int(parts[1])
             emoji  = '_'.join(parts[2:]) if len(parts) > 2 else parts[2]
         except:
-            bot.answer_callback_query(call.id, text='❌ خطأ، ابدأ الطلب من جديد', show_alert=True)
+            _cb_alert(call, text='❌ خطأ، ابدأ الطلب من جديد', show_alert=True)
             return
         if cid != p_uid:
-            bot.answer_callback_query(call.id, text='❌ هذا الطلب ليس لك', show_alert=True)
+            _cb_alert(call, text='❌ هذا الطلب ليس لك', show_alert=True)
             return
         url = db.get(f'react_url_{cid}') if db.exists(f'react_url_{cid}') else ''
         if not url:
-            bot.answer_callback_query(call.id, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
+            _cb_alert(call, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
             return
         # إخفاء الأزرار وتأكيد الاختيار
         try:
@@ -8394,7 +8433,7 @@ def _c_rs_worker(call):
         except:
             pass
         try:
-            bot.answer_callback_query(call.id, text=f'✅ تم اختيار {emoji}')
+            _cb_alert(call, text=f'✅ تم اختيار {emoji}')
         except:
             pass
         db.delete(f'react_url_{cid}')
@@ -8447,7 +8486,7 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_charge_approve, target_uid)
         try:
-            bot.answer_callback_query(call.id, text='أرسل عدد النقاط')
+            _cb_alert(call, text='أرسل عدد النقاط')
         except:
             pass
 
@@ -8481,7 +8520,7 @@ def _c_rs_worker(call):
         except:
             pass
         try:
-            bot.answer_callback_query(call.id, text='تم الرفض')
+            _cb_alert(call, text='تم الرفض')
         except:
             pass
 
@@ -8576,20 +8615,20 @@ def _c_rs_worker(call):
         code = data.replace('use_gift_', '')
         gift = db.get(f"gift_{code}")
         if not gift:
-            bot.answer_callback_query(call.id, text='❌ رابط الهدية غير صالح أو منتهي الصلاحية', show_alert=True)
+            _cb_alert(call, text='❌ رابط الهدية غير صالح أو منتهي الصلاحية', show_alert=True)
             return
         max_uses = int(gift.get("max_uses", 1))
         uses = int(gift.get("uses", 0))
         used_by = gift.get("used_by", [])
         if gift.get("used") or uses >= max_uses:
-            bot.answer_callback_query(call.id, text='❌ تم استنفاد استخدامات هذا الرابط', show_alert=True)
+            _cb_alert(call, text='❌ تم استنفاد استخدامات هذا الرابط', show_alert=True)
             return
         if cid in used_by:
-            bot.answer_callback_query(call.id, text='❌ لقد استخدمت هذا الرابط من قبل', show_alert=True)
+            _cb_alert(call, text='❌ لقد استخدمت هذا الرابط من قبل', show_alert=True)
             return
         info = db.get(f'user_{cid}')
         if not info:
-            bot.answer_callback_query(call.id, text='❌ سجّل في البوت أولاً', show_alert=True)
+            _cb_alert(call, text='❌ سجّل في البوت أولاً', show_alert=True)
             return
         pts = int(gift.get("points", 0))
         info['coins'] = int(info.get('coins', 0)) + pts
@@ -8602,7 +8641,7 @@ def _c_rs_worker(call):
             gift["used"] = True
         db.set(f"gift_{code}", gift)
         remaining = max_uses - uses
-        bot.answer_callback_query(call.id, text=f'🎉 تهانيك! حصلت على {pts:,} نقطة هدية!', show_alert=True)
+        _cb_alert(call, text=f'🎉 تهانيك! حصلت على {pts:,} نقطة هدية!', show_alert=True)
         keys = mk(row_width=1)
         keys.add(btn('🔙 رجوع للرئيسية', callback_data='back', color='blue'))
         bot.edit_message_text(
@@ -8641,7 +8680,7 @@ def _do_set_fsub(message, key, is_text=False):
     label = labels.get(key, key)
     keys = mk(row_width=1)
     keys.add(btn('🔙 رجوع لإعدادات الشحن', callback_data='adm_charge_panel', color='blue'))
-    bot.reply_to(message, f'✅ تم تحديث {label} إلى: *{raw}*', reply_markup=keys, parse_mode='Markdown')
+    bot.reply_to(message, f'✅ تم تحديث {label} إ��ى: *{raw}*', reply_markup=keys, parse_mode='Markdown')
 
 def _do_gift_ask_uses(message):
     """الخطوة الأولى: اس��لام النقاط ثم السؤال عن عدد الاستخدامات"""
@@ -9949,7 +9988,7 @@ def votes_fsub_chforce(message, amount, wait_time, vote_url):
         f'• لم يتم ارسال : {false}\n'
         f'• تم خصم : {true * votes_fsub_price}'
     ), reply_markup=bk_cancel, parse_mode="HTML")
-    send_order_complete_to_channel(message.from_user, typerr, 'خدمات البوت VIP', amount, true, false, true * votes_fsub_price)
+    send_order_complete_to_channel(message.from_user, typerr, 'خد��ات البوت VIP', amount, true, false, true * votes_fsub_price)
     return
     url = message.text
     if 'https://t.me' in url:
@@ -10180,7 +10219,7 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(send_reaction(y['s'], url, like))
+                    _pyro_run(reactions(y['s'], url, like))
                     true += 1
                 except: false += 1
             unit_price = svc_price('react')
@@ -10200,7 +10239,7 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(send_vote(y['s'], url, poll_idx, wait_time))
+                    _pyro_run(poll(y['s'], url, int(poll_idx)))
                     true += 1
                 except: false += 1
             unit_price = svc_price('votes')
@@ -11735,7 +11774,7 @@ def vipp(message, type_op):
             return
         d = db.get(f"user_{uid}")
         if d is None:
-            bot.reply_to(message, f'• العضو غير موجود في البوت')
+            bot.reply_to(message, f'• العضو غ��ر موجود في البوت')
             return
         d['premium'] = True
         db.set(f'user_{uid}', d)
@@ -12809,7 +12848,7 @@ def gen_start(message):
                         f'👤 الاسم : {message.from_user.first_name or ""}\n'
                         f'📛 اليوزر : {_eu_uname}\n'
                         f'🆔 الأيدي : <code>{uid}</code>\n'
-                        f'📱 أرقام سجّلها : {_eu_submitted} رقم'
+                        f'📱 أرقام سجّلها : {_eu_submitted} رق��'
                     ),
                     "parse_mode": "HTML"
                 },
