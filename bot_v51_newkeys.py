@@ -1836,6 +1836,11 @@ def check_user(user_id):
     return True
 
 def set_user(user_id, data):
+    try:
+        if not db.exists(f'user_{user_id}_reg'):
+            db.set(f'user_{user_id}_reg', time.time())
+    except Exception:
+        pass
     db.set(f'user_{user_id}', data)
     return True
 
@@ -2731,7 +2736,7 @@ def _do_claim_daily_gift(call):
 
         success_txt = (
             f'🎉 <b>تهانيناً!</b>\n\n'
-            f'🎁 حصلت على <b>{daily_gift} نقطة</b> هدية يومية\n'
+            f'�� حصلت على <b>{daily_gift} نقطة</b> هدية يومية\n'
             f'💰 رصيدك الآن: <b>{info["coins"]} نقطة</b>'
         )
 
@@ -3217,7 +3222,7 @@ def _handle_mkt_add_step(message):
         pending_market_data[cid] = data
         msg = bot.reply_to(
             message,
-            '💰 <b>سعر البيع</b>\n\nأرسل السعر الذي تريده (بالنقاط):\nمثال: 5000',
+            '💰 <b>سعر البيع</b>\n\nأرسل السعر ال��ي تريده (بالنقاط):\nمثال: 5000',
             parse_mode='HTML'
         )
         bot.register_next_step_handler(msg, _handle_mkt_add_step)
@@ -3902,7 +3907,7 @@ def start_asinvite(message):
         start_message(message)
         return
 
-    # ✅ حفظ الإحالة مؤقتاً — النقاط تتضاف بعد الاشتراك في القنوات
+    # ✅ حفظ الإحالة مؤقتاً — النقاط تتضاف بع�� الاشتراك في القنوات
 
     # تسجيل المدعو لو مش موجود
     if not check_user(join_user):
@@ -4167,6 +4172,7 @@ _ADMIN_CATEGORIES = {
     'adm_cat_users': {
         'title': '👥 المستخدمين والصلاحيات',
         'buttons': [
+            ('🛠 إدارة المستخدمين', 'adm_usermgmt', 'green'),
             ('حظر شخص',        'banone',   'red'),
             ('فك حظر',          'unbanone', 'green'),
             ('اضافة ادمن',      'addadmin', 'green'),
@@ -4233,7 +4239,7 @@ _ADMIN_CATEGORIES = {
             ('🤖 إدارة الدعم بالذكاء الاصطناعي',    'adm_ai_panel','green'),
             ('سحب اصوات',                           'dump_votes','red'),
             ('س��ام رسائل',                          'spams',     'red'),
-            ('مغادرة كل الحسابات من قناة',          'leave',     'red'),
+            ('مغادرة كل الحسابات ��ن قناة',          'leave',     'red'),
             ('مغادرة كل القنوات والمجموعات',        'lvall',     'red'),
         ],
     },
@@ -4772,9 +4778,8 @@ def _c_rs_worker(call):
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
-        'setforce', 'fsub_add', 'fsub_remove', 'fsub_del_', 'fsub_edit_',
-        'adm_fsub_stats', 'adm_fsub_limit_',
-        'stats', 'adm_cat_subscription', 'adm_set_channels',
+        'setforce', 'fsub_', 'adm_fsub_stats', 'adm_fsub_limit_',
+        'adm_usermgmt', 'umg_',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -5209,6 +5214,15 @@ def _c_rs_worker(call):
     # ⚽ كورة القدم — عرض القائمة
 
     if data == 'football':
+        _fbcd_key = f"user_{call.from_user.id}_fb_cd"
+        _fbcd_now = time.time()
+        try:
+            _fbcd_last = float(db.get(_fbcd_key) or 0)
+        except Exception:
+            _fbcd_last = 0
+        if _fbcd_now - _fbcd_last < 3600:
+            _cb_alert(call, '⏳ استنى ' + fmt_remaining(int(3600 - (_fbcd_now - _fbcd_last))) + ' وتعالى العب كورة تاني ⚽', show_alert=True)
+            return
         _show_football_menu(call.from_user.id, cid, mid)
         return
 
@@ -5240,6 +5254,15 @@ def _c_rs_worker(call):
         return
 
     if data == 'xo_menu':
+        _xmcd_key = f"user_{cid}_xo_cd"
+        _xmcd_now = time.time()
+        try:
+            _xmcd_last = float(db.get(_xmcd_key) or 0)
+        except Exception:
+            _xmcd_last = 0
+        if _xmcd_now - _xmcd_last < 3600:
+            _cb_alert(call, '⏳ استنى ' + fmt_remaining(int(3600 - (_xmcd_now - _xmcd_last))) + ' وتعالى العب XO تاني ❌', show_alert=True)
+            return
         xo_prize = int(db.get("xo_prize") or 300)
         keys = mk(row_width=1)
         keys.add(btn('❌ ابدأ لعبة XO (مجاناً)', callback_data='xo_start', color='green'))
@@ -5862,8 +5885,6 @@ def _c_rs_worker(call):
         return
 
     if data == 'stats':
-        if cid not in (db.get('admins') or []) and cid != sudo:
-            return
         today = datetime.datetime.now().strftime("%Y-%m-%d")
 
 
@@ -6193,6 +6214,54 @@ def _c_rs_worker(call):
     if data == 'getinfo':
         x = bot.edit_message_text(text='• ارسل ايدي الشخص الذي تريد معرفة معلوماته', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, get_info)
+        return
+
+    if data == 'adm_usermgmt':
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        x = _safe_edit_msg(text='🛠 <b>إدارة المستخدمين</b>' + chr(10) + chr(10) + '• ابعت آيدي المستخدم أو اليوزر (@username):', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm, parse_mode='HTML')
+        bot.register_next_step_handler(x, _umg_lookup)
+        return
+    if data.startswith('umg_show_'):
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        try:
+            _u = int(data.replace('umg_show_', ''))
+        except Exception:
+            return
+        _umg_show_panel(cid, mid, _u)
+        return
+    if data.startswith('umg_add_') or data.startswith('umg_sub_'):
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        _op = 'add' if data.startswith('umg_add_') else 'sub'
+        try:
+            _u = int(data.replace('umg_add_', '').replace('umg_sub_', ''))
+        except Exception:
+            return
+        _lbl = 'إضافة' if _op == 'add' else 'خصم'
+        x = _safe_edit_msg(text='✏️ <b>' + _lbl + ' نقاط للمستخدم</b> <code>' + str(_u) + '</code>' + chr(10) + chr(10) + '• ابعت عدد النقاط:', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm, parse_mode='HTML')
+        bot.register_next_step_handler(x, _umg_amount, _u, _op)
+        return
+    if data.startswith('umg_unban_') or data.startswith('umg_ban_'):
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        _is_unban = data.startswith('umg_unban_')
+        try:
+            _u = int(data.replace('umg_unban_', '').replace('umg_ban_', ''))
+        except Exception:
+            return
+        _bad = db.get('badguys') or []
+        if _is_unban:
+            if _u in _bad:
+                _bad.remove(_u)
+                db.set('badguys', _bad)
+        else:
+            if _u not in _bad:
+                _bad.append(_u)
+                db.set('badguys', _bad)
+        _umg_show_panel(cid, mid, _u)
+        return
     if data == 'lvall':
         keys = mk(row_width=2)
         btn2 = btn('تاكيد المغادرة', callback_data='lvallc')
@@ -6604,8 +6673,6 @@ def _c_rs_worker(call):
         bot.edit_message_text(text=textt, chat_id=cid, message_id=mid, reply_markup=bk_cancel, parse_mode="HTML")
         return
     if data == 'setforce':
-        if cid not in (db.get('admins') or []) and cid != sudo:
-            return
         force_ch = _get_force_channels()
         ch_list  = '\n'.join([f'• {_ch_name(c)} → {_ch_url(c)}' for c in force_ch]) if force_ch else 'لا توجد قنوات بعد'
 
@@ -6631,7 +6698,7 @@ def _c_rs_worker(call):
         ckeys_sf.add(btn(f'✏️ زر الاشتراك: {_se} {_st}', callback_data='fsub_edit_sub_btn', color='green'))
         ckeys_sf.add(btn(f'✏️ زر التحقق: {_ce} {_ct}',   callback_data='fsub_edit_check_btn', color='blue'))
         ckeys_sf.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_subscription', color='red'))
-        bot.edit_message_text(
+        _safe_edit_msg(
             text=(
                 '📡 <b>إدارة قنوات الاشتراك الإجباري</b>\n\n'
                 f'<b>القنوات الحالية ({len(force_ch)}):</b>\n{ch_list}\n'
@@ -6822,9 +6889,12 @@ def _c_rs_worker(call):
             return
         force_channels = db.get('force') or []
         if not force_channels:
-            bot.edit_message_text(
+            _emp_kb = mk(row_width=1)
+            _emp_kb.add(btn('➕ إضافة قناة جديدة', callback_data='fsub_add', color='green'))
+            _emp_kb.add(btn('🔙 رجوع', callback_data='adm_cat_subscription', color='red'))
+            _safe_edit_msg(
                 text='📊 إحصائيات الاشتراك الإجباري\n\n⚠️ لا توجد قنوات اشتراك إجباري مضافة بعد',
-                chat_id=cid, message_id=mid, reply_markup=bk
+                chat_id=cid, message_id=mid, reply_markup=_emp_kb
             )
             return
         txt = '📊 <b>إحصائيات الاشتراك الإجباري</b>\n'
@@ -6847,7 +6917,7 @@ def _c_rs_worker(call):
             keys_s.add(btn(f'✏️ تعيين حد @{ch_clean}', callback_data=f'adm_fsub_limit_{ch_clean}', color='green'))
         txt += '━━━━━━━━━━━━━━━━━━━'
         keys_s.add(btn('رجوع', callback_data='setforce', color='blue'))
-        bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys_s, parse_mode='HTML')
+        _safe_edit_msg(text=txt, chat_id=cid, message_id=mid, reply_markup=keys_s, parse_mode='HTML')
         return
 
     if data.startswith('adm_fsub_limit_'):
@@ -7038,7 +7108,7 @@ def _c_rs_worker(call):
 
     if data == 'charge_points':
         keys = mk(row_width=1)
-        keys.add(btn('��� شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
+        keys.add(btn('��� ��حن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
         keys.add(btn('💎 شحن بيوستد', callback_data='charge_usdt', color='blue'))
         keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
@@ -7298,7 +7368,7 @@ def _c_rs_worker(call):
         _pr = svc_price('reacts'); _mn = svc_min('reacts'); _mx = svc_max('reacts')
         _svc_txt = (
             f'🎲 <b>خدمة تفاعلات عشوائي</b>\n\n'
-            f'━━━━━━━━━━━━━━━━━━━\n'
+            f'━━���━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
             f'���� الحد الأقصى : <b>{_mx}</b>\n'
@@ -7791,7 +7861,7 @@ def _c_rs_worker(call):
             f"🤝 الوكيل: {agent_info}\n\n"
             f"👑 VIP شهري: {vip_monthly:,} نقطة\n"
             f"👑 VIP سنوي: {vip_yearly:,} نقطة\n"
-            f"👑 VIP مدى الحياة: {vip_lifetime:,} نقطة\n"
+            f"👑 VIP مدى ��لحياة: {vip_lifetime:,} نقطة\n"
             f"📌 شراء VIP: {'✅ مفعّل' if vip_sub_on else '❌ معطّل'}"
         )
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode="HTML")
@@ -9088,7 +9158,7 @@ def _do_create_gift_link(message, pts):
         link = f'https://t.me/{me.username}?start=gift_{code}'
     except:
         link = f'رمز الهدية: gift_{code}'
-    uses_txt = 'مرة واحدة فقط ❗' if max_uses == 1 else f'{max_uses:,} مرة 🔁'
+    uses_txt = 'مرة واحدة فقط ���' if max_uses == 1 else f'{max_uses:,} مرة 🔁'
     keys = mk(row_width=1)
     keys.add(btn('🎁 صنع رابط هدية آخر', callback_data='adm_gift_link', color='green'))
     keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_tasks', color='blue'))
@@ -9809,7 +9879,7 @@ def get_amount(message, type_req):
                 bot.reply_to(message, f'• عدد حسابات البوت غير كافية لتنفيذ طلبك', reply_markup=bk_cancel, parse_mode="HTML")
                 return
             _req_txt = (
-                f'╔═══════════════════���══╗\n'
+                f'╔══════════════��════���══╗\n'
                 f'       ⚡ طلب تفاعلات اختياري جديد\n'
                 f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} تفاعل\n\n'
@@ -10738,7 +10808,7 @@ def def_execute_order(uid: int, cb=None):
                 except: false += 1
             unit_price = linkbot_price
 
-        elif otype == 'تفاعلات اختياري':
+        elif otype == 'تفاعلات اختيار��':
             like = extra.get('like', '👍')
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
@@ -10897,7 +10967,7 @@ def get_url_memp(message, amount):
     info = get(message.from_user.id)
     price = member_price * amount
     if price > int(info['coins']):
-        bot.reply_to(message, text=f'نقاطك غير كافية لتنفيذ طلبك تحتاج الي   {price - int(info["coins"])}  ', reply_markup=bk_cancel, parse_mode="HTML")
+        bot.reply_to(message, text=f'نقاطك غير كافية لتنفيذ طلبك ��حتاج الي   {price - int(info["coins"])}  ', reply_markup=bk_cancel, parse_mode="HTML")
         return
     load = db.get('accounts')
     if len(load) < 1:
@@ -11124,7 +11194,7 @@ def react_special_get_emoji_first(message):
     if not db.get(f'react_special_{cid}_proccess'):
         return
     if message.text and message.text.startswith('/'):
-        bot.reply_to(message, '❌ تم إلغاء الطلب', reply_markup=bk)
+        bot.reply_to(message, '�� تم إلغاء الطلب', reply_markup=bk)
         db.delete(f'react_special_{cid}_proccess')
         return
 
@@ -12000,6 +12070,125 @@ def banned(message, type_op):
             db.set('badguys', d)
             bot.reply_to(message, f'• تم الغاء حظر العضو بنجاح ✅')
             return
+
+def _safe_edit_msg(text=None, chat_id=None, message_id=None, reply_markup=None, parse_mode=None, **kwargs):
+    try:
+        return bot.edit_message_text(text=text, chat_id=chat_id, message_id=message_id, reply_markup=reply_markup, parse_mode=parse_mode, **kwargs)
+    except Exception:
+        pass
+    try:
+        return bot.send_message(chat_id, text, reply_markup=reply_markup, parse_mode=parse_mode)
+    except Exception:
+        return None
+
+def _umg_resolve_uid(text):
+    text = (text or '').strip()
+    if not text:
+        return None
+    if text.lstrip('-').isdigit():
+        try:
+            return int(text)
+        except Exception:
+            return None
+    handle = text.lstrip('@').split('/')[-1].strip()
+    if not handle:
+        return None
+    try:
+        ch = bot.get_chat('@' + handle)
+        return ch.id
+    except Exception:
+        return None
+
+def _umg_show_panel(chat_id, message_id, uid):
+    d = db.get('user_' + str(uid))
+    if not d:
+        _kb = mk(row_width=1)
+        _kb.add(btn('🔙 رجوع', callback_data='adm_cat_users', color='red'))
+        _safe_edit_msg(text='❌ المستخدم <code>' + str(uid) + '</code> غير موجود في البوت', chat_id=chat_id, message_id=message_id, reply_markup=_kb, parse_mode='HTML')
+        return
+    coins = int(d.get('coins', 0) or 0)
+    refs = len(d.get('users', []) or [])
+    buys = int(db.get('user_' + str(uid) + '_buys')) if db.exists('user_' + str(uid) + '_buys') else 0
+    is_vip = bool(d.get('premium'))
+    is_banned = uid in (db.get('badguys') or [])
+    uname = '—'
+    fname = str(uid)
+    try:
+        _chat = bot.get_chat(uid)
+        fname = _chat.first_name or str(uid)
+        uname = ('@' + _chat.username) if getattr(_chat, 'username', None) else '—'
+    except Exception:
+        pass
+    join_txt = 'غير معروف'
+    if db.exists('user_' + str(uid) + '_reg'):
+        try:
+            join_txt = time.strftime('%Y-%m-%d', time.localtime(float(db.get('user_' + str(uid) + '_reg'))))
+        except Exception:
+            join_txt = 'غير معروف'
+    lines = [
+        '👤 <b>بيانات المستخدم</b>',
+        '━━━━━━━━━━━━━━━━',
+        '🆔 <b>المعرف:</b> <code>' + str(uid) + '</code>',
+        '📛 <b>الاسم:</b> ' + str(fname),
+        '🔗 <b>اليوزر:</b> ' + str(uname),
+        '💰 <b>النقاط:</b> ' + format(coins, ',') + ' نقطة',
+        '👥 <b>الإحالات:</b> ' + format(refs, ','),
+        '📮 <b>الطلبات:</b> ' + format(buys, ','),
+        '👑 <b>VIP:</b> ' + ('نعم' if is_vip else 'لا'),
+        '🚫 <b>محظور:</b> ' + ('نعم' if is_banned else 'لا'),
+        '📅 <b>انضم:</b> ' + str(join_txt),
+    ]
+    txt = chr(10).join(lines)
+    kb = mk(row_width=2)
+    kb.add(btn('➕ إضافة نقاط', callback_data='umg_add_' + str(uid), color='green'), btn('➖ خصم نقاط', callback_data='umg_sub_' + str(uid), color='red'))
+    if is_banned:
+        kb.add(btn('✅ فك الحظر', callback_data='umg_unban_' + str(uid), color='green'))
+    else:
+        kb.add(btn('🚫 حظر', callback_data='umg_ban_' + str(uid), color='red'))
+    kb.add(btn('🔄 تحديث البيانات', callback_data='umg_show_' + str(uid), color='blue'))
+    kb.add(btn('🔙 رجوع', callback_data='adm_cat_users', color='red'))
+    _safe_edit_msg(text=txt, chat_id=chat_id, message_id=message_id, reply_markup=kb, parse_mode='HTML')
+
+def _umg_lookup(message):
+    _cid = message.from_user.id
+    if _cid not in (db.get('admins') or []) and _cid != sudo:
+        return
+    t = (message.text or '').strip()
+    if t in ('/start', '/cancel', '❌ إلغاء و رجوع'):
+        return
+    uid = _umg_resolve_uid(t)
+    if uid is None:
+        bot.reply_to(message, '❌ ابعت آيدي رقمي صحيح أو يوزر مظبوط (@username)')
+        return
+    _umg_show_panel(message.chat.id, None, uid)
+
+def _umg_amount(message, uid, op):
+    _cid = message.from_user.id
+    if _cid not in (db.get('admins') or []) and _cid != sudo:
+        return
+    t = (message.text or '').strip()
+    if t in ('/start', '/cancel', '❌ إلغاء و رجوع'):
+        return
+    try:
+        amount = int(t)
+    except Exception:
+        bot.reply_to(message, '❌ ابعت رقم صحيح بس')
+        return
+    if amount < 1:
+        bot.reply_to(message, '❌ لازم رقم أكبر من 0')
+        return
+    b = db.get('user_' + str(uid))
+    if not b:
+        bot.reply_to(message, '❌ المستخدم مش موجود')
+        return
+    cur = int(b.get('coins', 0) or 0)
+    if op == 'add':
+        b['coins'] = cur + amount
+    else:
+        b['coins'] = max(0, cur - amount)
+    db.set('user_' + str(uid), b)
+    bot.reply_to(message, '✅ تم بنجاح — نقاطه الآن: ' + format(b['coins'], ',') + ' نقطة')
+    _umg_show_panel(message.chat.id, None, uid)
 
 def get_info(message):
     try:
@@ -13224,7 +13413,7 @@ def _gen_start_menu(uid, first_name):
         f'╔══════════════════╗\n'
         f'       🤖 بوت تسجيل الأرقام\n'
         f'╚══════════════════╝\n\n'
-        f'👋 أهلاً {first_name}!\n\n'
+        f'👋 أهلا�� {first_name}!\n\n'
         f'💎 <b>مكافأة كل رقم :</b> {_rent_pts:,} نقطة\n'
         f'📱 <b>أرقام سجّلتها أنت :</b> {_user_submitted} رقم\n'
         f'📅 <b>حالة التسجيل اليوم :</b> {_daily_txt}\n'
@@ -13824,7 +14013,7 @@ def _gen_verify_code(message, code_raw, uid):
             kb = _gikb([_gbtn('إلغاء', cb='reg_cancel')])
             gen_bot.reply_to(message,
                 '🔐 <b>التحقق بخطوتين مفعّل</b>\n\n'
-                '• أرسل كلمة مرور الحساب الآن:',
+                '• أرسل كلمة م��ور الحساب الآن:',
                 reply_markup=kb, parse_mode='HTML'
             )
             return
@@ -13861,7 +14050,7 @@ def _gen_verify_pass(message, password, uid):
             await client.check_password(password)
         except PasswordHashInvalid:
             kb = _gikb([_gbtn('إلغاء', cb='reg_cancel')])
-            gen_bot.reply_to(message, '❌ <b>كلمة مرور خاطئة</b>\n\nأعد المحاولة:', reply_markup=kb, parse_mode='HTML')
+            gen_bot.reply_to(message, '❌ <b>كلمة مرور خاطئة</b>\n\nأعد المحا��لة:', reply_markup=kb, parse_mode='HTML')
             return
         except Exception as e:
             gen_bot.reply_to(message, f'❌ خطأ: {e}')
