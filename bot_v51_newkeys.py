@@ -1845,7 +1845,17 @@ def set_user(user_id, data):
     return True
 
 def get(user_id):
-    return db.get(f'user_{user_id}')
+    d = db.get(f'user_{user_id}')
+    if isinstance(d, dict) and d.get('premium') and d.get('premium_until'):
+        try:
+            if time.time() > float(d['premium_until']):
+                d['premium'] = False
+                d['premium_until'] = None
+                d['premium_plan'] = None
+                db.set(f'user_{user_id}', d)
+        except Exception:
+            pass
+    return d
 
 def delete(user_id):
     return db.delete(f'user_{user_id}')
@@ -3321,7 +3331,7 @@ def _handle_set_market_fee(message):
         bot.reply_to(message, '❌ أرسل رقماً صحيحاً')
         return
     db.set("market_fee", fee)
-    bot.reply_to(message, f'✅ تم تعيين نسبة العمولة إلى {fee}%', reply_markup=bk)
+    bot.reply_to(message, f'✅ تم ت��يين نسبة العمولة إلى {fee}%', reply_markup=bk)
 
 def _handle_admin_task_step(message):
     cid = message.from_user.id
@@ -4417,15 +4427,11 @@ def _show_shop_panel(cid, mid):
     month_price = int(db.get("vip_monthly_price") or db.get("vip_month_price") or 15000)
     year_price  = int(db.get("vip_yearly_price")  or db.get("vip_year_price")  or 100000)
     keys = mk(row_width=1)
+    keys.add(btn(f'📅 أسبوعي — {week_price:,} نقطة', callback_data='vip_buy_week', color='green'))
+    keys.add(btn(f'📆 شهري — {month_price:,} نقطة', callback_data='vip_buy_month', color='green'))
+    keys.add(btn(f'🏆 سنوي — {year_price:,} نقطة', callback_data='vip_buy_year', color='green'))
     if support_username:
-        keys.add(btn(f'📅 أسبوعي — {week_price:,} نقطة',  url=f'https://t.me/{support_username}', color='green'))
-        keys.add(btn(f'📆 شهري — {month_price:,} نقطة',   url=f'https://t.me/{support_username}', color='green'))
-        keys.add(btn(f'🏆 سنوي — {year_price:,} نقطة',    url=f'https://t.me/{support_username}', color='green'))
-        keys.add(btn('💬 تواصل مع الدعم',     url=f'https://t.me/{support_username}', color='blue'))
-    else:
-        keys.add(btn(f'📅 أسبوعي — {week_price:,} نقطة',  callback_data='vip_info', color='green'))
-        keys.add(btn(f'📆 شهري — {month_price:,} نقطة',   callback_data='vip_info', color='green'))
-        keys.add(btn(f'🏆 سنوي — {year_price:,} نقطة',    callback_data='vip_info', color='green'))
+        keys.add(btn('💬 تواصل مع الدعم', url=f'{{https://t.me/{support_username}}}', color='blue'))
     keys.add(btn('🔙 رجوع', callback_data='back', color='red'))
     contact_line = f'@{support_username}' if support_username else '@admin'
     txt = (
@@ -4456,6 +4462,68 @@ def _show_shop_panel(cid, mid):
     bot.send_message(cid, txt, reply_markup=keys, parse_mode='HTML')
 
 # ⚽ لعبة كورة القدم
+
+def _do_vip_purchase(call, plan):
+    cid = call.from_user.id
+    _plans = {
+        'week':  ('أسبوعي', int(db.get('vip_week_price') or 5000), 7),
+        'month': ('شهري', int(db.get('vip_monthly_price') or db.get('vip_month_price') or 15000), 30),
+        'year':  ('سنوي', int(db.get('vip_yearly_price') or db.get('vip_year_price') or 100000), 365),
+    }
+    if plan not in _plans:
+        return
+    label, price, days = _plans[plan]
+    d = get(cid)
+    if not d:
+        try:
+            bot.send_message(cid, '❌ لازم تسجّل في البوت الأول.')
+        except Exception:
+            pass
+        return
+    coins = int(d.get('coins', 0) or 0)
+    if coins < price:
+        try:
+            bot.send_message(cid,
+                '❌ نقاطك مش كافية لتفعيل الاشتراك!' + chr(10) + chr(10)
+                + f'👑 الباقة: VIP {label}' + chr(10)
+                + f'💵 السعر: {price:,} نقطة' + chr(10)
+                + f'💰 رصيدك: {coins:,} نقطة' + chr(10)
+                + f'➖ ينقصك: {price - coins:,} نقطة')
+        except Exception:
+            pass
+        return
+    now = time.time()
+    base = now
+    if d.get('premium') and d.get('premium_until'):
+        try:
+            if float(d['premium_until']) > now:
+                base = float(d['premium_until'])
+        except Exception:
+            base = now
+    d['coins'] = coins - price
+    d['premium'] = True
+    d['premium_until'] = base + days * 86400
+    d['premium_plan'] = plan
+    set_user(cid, d)
+    try:
+        import datetime as _dt
+        _exp = _dt.datetime.fromtimestamp(d['premium_until']).strftime('%Y-%m-%d')
+    except Exception:
+        _exp = ''
+    try:
+        bot.send_message(cid,
+            f'🎉 مبروك! تم تفعيل اشتراك VIP {label} بنجاح 👑' + chr(10) + chr(10)
+            + f'💳 اتخصم: {price:,} نقطة' + chr(10)
+            + f'💰 رصيدك الحالي: {d["coins"]:,} نقطة' + chr(10)
+            + (f'⏰ ينتهي في: {_exp}' + chr(10) if _exp else '') +
+            f'⌛ المدة: {days} يوم')
+    except Exception:
+        pass
+    try:
+        _show_shop_panel(cid, call.message.message_id)
+    except Exception:
+        pass
+
 
 @bot.message_handler(commands=['football'])
 def cmd_football(message):
@@ -5216,6 +5284,15 @@ def _c_rs_worker(call):
         _show_shop_panel(cid, mid)
         return
 
+    if data == 'vip_buy_week':
+        _do_vip_purchase(call, 'week')
+        return
+    if data == 'vip_buy_month':
+        _do_vip_purchase(call, 'month')
+        return
+    if data == 'vip_buy_year':
+        _do_vip_purchase(call, 'year')
+        return
     if data == 'vip_info':
         _cb_alert(
             call,
@@ -5393,7 +5470,7 @@ def _c_rs_worker(call):
         completed_key = f"user_{cid}_tasks_{today}"
         completed = db.get(completed_key) or []
         if task_id in completed:
-            _cb_alert(call, '✅ لقد أكمل�� هذه المهمة مسبقاً!', show_alert=True)
+            _cb_alert(call, '✅ لقد أكمل�� هذه المهمة ��سبقاً!', show_alert=True)
             return
         task_type   = target_task.get("type", "")
         task_target = target_task.get("target", "").strip()
@@ -5847,7 +5924,7 @@ def _c_rs_worker(call):
         _rent_pts_val = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
         reg_keys = mk(row_width=1)
         reg_keys.add(btn('📲 تسجيل حساب الآن', url=_give_bot_link, color='green'))
-        reg_keys.add(btn('🏆 توب 5 تسجيل الحسابات', callback_data='rent_top', color='red'))
+        reg_keys.add(btn('🏆 توب 5 ت��جيل الحسابات', callback_data='rent_top', color='red'))
         reg_keys.add(btn('رجوع', callback_data='back', color='blue'))
         reg_txt = (
             "╔══════════��═══════╗\n"
@@ -6069,7 +6146,7 @@ def _c_rs_worker(call):
         _cb_alert(call, text=_L(cid, f'🔢 إجمالي الطلبات: {total_orders:,}', f'🔢 Total orders: {total_orders:,}'), show_alert=True)
         return
     if data == 'addpoints':
-        x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
+        x = bot.edit_message_text(text='• ارسل ايدي الشخص ال��راد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, addpoints)
     if data == 'send':
         if cid in (db.get("admins") or []) or cid == sudo:
@@ -6441,7 +6518,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(
             text=(
                 '⚡ <b>تفاعلات مجانية</b>\n\n'
-                '━━━━━━━━━━━━━━━━━━━\n'
+                '━━━━━━━━━��━━━━━━━━━\n'
                 '📎 أرسل الآن رابط المنشور\n'
                 '━━━━━━━━━━━━━━━━━━━\n\n'
                 '• مثال: https://t.me/channel/123\n'
@@ -7611,7 +7688,7 @@ def _c_rs_worker(call):
             status_icon = '🟢' if on else '🔴'
             price_str = f'💰{p}/عضو' if svc_key == 'free_member' else f'💰{p * 100}/100'
             skeys.add(btn(f'{status_icon} {svc_info["label"]} | {price_str} | {mn}~{mx}', callback_data=f'svc_pick_{svc_key}', color='green' if on else 'red'))
-        skeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
+        skeys.add(btn('🔙 رجوع للأدم��', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(
             text='⚙️ إعدادات الخدمات\n\nاضغط على أي خدمة لتعديل سعرها أو حدودها أو تفعيلها/تعطيلها\n\n🟢 = مفعّلة  |  🔴 = معطّلة\nا��تنسيق: 💰السعر لكل وحدة | الحد الأدنى ~ الأقصى',
             chat_id=cid, message_id=mid, reply_markup=skeys
@@ -8318,7 +8395,7 @@ def _c_rs_worker(call):
             ekeys.add(btn(f'{icon} {cur_label}', callback_data=f'emjbtn_{cb}', color='blue'))
         ekeys.add(btn('رجوع', callback_data='adm_emoji', color='blue'))
         bot.edit_message_text(
-            text='اختر الزر الذي تريد تعيين إيموجي له:\n\n✅ = مضبوط  |  ➕ = بدون إيموجي',
+            text='اخت�� الزر الذي تريد تعيين إيمو��ي له:\n\n✅ = مضبوط  |  ➕ = بدون إيموجي',
             chat_id=cid, message_id=mid, reply_markup=ekeys
         )
 
@@ -8340,7 +8417,7 @@ def _c_rs_worker(call):
                 f'🎨 <b>تعيين إيموجي للزر: {cur_label}</b>\n'
                 f'{cur_txt}\n\n'
                 '━━━━━━━━━━━━━━━━━━\n'
-                '📤 أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
+                '📤 أرسل الإيموجي ا��مميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
                 'مثال:\n'
                 '<code>5368324170671202286</code>'
             ),
@@ -9196,6 +9273,15 @@ def _do_set_support_info(message):
         bot.reply_to(message, '❌ نص فارغ، حاول مرة أخرى')
         return
     db.set("support_info", txt)
+    try:
+        import re as _re_sup
+        _mu = _re_sup.search(r'(?:https?://)?t\.me/([A-Za-z0-9_]{3,})', txt) or _re_sup.search(r'@([A-Za-z0-9_]{3,})', txt)
+        if _mu:
+            db.set("support_username", _mu.group(1))
+        elif _re_sup.fullmatch(r'[A-Za-z0-9_]{3,}', txt.strip()):
+            db.set("support_username", txt.strip())
+    except Exception:
+        pass
     keys = mk(row_width=1)
     keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_subscription', color='blue'))
     bot.reply_to(message, '✅ تم تحديث نص الدعم الفني بنجاح', reply_markup=keys)
@@ -9380,7 +9466,7 @@ def _do_svc_edit(message, svc_key, field):
         label = f'⬇️ الحد الأدنى الجديد: {val}'
     elif field == 'max':
         db.set(svc_info["max_key"], val)
-        label = f'⬆️ الحد الأقصى الجديد: {val}'
+        label = f'���️ الحد الأقصى الجديد: {val}'
     else:
         return
     skeys = TelebotMarkup(row_width=1)
@@ -10316,7 +10402,7 @@ def get_amount(message, type_req):
             try:
                 amount = int(message.text)
             except:
-                r = bot.reply_to(message, f'• رجاء ارسل رقم فقط ، اعد المحاولة مره اخري')
+                r = bot.reply_to(message, f'• رجاء ارس�� رقم فقط ، اعد المحا��لة مره اخري')
                 bot.register_next_step_handler(r, get_amount, type_req)
                 return
             _min, _max = svc_min('comments'), svc_max('comments')
@@ -10637,7 +10723,7 @@ def show_order_confirm(message, order_type: str, amount: int, url: str, price: i
         f"💳 <b>رصيدك</b>   : {coins:,} نقطة\n"
         f"💳 <b>بعد الطلب</b>: {max(0, coins - price):,} نقطة\n"
         f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"هل تريد تأكيد الطلب؟"
+        f"هل تريد تأكيد الطل��؟"
     )
     keys = mk(row_width=2)
     keys.add(
@@ -11593,7 +11679,7 @@ def react_special_step2_url(message):
         db.delete(f'react_special_url_{cid}')
 
 def react_special_get_url(message):
-    """الخطوة 1: استقبال رابط المنشور ثم جلب الإيموجي المتاحة من القناة"""
+    """الخطوة 1: استقبال را��ط المنشور ثم جلب الإيموجي المتاحة من القناة"""
     cid = message.from_user.id
     _proc = db.get(f'react_special_{cid}_proccess')
     if not _proc and _proc != True and str(_proc) not in ('True', '1', 'true'):
@@ -12051,7 +12137,7 @@ def adminss(message, type_op):
         else:
             d.remove(uid)
             db.set('admins', d)
-            bot.reply_to(message, f'• تم ا��الة العضو من الادمنية بنجاح ✅')
+            bot.reply_to(message, f'• تم ا����الة العضو من الادمنية بنجاح ✅')
             return
 
 def banned(message, type_op):
@@ -12448,7 +12534,7 @@ def handle_successful_payment(message):
                 chat_id=uid,
                 text=(
                     f"✅ تم الشحن بنجاح!\n\n"
-                    f"⭐ النجوم المدفوعة: {amt}\n"
+                    f"⭐ النجوم المدفوع��: {amt}\n"
                     f"💰 النقاط المضافة: {pts:,}\n\n"
                     f"رصيدك الحالي: {int(udata['coins']):,} نقطة 🎉"
                 )
@@ -13000,7 +13086,7 @@ async def _check_sessions_task():
                             if db.exists(f'user_{owner_id}'):
                                 udata  = db.get(f'user_{owner_id}')
                                 coins  = int(udata.get('coins', 0))
-                                # يسمح بالرصيد السالب عمداً (بدون max)
+                                # يسمح با��رصيد السالب عمداً (بدون max)
                                 new_coins = coins - _rent_pts
                                 udata['coins'] = new_coins
                                 db.set(f'user_{owner_id}', udata)
@@ -13872,7 +13958,7 @@ def gen_msg_handler(message):
                 gen_bot.reply_to(message,
                     f'⚠️ <b>الرقم موجود مسبقاً لكنه {_status}</b>\n\n'
                     f'📱 <code>{phone}</code>\n'
-                    '• سيتم تحديث الجلسة بالجلسة الجديدة تلقائياً ✅',
+                    '• سيتم تحديث ال��لسة بالجلسة الجديدة تلقائياً ✅',
                     parse_mode='HTML'
                 )
         wait_msg = gen_bot.reply_to(message, '⏳ جارٍ إرسال كود التحقق...')
