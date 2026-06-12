@@ -2943,14 +2943,14 @@ def _build_main_keys(user_id):
         ek.add(btn(f'Total orders : {total_orders:,}', callback_data='11', color='green'))
         return ek
     keys = mk(row_width=2)
-    keys.add(btn(' خدمات بوت رشق بلص - 𝖯𝖫𝖴𝖲', callback_data='ps',            color='green'))
+    keys.add(btn('🤖 خدمات بوت BOOSTGRAM', callback_data='ps',            color='green'))
     if _is_btn_visible('collect'):
         keys.add(btn('تجميع النقاط',  callback_data='collect',       color='green'),
                  btn('شحن النقاط',    callback_data='charge_points', color='green'))
     if _is_btn_visible('tasks'):
-        keys.add(btn(' المهام اليومية', callback_data='tasks', color='green'))
+        keys.add(btn('📋 المهام اليومية', callback_data='tasks', color='green'))
     if _is_btn_visible('register_accounts'):
-        keys.add(btn(' سجل بحساباتك واتحكم فيهم', callback_data='register_accounts', color='green'))
+        keys.add(btn('📲 سجل بحساباتك واتحكم فيهم', callback_data='register_accounts', color='green'))
     if _is_btn_visible('account'):
         keys.add(btn('معلومات حسابك', callback_data='account',       color='blue'),
                  btn('تحويل نقاط',    callback_data='send',           color='red'))
@@ -2960,10 +2960,10 @@ def _build_main_keys(user_id):
         keys.add(btn('قنوات البوت',  callback_data='channels', color='red'),
                  btn('الدعم الفني',  callback_data='support',  color='green'))
     if _is_btn_visible('user_store'):
-        keys.add(btn(' متجر المستخدمين', callback_data='user_store', color='blue'))
+        keys.add(btn('🏪 متجر المستخدمين', callback_data='user_store', color='blue'))
     if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
         lb_btn = btn('Leaderboard',  callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
-        tl_btn = btn(' TOP LEVEL', callback_data='top_level',   color='red') if _is_btn_visible('top_level') else None
+        tl_btn = btn('🏅 TOP LEVEL', callback_data='top_level',   color='red') if _is_btn_visible('top_level') else None
         if lb_btn and tl_btn:
             keys.add(lb_btn, tl_btn)
         elif lb_btn:
@@ -3520,6 +3520,19 @@ def _cmd_lang(message):
 def start_message(message):
     user_id = message.from_user.id
     if not _check_rate_limit(user_id):
+        return
+
+    # ── فحص وضع الصيانة ──
+    _is_admin_start = (user_id == sudo) or (user_id in _get_admins_cached())
+    if not _is_admin_start and db.get('maintenance_mode'):
+        try:
+            bot.reply_to(message,
+                '🔧 <b>البوت في وضع الصيانة حالياً</b>\n\n'
+                'سيعود للعمل قريباً، يرجى الانتظار. 🙏',
+                parse_mode='HTML'
+            )
+        except:
+            pass
         return
 
     try:
@@ -5999,7 +6012,13 @@ def _c_rs_worker(call):
         return
     if data == 'numbers':
         d = len(db.get('accounts') or [])
-        _cb_alert(call, text=f'عدد ارقام البوت : {d}', show_alert=True)
+        _num_kb = mk(row_width=1)
+        _num_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_users', color='red'))
+        bot.edit_message_text(
+            chat_id=cid, message_id=mid,
+            text=f'📱 <b>عدد أرقام البوت</b>\n\n🔢 الأرقام المسجلة: <b>{d}</b>',
+            reply_markup=_num_kb, parse_mode='HTML'
+        )
         return
     if data == '11':
         total_orders = db.get('orders')
@@ -6556,7 +6575,7 @@ def _c_rs_worker(call):
     if data == 'leave':
         if cid in admins:
             db.set(f'leave_{cid}_proccess', True)
-            x = bot.edit_message_text(text='ارسل رابط اذا القناة خاصه، اذا عامه ارسل معرفها فقط؟', reply_markup=bk_cancel, chat_id=cid, message_id=mid, parse_mode="HTML")
+            x = bot.edit_message_text(text='ارسل رابط اذا القناة خاصه، اذا عامه ارسل معرفها فقط؟', reply_markup=bk_cancel_adm, chat_id=cid, message_id=mid, parse_mode="HTML")
             bot.register_next_step_handler(x, get_amount, 'leavs')
     if data == 'account':
         if not check_user(cid):
@@ -6851,6 +6870,8 @@ def _c_rs_worker(call):
         return
     if data == 'admins':
         get_admins = db.get('admins')
+        _adm_back_kb = mk(row_width=1)
+        _adm_back_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_users', color='red'))
         if get_admins:
             if len(get_admins) >= 1:
                 txt = 'الادمنية : \n'
@@ -6861,13 +6882,13 @@ def _c_rs_worker(call):
                         txt += username
                     except:
                         txt += f'{ran} {admin_id}\n'
-                bot.edit_message_text(chat_id=cid, message_id=mid, text=txt)
+                bot.edit_message_text(chat_id=cid, message_id=mid, text=txt, reply_markup=_adm_back_kb)
                 return
             else:
-                bot.edit_message_text(chat_id=cid, message_id=mid, text=f'لا يوجد ادمنية بالبوت')
+                bot.edit_message_text(chat_id=cid, message_id=mid, text='لا يوجد ادمنية بالبوت', reply_markup=_adm_back_kb)
                 return
         else:
-            bot.edit_message_text(chat_id=cid, message_id=mid, text='لا يوجد ادمنية بالبوت')
+            bot.edit_message_text(chat_id=cid, message_id=mid, text='لا يوجد ادمنية بالبوت', reply_markup=_adm_back_kb)
             return
     if data == 'votes':
         _pr = svc_price('votes'); _mn = svc_min('votes'); _mx = svc_max('votes')
@@ -7419,7 +7440,9 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('vips'), chat_id=cid, message_id=mid, parse_mode="HTML")
         bot.register_next_step_handler(x, get_amount, 'comments')
     if data == 'lvallc':
-        bot.edit_message_text(text='• تم بدء مغادرة كل القنوات والمجموعات بنجاح ✅', chat_id=cid, message_id=mid)
+        _lvall_kb = mk(row_width=1)
+        _lvall_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_general', color='red'))
+        bot.edit_message_text(text='⏳ جارٍ مغادرة كل القنوات والمجموعات...', chat_id=cid, message_id=mid, reply_markup=_lvall_kb)
         acc = db.get('accounts') or []
         true = 0
         for amount in acc:
@@ -7429,9 +7452,11 @@ def _c_rs_worker(call):
             except Exception as e:
                 print(e)
                 continue
-        bot.send_message(chat_id=call.from_user.id, text=f'• تم بنجاح الخروج من كل القنوات والمجموعات \n• تم الخروج من <code>{true}</code> حساب بنجاح ✅')
+        bot.send_message(chat_id=call.from_user.id, text=f'✅ تم بنجاح الخروج من كل القنوات والمجموعات\n• تم الخروج من <code>{true}</code> حساب بنجاح', parse_mode='HTML')
     if data == 'cancel':
-        bot.edit_message_text(text=' • تم الغاء عملية المغادرة ❌ ', chat_id=cid, message_id=mid)
+        _cancel_kb = mk(row_width=1)
+        _cancel_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_general', color='red'))
+        bot.edit_message_text(text='❌ تم إلغاء عملية المغادرة', chat_id=cid, message_id=mid, reply_markup=_cancel_kb)
     if data == 'linkbot2':
         _vip_info = db.get(f'user_{cid}')
         _is_prem = _vip_info.get('premium', False) if _vip_info else False
@@ -7470,7 +7495,7 @@ def _c_rs_worker(call):
         )
         bot.register_next_step_handler(x, get_amount, 'linkbot2')
     if data == 'dump_votes':
-        x = bot.edit_message_text(text='• ارسل الان رابط المنشور الذي تريد سحب اصواته', chat_id=cid, message_id=mid)
+        x = bot.edit_message_text(text='• ارسل الان رابط المنشور الذي تريد سحب اصواته', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, dump_votes)
 
     # ⚙️ لوحة إعدادات الخدمات (السعر / الحد الأدنى / الأقصى)
@@ -7981,10 +8006,12 @@ def _c_rs_worker(call):
                 reply_markup=back_kb, parse_mode='HTML'
             )
         except Exception as _e:
+            _reset_err_kb = mk(row_width=1)
+            _reset_err_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_points', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
                 text=f'❌ خطأ: {_e}',
-                parse_mode='HTML'
+                reply_markup=_reset_err_kb, parse_mode='HTML'
             )
 
     if data.startswith('adm_import_type_'):
@@ -8012,7 +8039,7 @@ def _c_rs_worker(call):
                 "<i>يجب أن يكون الملف من تصدير /exportdb</i>"
             ),
             parse_mode="HTML",
-            reply_markup=bk_cancel
+            reply_markup=bk_cancel_adm
         )
         bot.register_next_step_handler_by_chat_id(cid, _handle_import_db_file)
 
@@ -8070,10 +8097,12 @@ def _c_rs_worker(call):
                 parse_mode="HTML"
             )
         except Exception as e:
+            _import_err_kb = mk(row_width=1)
+            _import_err_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_database', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
                 text=f"❌ <b>فشل الاستيراد:</b>\n{e}",
-                parse_mode="HTML"
+                reply_markup=_import_err_kb, parse_mode="HTML"
             )
 
     # ✏️ نظام تغيير أسماء الأزرار
@@ -8396,7 +8425,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(
             text=f'👑 عدد الدعوات المطلوبة للحصول على VIP تلقائياً\n\n🔢 الحالي: {cur} دعوات\n\n• أرسل العدد الجديد:',
             chat_id=cid, message_id=mid
-        , reply_markup=bk_cancel)
+        , reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, _set_vip_thresh)
 
     # 🎯 لوحة إعدادات المكافآت
@@ -8641,18 +8670,22 @@ def _c_rs_worker(call):
         acc = db.get(f'user_{cid}') or {}
         pr = _svc_price * amount
         if int(pr) > int(acc.get('coins', 0)):
+            _rsc_err_kb = mk(row_width=1)
+            _rsc_err_kb.add(btn('🔙 رجوع', callback_data='react_special', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
                 text=f'❌ <b>نقاطك غير كافية</b>\n• تحتاج : {pr:,} نقطة\n• رصيدك : {int(acc.get("coins", 0)):,} نقطة',
-                parse_mode='HTML'
+                reply_markup=_rsc_err_kb, parse_mode='HTML'
             )
             return
 
         load_ = db.get('accounts') or []
         if len(load_) < amount:
+            _rsc_err_kb2 = mk(row_width=1)
+            _rsc_err_kb2.add(btn('🔙 رجوع', callback_data='react_special', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
-                text='❌ عدد حسابات البوت غير كافية حالياً', parse_mode='HTML'
+                text='❌ عدد حسابات البوت غير كافية حالياً', reply_markup=_rsc_err_kb2, parse_mode='HTML'
             )
             return
 
@@ -13485,14 +13518,14 @@ def _gen_clear_sessions(call):
     """تنظيف الجلسات المنتهية (sync في thread)"""
     if not db.exists('accounts'):
         try:
-            gen_bot.edit_message_text('• لا يوجد اي ارقام في ال��وت', call.message.chat.id, call.message.message_id)
+            gen_bot.edit_message_text('• لا يوجد اي ارقام في البوت', call.message.chat.id, call.message.message_id, reply_markup=_gikb([_gbtn('🔙 رجوع', cb='reg_back_main')]))
         except:
             pass
         return
     sessions = db.get('accounts')
     if len(sessions) < 1:
         try:
-            gen_bot.edit_message_text('لا يوجد اي ارقام في البوت', call.message.chat.id, call.message.message_id)
+            gen_bot.edit_message_text('لا يوجد اي ارقام في البوت', call.message.chat.id, call.message.message_id, reply_markup=_gikb([_gbtn('🔙 رجوع', cb='reg_back_main')]))
         except:
             pass
         return
@@ -13532,9 +13565,13 @@ def _gen_clear_sessions(call):
 
     db.set('accounts', updated_sessions)
     try:
+        from telebot.types import InlineKeyboardMarkup as _TM, InlineKeyboardButton as _TB
+        _clr_kb = _TM(row_width=1)
+        _clr_kb.add(_TB(text='🔙 رجوع', callback_data='reg_back_main'))
         gen_bot.edit_message_text(
-            f'• تم التنظيف\n• شغالة: {working_count}\n• محذوفة: {deleted_count}',
-            call.message.chat.id, call.message.message_id
+            f'✅ تم التنظيف\n• شغالة: {working_count}\n• محذوفة: {deleted_count}',
+            call.message.chat.id, call.message.message_id,
+            reply_markup=_clr_kb
         )
     except:
         pass
