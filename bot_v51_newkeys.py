@@ -4431,7 +4431,7 @@ def _show_shop_panel(cid, mid):
     keys.add(btn(f'📆 شهري — {month_price:,} نقطة', callback_data='vip_buy_month', color='green'))
     keys.add(btn(f'🏆 سنوي — {year_price:,} نقطة', callback_data='vip_buy_year', color='green'))
     if support_username:
-        keys.add(btn('💬 تواصل مع الدعم', url=f'{{https://t.me/{support_username}}}', color='blue'))
+        keys.add(btn('💬 تواصل مع الدعم', url=f'https://t.me/{support_username}', color='blue'))
     keys.add(btn('🔙 رجوع', callback_data='back', color='red'))
     contact_line = f'@{support_username}' if support_username else '@admin'
     txt = (
@@ -6149,13 +6149,8 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(text='• ارسل ايدي الشخص ال��راد اضافة النقاط له', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, addpoints)
     if data == 'send':
-        if cid in (db.get("admins") or []) or cid == sudo:
-            x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد تحويل النقاط له.', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
-            bot.register_next_step_handler(x, send)
-        else:
-            keys = mk(row_width=2)
-            keys.add(btn('رجوع', callback_data='back'))
-            bot.edit_message_text(text='• عذرا ، التحويل مقفل للاعضاء ، يمكن للادمنية فقط تحويل النقاط', chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
+        x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد تحويل النقاط له.', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
+        bot.register_next_step_handler(x, send)
     if data == 'addadmin':
         x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد اضافته ادمن بالبوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, adminss, 'add')
@@ -8507,8 +8502,8 @@ def _c_rs_worker(call):
         ckeys = mk(row_width=1)
         ckeys.add(btn('رجوع', callback_data='adm_cat_subscription', color='blue'))
         x = bot.edit_message_text(
-            text=f'🎧 *تعيين نص الدعم الفني*\n\nالحالي:\n{cur}\n\nأرسل النص الجديد (يمكن تضمين روابط تيليجرام):',
-            chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode='Markdown'
+            text=f'🎧 تعيين نص الدعم الفني\n\nالحالي:\n{cur}\n\nأرسل النص الجديد (يمكن تضمين روابط تيليجرام):',
+            chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode=None
         )
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_set_support_info)
