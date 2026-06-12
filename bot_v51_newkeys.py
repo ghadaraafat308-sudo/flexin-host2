@@ -720,7 +720,7 @@ STATIC_BUTTON_REGISTRY = [
     ("الأزرار الرئيسية", [
         ("ps",            "🛒 الخدمات"),
         ("collect",       "💠 تجميع النقاط"),
-        ("charge_points", "💳 شحن النقاط"),
+        ("charge_points", " شحن النقاط"),
         ("charge_stars",  "⭐ شحن تلقائي بالنجوم"),
         ("charge_vf",     "📱 شحن بفودافون كاش"),
         ("charge_usdt",   "💎 شحن بيوستد"),
@@ -2900,7 +2900,7 @@ _MAIN_MENU_DEFAULT_ORDER = [
 
 # أسماء العناصر كما تظهر في لوحة ترتيب الأزرار للأدمن
 _MAIN_MENU_ITEM_NAMES = {
-    "ps":                "خدمات بوت BOOSTGRAM",
+    "ps":                "خدمات بوت رشق بلص - 𝖯𝖫𝖴𝖲",
     "collect":           "تجميع النقاط / شحن النقاط",
     "tasks":             "قائمة المهام (ربح نقاط)",
     "register_accounts": "تسجيل الحسابات",
@@ -7131,14 +7131,14 @@ def _c_rs_worker(call):
 
     if data == 'charge_points':
         keys = mk(row_width=1)
-        keys.add(btn('��� شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
+        keys.add(btn(' شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
         keys.add(btn('💎 شحن بيوستد', callback_data='charge_usdt', color='blue'))
         keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
         keys.add(btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue'))
         keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(
-            text='💳 شحن النقاط\n\nاختر طريقة الشحن:',
+            text=' شحن النقاط\n\nاختر طريقة الشحن:',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML"
         )
 
