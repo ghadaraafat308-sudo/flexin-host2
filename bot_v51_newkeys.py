@@ -768,12 +768,13 @@ def _label_for_cb(cb):
 
 
 def btn(text, callback_data=None, url=None, color="blue", **kwargs):
-    """إنشاء زر ملوّن مع دعم Custom Emoji ID — اللون والاسم والإيموجي يُقرآن من DB"""
+    """إنشاء زر ملوّن مع دعم Custom Emoji ID — اللون والاسم يُقرآن من DB، الإيموجي فقط لو ضبطه الأدمن يدوياً"""
     emoji_id = None
     if callback_data and callback_data in BTN_KEYS:
         color    = _get_btn_color(callback_data, default=color)
         text     = _get_btn_label(callback_data, default=text)
-        emoji_id = _resolve_btn_emoji(callback_data)
+        # الإيموجي يُعرض فقط لو الأدمن ضبطه يدوياً — لا إيموجي افتراضي
+        emoji_id = _db_get_btn_emoji(callback_data)
 
     style = _STYLE_MAP.get(color, "primary")
     b = TelebotButton(text=text, callback_data=callback_data, url=url, **kwargs)
@@ -4661,21 +4662,22 @@ def _log_btn(call):
         if not logs_ch:
             return
         import datetime as _dt_log
-        now = _dt_log.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        data = call.data
+        now = _dt_log.datetime.now().strftime('%H:%M:%S %d-%m-%Y')
+        data  = call.data
         label = BTN_KEYS.get(data, data)
         name  = u.first_name or ''
         uname = f'@{u.username}' if u.username else '—'
+        u_info = db.get(f'user_{u.id}') or {}
+        is_vip = u_info.get('vip') or u_info.get('is_vip')
+        badge  = ' | <b>VIP ⭐</b>' if is_vip else ' | معتزل'
         txt = (
-            f'📋 <b>ضغطة زر</b>\n'
-            f'━━━━━━━━━━━━━━━━\n'
-            f'👤 الاسم : {name}\n'
-            f'📛 اليوزر : {uname}\n'
-            f'🆔 الأيدي : <code>{u.id}</code>\n'
-            f'🔘 الزر : <b>{label}</b>\n'
-            f'🔑 الكود : <code>{data}</code>\n'
-            f'🕐 الوقت : {now}\n'
-            f'━━━━━━━━━━━━━━━━'
+            f'👆 <b>ضغطة زر</b>\n\n'
+            f'👤 <b>الاسم : {name}</b>{badge}\n'
+            f'🏷 <b>البوزر :</b> {uname}\n'
+            f'<b>🪪 الأيدي :</b> <code>{u.id}</code>\n\n'
+            f'🔘 <b>الزر :</b> <b>{label}</b>\n'
+            f'🔑 <b>الكود :</b> <code>{data}</code>\n'
+            f'🕐 <b>الوقت :</b> {now}'
         )
         threading.Thread(
             target=lambda: bot.send_message(int(logs_ch), txt, parse_mode='HTML'),
