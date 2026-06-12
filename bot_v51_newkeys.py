@@ -1,5 +1,6 @@
-import os
+شimport os
 import sys
+
 
 if sys.platform == "win32":
     import io
@@ -479,11 +480,11 @@ BTN_KEYS = {
     "register_accounts": "تسجيل حساباتك للتحكم فيها",
     "channels": "قنوات البوت",
     "leaderboard": "Leaderboard",
-    "user_store": "متجر المستخدمين",
+    "user_store": "متجر البوت",
     "none": "رصيدك",
     "11": "عدد الطلبات",
     "bot_channel_btn": "قناة البوت",
-    "tasks": "المهام اليومية",
+    "tasks": "قائمة المهام (ربح نقاط)",
     "guess": "لعبة التخمين",
     "adm_export_db": "تصدير قاعدة البيانات",
     "adm_export_users": "تصدير المستخدمين",
@@ -915,7 +916,7 @@ votes_fsub_price = CONFIG["prices"]["votes_fsub"]
 print("[⏳] جارٍ الاتصال بقاعدة البيانات...")
 db = FirebaseDB(FIREBASE_URL, FIREBASE_SA_INFO)
 # البوت يبدأ فوراً — البيانات تتحمل في الخلفية (cache يعمل من أول request)
-print("[✅] Firebase متصل — البوت جاهز فوراً، البيانات تتحمل في الخلفية...")
+print("[���] Firebase متصل — البوت جاهز فوراً، البيانات تتحمل في الخلفية...")
 
 # إخفاء افتراضي لليدربورد + تصفير المهام القديمة (مرّة واحدة)
 try:
@@ -1097,7 +1098,7 @@ def _edit_force_sub_msg(bot_obj, chat_id, message_id, not_subscribed):
 _subs_cache: dict = {}
 _SUBS_CACHE_TTL = 600  # 10 دقائق — يقلل API calls بشكل كبير
 
-# ✅ Cache للأدمن — يُحدَّث كل 60 ثانية بدل Firebase في كل ضغطة زر
+# ✅ Cache للأدمن — يُحدَّث كل 60 ثانية بدل Firebase ����ي كل ضغطة زر
 _admins_cache: list = []
 _admins_cache_ts: float = 0
 _ADMINS_CACHE_TTL = 300  # 5 دقائق
@@ -1198,7 +1199,7 @@ def _get_bot_me():
 # ✅ انتظر تحميل Firebase قبل أي checks — يمنع مسح البيانات عند إعادة التشغيل
 print("[⏳] انتظار تحميل بيانات Firebase...")
 db.wait_until_loaded(timeout=60)
-print("[✅] Firebase جاهز — جارٍ التهيئة...")
+print("[✅] Firebase جاهز — جارٍ التهي��ة...")
 
 # ✅ حماية: لا نمسح الأرقام إلا لو Firebase فعلاً فاضي (مش فشل في التحميل)
 _existing_accounts = db.get('accounts')
@@ -2282,7 +2283,7 @@ def get_user_level(uid: int) -> dict:
     return current
 
 def get_next_level(uid: int) -> dict | None:
-    """يرجع بيانات المستوى التالي، أو None لو وصل الأعلى"""
+    """��رجع بيانات المستوى التالي، أو None لو وصل الأعلى"""
     current = get_user_level(uid)
     cur_idx = next((i for i, lv in enumerate(TOP_LEVELS)
                     if lv["level"] == current["level"]), 0)
@@ -2356,7 +2357,7 @@ def top_level_text(uid: int) -> str:
         f"  📦 الطلبات      : <b>{stats['orders']:,}</b>",
         f"  💰 النقاط       : <b>{stats['coins']:,}</b>",
         f"  📱 الحسابات     : <b>{stats['accounts']:,}</b>",
-        f"━━━━━━━━━━━━━━━━━━━",
+        f"━━━━━━━━━━━━━��━━━━━",
         f"✨ <b>مميزاتك:</b> {current['perks']}",
         f"━━━━━━━━━━━━━━━━━━━",
         f"📈 <b>التقدم:</b> {progress_bar} ({current['level']}/{len(TOP_LEVELS)})",
@@ -2549,7 +2550,7 @@ def send_order_complete_to_channel(user, service_label, section_label, amount, d
                 f'🛍 الخدمة : {service_label}\n'
                 f'📦 الكمية المطلوبة : {amount}\n'
                 f'✅ تم تنفيذ : {_done_txt}\n'
-                f'❌ لم يتم : {_fail_txt}\n'
+                f'❌ لم ي��م : {_fail_txt}\n'
                 f'💰 النقاط المخصومة : {int(points_deducted or 0):,}\n'
                 f'━━━━━━━━━━━━━━━━━━━\n'
                 f'شكراً لاستخدامك البوت! 🎉'
@@ -2884,92 +2885,142 @@ def adds_session(session: str, phone: str, owner_id: int = None) -> bool:
 
 # بوت تيليبوت (الرئيسي)
 
+# ===== ترتيب أزرار القائمة الرئيسية (يتحكم فيه الأدمن من اللوحة) =====
+_MAIN_MENU_DEFAULT_ORDER = [
+    "ps",
+    "collect",
+    "tasks",
+    "register_accounts",
+    "account",
+    "channels",
+    "user_store",
+    "leaderboard",
+    "orders",
+]
+
+# أسماء العناصر كما تظهر في لوحة ترتيب الأزرار للأدمن
+_MAIN_MENU_ITEM_NAMES = {
+    "ps":                "خدمات بوت BOOSTGRAM",
+    "collect":           "تجميع النقاط / شحن النقاط",
+    "tasks":             "قائمة المهام (ربح نقاط)",
+    "register_accounts": "تسجيل الحسابات",
+    "account":           "معلومات حسابك / تحويل نقاط",
+    "channels":          "قنوات البوت / الدعم الفني",
+    "user_store":        "متجر البوت",
+    "leaderboard":       "Leaderboard / TOP LEVEL",
+    "orders":            "عدد الطلبات",
+}
+
+def _get_main_menu_order():
+    """يرجع ترتيب عناصر القائمة الرئيسية المحفوظ مع ضمان اكتمال كل العناصر"""
+    order = []
+    try:
+        saved = db.get("main_menu_order")
+        if saved and isinstance(saved, list):
+            order = [x for x in saved if x in _MAIN_MENU_DEFAULT_ORDER]
+    except:
+        order = []
+    for x in _MAIN_MENU_DEFAULT_ORDER:
+        if x not in order:
+            order.append(x)
+    return order
+
+def _set_main_menu_order(order):
+    try:
+        db.set("main_menu_order", list(order))
+    except:
+        pass
+
+def _render_menu_order_panel():
+    """يبني نص وأزرار لوحة ترتيب القائمة الرئيسية للأدمن"""
+    order = _get_main_menu_order()
+    txt = '🔀 <b>ترتيب أزرار القائمة الرئيسية</b>\n\n'
+    txt += 'استخدم ⬆️ / ⬇️ لتحريك الزر لأعلى أو لأسفل:\n\n'
+    n = len(order)
+    keys = mk(row_width=3)
+    for idx, iid in enumerate(order):
+        name = _MAIN_MENU_ITEM_NAMES.get(iid, iid)
+        txt += f'{idx + 1}. {name}\n'
+        up_btn = btn('⬆️', callback_data=f'mord_up_{iid}', color='green') if idx > 0 else btn('➖', callback_data='noop', color='blue')
+        down_btn = btn('⬇️', callback_data=f'mord_down_{iid}', color='green') if idx < n - 1 else btn('➖', callback_data='noop', color='blue')
+        keys.add(
+            btn(f'{idx + 1}. {name}', callback_data='noop', color='blue'),
+            up_btn,
+            down_btn,
+        )
+    keys.add(btn('♻️ إعادة الترتيب الافتراضي', callback_data='mord_reset', color='red'))
+    keys.add(btn('🔙 رجوع للتخصيص', callback_data='adm_btn_panel', color='blue'))
+    return txt, keys
+
+def _build_menu_row(item_id, lang, ord_label):
+    """يبني صف القائمة الرئيسية لعنصر معيّن (أو None لو الزر مخفي)"""
+    en = (lang == 'en')
+    if item_id == "ps":
+        return [btn('BOOSTGRAM Bot Services' if en else 'خدمات بوت BOOSTGRAM',
+                    callback_data='ps', color='green')]
+    if item_id == "collect":
+        if not _is_btn_visible('collect'):
+            return None
+        if en:
+            return [btn('Collect points', callback_data='collect', color='green'),
+                    btn('Recharge points', callback_data='charge_points', color='green')]
+        return [btn('تجميع النقاط', callback_data='collect', color='green'),
+                btn('شحن النقا��', callback_data='charge_points', color='green')]
+    if item_id == "tasks":
+        if not _is_btn_visible('tasks'):
+            return None
+        return [btn('Tasks list (earn points)' if en else 'قائمة المهام (ربح نقاط)',
+                    callback_data='tasks', color='green')]
+    if item_id == "register_accounts":
+        if not _is_btn_visible('register_accounts'):
+            return None
+        return [btn('Register & manage your accounts' if en else 'سجل بحساباتك واتحكم فيهم',
+                    callback_data='register_accounts', color='green')]
+    if item_id == "account":
+        if not _is_btn_visible('account'):
+            return None
+        if en:
+            return [btn('Account info', callback_data='account', color='blue'),
+                    btn('Transfer points', callback_data='send', color='red')]
+        return [btn('معلومات حسابك', callback_data='account', color='blue'),
+                btn('تحويل نقاط', callback_data='send', color='red')]
+    if item_id == "channels":
+        if not _is_btn_visible('channels'):
+            return None
+        if en:
+            return [btn('Bot channels', callback_data='channels', color='red'),
+                    btn('Support', callback_data='support', color='green')]
+        return [btn('قنوات البوت', callback_data='channels', color='red'),
+                btn('الدعم الفني', callback_data='support', color='green')]
+    if item_id == "user_store":
+        if not _is_btn_visible('user_store'):
+            return None
+        return [btn('Bot store' if en else 'متجر البوت',
+                    callback_data='user_store', color='blue')]
+    if item_id == "leaderboard":
+        if not (_is_btn_visible('leaderboard') or _is_btn_visible('top_level')):
+            return None
+        lb_btn = btn('Leaderboard', callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
+        tl_btn = btn('TOP LEVEL', callback_data='top_level', color='red') if _is_btn_visible('top_level') else None
+        row = [b for b in (lb_btn, tl_btn) if b]
+        return row or None
+    if item_id == "orders":
+        return [btn(ord_label, callback_data='11', color='green')]
+    return None
+
 def _build_main_keys(user_id):
-    """يبني أزرار الصفحة الرئيسية — الإيموجي والألوان والنصوص تُقرأ من نظام BTN_KEYS"""
-    user_data = get(user_id)
-    coin = int(user_data['coins']) if user_data else 0
-    count_ord = int(db.get(f'user_{user_id}_buys') or 0)
-
-    # نص الأزرار الديناميكية (الرصيد والطلبات) يُدمج مع القيمة الحالية
-    bal_default = f'💰 رصيدك : {coin:,} نقطة'
-    ord_default = f'عدد الطلبات : {count_ord}'
-
-    # زر الرصيد — يستخدم BTN_KEYS لكن النص يتضمن الرقم
-    bal_label = _get_btn_label('none', default=f'💰 رصيدك')
-    bal_label = f'{bal_label} : {coin:,} نقطة'
-
+    """يبني أزرار الصفحة الرئيسية — الترتيب والألوان والنصوص قابلة للتخصيص من لوحة الأدمن"""
     ord_label = _get_btn_label('11', default='عدد الطلبات')
-    # عدد الطلبات الكلية من مفتاح 'orders' الموحد
     total_orders = db.get('orders')
     total_orders = int(total_orders) if total_orders is not None else 185443
     ord_label = f'{ord_label} : {total_orders:,}'
 
-    # عدد الطلبات الكلية المكتملة في البوت (نفس المصدر)
-    total_ord_label = f'📦 الطلبات المكتملة : {total_orders:,}'
-
-    ch_label  = _get_btn_label('bot_channel_btn', default='📢 قناة البوت')
-
-    # زر قناة البوت: callback دائماً (يفتح صفحة داخلية زي الدعم الفني)
-    btn6 = btn(ch_label, callback_data='bot_channel_btn', color='blue')
-
-    if _user_lang(user_id) == 'en':
-        ek = mk(row_width=2)
-        ek.add(btn('🤖 BOOSTGRAM Bot Services', callback_data='ps', color='green'))
-        if _is_btn_visible('collect'):
-            ek.add(btn('Collect points', callback_data='collect', color='green'),
-                   btn('Recharge points', callback_data='charge_points', color='green'))
-        if _is_btn_visible('tasks'):
-            ek.add(btn('📋 Daily tasks', callback_data='tasks', color='green'))
-        if _is_btn_visible('register_accounts'):
-            ek.add(btn('📲 Register & manage your accounts', callback_data='register_accounts', color='green'))
-        if _is_btn_visible('account'):
-            ek.add(btn('Account info', callback_data='account', color='blue'),
-                   btn('Transfer points', callback_data='send', color='red'))
-        if _is_btn_visible('channels'):
-            ek.add(btn('Bot channels', callback_data='channels', color='red'),
-                   btn('Support', callback_data='support', color='green'))
-        if _is_btn_visible('user_store'):
-            ek.add(btn('🏪 Users market', callback_data='user_store', color='blue'))
-        if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
-            _lb = btn('Leaderboard', callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
-            _tl = btn('🏅 TOP LEVEL', callback_data='top_level', color='red') if _is_btn_visible('top_level') else None
-            if _lb and _tl:
-                ek.add(_lb, _tl)
-            elif _lb:
-                ek.add(_lb)
-            elif _tl:
-                ek.add(_tl)
-        ek.add(btn(f'Total orders : {total_orders:,}', callback_data='11', color='green'))
-        return ek
+    lang = _user_lang(user_id)
     keys = mk(row_width=2)
-    keys.add(btn('🤖 خدمات بوت BOOSTGRAM', callback_data='ps',            color='green'))
-    if _is_btn_visible('collect'):
-        keys.add(btn('تجميع النقاط',  callback_data='collect',       color='green'),
-                 btn('شحن النقاط',    callback_data='charge_points', color='green'))
-    if _is_btn_visible('tasks'):
-        keys.add(btn('📋 المهام اليومية', callback_data='tasks', color='green'))
-    if _is_btn_visible('register_accounts'):
-        keys.add(btn('📲 سجل بحساباتك واتحكم فيهم', callback_data='register_accounts', color='green'))
-    if _is_btn_visible('account'):
-        keys.add(btn('معلومات حسابك', callback_data='account',       color='blue'),
-                 btn('تحويل نقاط',    callback_data='send',           color='red'))
-    if _is_btn_visible('guess'):
-        pass
-    if _is_btn_visible('channels'):
-        keys.add(btn('قنوات البوت',  callback_data='channels', color='red'),
-                 btn('الدعم الفني',  callback_data='support',  color='green'))
-    if _is_btn_visible('user_store'):
-        keys.add(btn('🏪 متجر المستخدمين', callback_data='user_store', color='blue'))
-    if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
-        lb_btn = btn('Leaderboard',  callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
-        tl_btn = btn('🏅 TOP LEVEL', callback_data='top_level',   color='red') if _is_btn_visible('top_level') else None
-        if lb_btn and tl_btn:
-            keys.add(lb_btn, tl_btn)
-        elif lb_btn:
-            keys.add(lb_btn)
-        elif tl_btn:
-            keys.add(tl_btn)
-    keys.add(btn(ord_label, callback_data='11', color='green'))
+    for item_id in _get_main_menu_order():
+        row = _build_menu_row(item_id, lang, ord_label)
+        if row:
+            keys.add(*row)
     return keys
 
 def _count_pending_referral(join_user):
@@ -3008,7 +3059,7 @@ def _settle_pending_referral(join_user):
 
     _ref_key = f'ref_used_{join_user}'
     if db.exists(_ref_key):
-        # تم صرفها مسبقاً — امسح المعلقة فقط
+        # تم صرفها ��سبقاً — امسح المعلقة فقط
         db.delete(_pending_key)
         db.delete(f'ref_invitee_name_{join_user}')
         db.delete(f'ref_invitee_user_{join_user}')
@@ -3373,7 +3424,7 @@ def _handle_admin_task_step(message):
             f'✅ <b>تم إضافة المهمة بنجاح!</b>\n\n'
             f'📝 الوصف: {task_desc}\n'
             f'💰 المكافأة: {reward:,} نقطة\n'
-            f'🎯 النوع: {task_type}\n'
+            f'🎯 النو����: {task_type}\n'
             f'📍 الهدف: {task_target}',
             reply_markup=bk, parse_mode='HTML'
         )
@@ -4017,7 +4068,7 @@ def _send_db_export_file(cid, export_type="all", label="الكل"):
                 f"📦 العناصر: <b>{len(snapshot):,}</b>\n"
                 f"👥 المستخدمون: <b>{n_users:,}</b>\n"
                 f"📱 الأرقام: <b>{n_accs:,}</b>\n\n"
-                f"<i>احتفظ بالملف لاستعادته لاحقاً عبر زر الاستيراد.</i>"
+                f"<i>احتفظ بالملف لاستعادته لاحقاً ع��ر زر الاستيراد.</i>"
             ),
             parse_mode="HTML",
         )
@@ -4229,7 +4280,7 @@ _ADMIN_CATEGORIES = {
             ('📢 اذاعة',                            'cast',      'green'),
             ('🤖 إدارة الدعم بالذكاء الاصطناعي',    'adm_ai_panel','green'),
             ('سحب اصوات',                           'dump_votes','red'),
-            ('سبام رسائل',                          'spams',     'red'),
+            ('س��ام رسائل',                          'spams',     'red'),
             ('مغادرة كل الحسابات من قناة',          'leave',     'red'),
             ('مغادرة كل القنوات والمجموعات',        'lvall',     'red'),
         ],
@@ -4769,6 +4820,7 @@ def _c_rs_worker(call):
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
+        'adm_menu_order', 'mord_up_', 'mord_down_', 'mord_reset', 'noop',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -4947,9 +4999,9 @@ def _c_rs_worker(call):
         store_keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(
             text='╔══════════════════╗\n'
-                 '       🏪 متجر المستخدمين\n'
+                 '       🏪 متجر البوت\n'
                  '╚══════════════════╝\n\n'
-                 '📌 متجر بيع وشراء الحسابات بين المستخدمين\n\n'
+                 '📌 متجر بيع وشراء الحسابات ��ين المستخدمين\n\n'
                  f'📦 إعلانات نشطة: {len(active)}\n'
                  '━━━━━━━━━━━━━━━━━━━',
             chat_id=cid, message_id=mid, reply_markup=store_keys, parse_mode='HTML'
@@ -5276,7 +5328,7 @@ def _c_rs_worker(call):
         except:
             return
         if game["board"][idx] != " ":
-            _cb_alert(call, '❌ هذه الخانة مشغولة', show_alert=True)
+            _cb_alert(call, '❌ هذه الخان�� مشغولة', show_alert=True)
             return
         game["board"][idx] = "X"
         result = _check_xo_winner(game["board"])
@@ -5349,7 +5401,7 @@ def _c_rs_worker(call):
         completed_key = f"user_{cid}_tasks_{today}"
         completed = db.get(completed_key) or []
         if task_id in completed:
-            _cb_alert(call, '✅ لقد أكملت هذه المهمة مسبقاً!', show_alert=True)
+            _cb_alert(call, '✅ لقد أكمل�� هذه المهمة مسبقاً!', show_alert=True)
             return
         task_type   = target_task.get("type", "")
         task_target = target_task.get("target", "").strip()
@@ -5505,6 +5557,57 @@ def _c_rs_worker(call):
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
+    # 🔀 ترتيب أزرار القائمة الرئيسية (للأدمن)
+
+    if data == 'adm_menu_order':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        txt, keys = _render_menu_order_panel()
+        bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
+        return
+
+    if data.startswith('mord_up_') or data.startswith('mord_down_'):
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        is_up = data.startswith('mord_up_')
+        item_id = data[len('mord_up_'):] if is_up else data[len('mord_down_'):]
+        order = _get_main_menu_order()
+        if item_id in order:
+            i = order.index(item_id)
+            j = i - 1 if is_up else i + 1
+            if 0 <= j < len(order):
+                order[i], order[j] = order[j], order[i]
+                _set_main_menu_order(order)
+        try:
+            _cb_alert(call)
+        except Exception:
+            pass
+        txt, keys = _render_menu_order_panel()
+        try:
+            bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
+        except Exception:
+            pass
+        return
+
+    if data == 'mord_reset':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        _set_main_menu_order(list(_MAIN_MENU_DEFAULT_ORDER))
+        _cb_alert(call, '✅ تم إعادة الترتيب الافتراضي', show_alert=True)
+        txt, keys = _render_menu_order_panel()
+        try:
+            bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
+        except Exception:
+            pass
+        return
+
+    if data == 'noop':
+        try:
+            _cb_alert(call)
+        except Exception:
+            pass
+        return
+
     # 👁 لوحة إخفاء/إظهار الأزرار (للأدمن)
 
     if data == 'adm_visibility':
@@ -5605,7 +5708,7 @@ def _c_rs_worker(call):
                  f'💰 العمولة: {fee}%\n'
                  f'📦 إعلانات نشطة: {active}\n'
                  f'✅ تم بيعها: {sold}\n'
-                 f'━━━━━━━━━━━━━━━━━━━',
+                 f'━━���━━━━━━━━━━━━━━━━',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
         )
         return
@@ -6136,7 +6239,7 @@ def _c_rs_worker(call):
             cast_channels.remove(ch_to_del)
             db.set('cast_channels', cast_channels)
         ckeys = mk(row_width=1)
-        ckeys.add(btn('🔙 رجوع للقنوات', callback_data='cast_discovered', color='blue'))
+        ckeys.add(btn('🔙 رجوع ��لقنوات', callback_data='cast_discovered', color='blue'))
         bot.edit_message_text(text=f'✅ تم حذف القناة: `{ch_to_del}`', chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode='Markdown')
     if data == 'cast_auto_scan':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -6462,14 +6565,14 @@ def _c_rs_worker(call):
                 parse_mode='HTML'
             )
         except: pass
-        # تحديث عداد التحويلات
+        # تحديث عد��د التحويلات
         trans = int(db.get(f'user_{cid}_trans') or 0) + 1
         db.set(f'user_{cid}_trans', trans)
         _cb_alert(call, "✅ تم التحويل بنجاح!")
         keys = mk(row_width=1)
         keys.add(btn('🔙 رجوع للقائمة', callback_data='back', color='blue'))
         bot.send_message(cid,
-            f"✅ <b>تم التحويل بنجاح!</b>\n\n"
+            f"✅ <b>تم التحويل ب��جاح!</b>\n\n"
             f"👤 إلى: {name}\n"
             f"💰 المبلغ المحوّل: <b>{amount:,} نقطة</b>\n"
             f"⚠️ العمولة المخصومة: <b>500 نقطة</b>\n"
@@ -7028,7 +7131,7 @@ def _c_rs_worker(call):
 
     if data == 'charge_points':
         keys = mk(row_width=1)
-        keys.add(btn('⭐ شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
+        keys.add(btn('��� شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
         keys.add(btn('💎 شحن بيوستد', callback_data='charge_usdt', color='blue'))
         keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
@@ -7189,7 +7292,7 @@ def _c_rs_worker(call):
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
-            f'📈 الحد الأقصى : <b>{_mx}</b>\n'
+            f'�� الحد الأقصى : <b>{_mx}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
             f'أرسل الآن العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
         )
@@ -7286,7 +7389,7 @@ def _c_rs_worker(call):
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
-            f'📈 الحد الأقصى : <b>{_mx}</b>\n'
+            f'���� الحد الأقصى : <b>{_mx}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
             f'أرسل الآن العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
         )
@@ -7487,7 +7590,7 @@ def _c_rs_worker(call):
                 '🚀 إحالات حقيقية بجودة عالية\n'
                 '✅ اشتراك إجباري مضمون\n'
                 f'💰 السعر : <b>{_pr2 * 100}</b> نقطة لكل 100\n'
-                '━━━━━━━━━━━━━━━━━━━\n\n'
+                '━━━━━━━━━━━━━━━━━���━\n\n'
                 '📨 أرسل الآن العدد المطلوب'
             ),
             reply_markup=_bk_cancel_svc('vips'), chat_id=cid, message_id=mid, parse_mode="HTML"
@@ -7540,7 +7643,7 @@ def _c_rs_worker(call):
             skeys.add(btn(f'💰 تعديل السعر لكل 100 (الحالي: {p100})', callback_data=f'svc_edit_price1000_{svc_key}', color='green'))
             price_line = f'{p100} نقطة لكل 100'
         skeys.add(btn(f'⬇️ تعديل الحد الأدنى (الحالي: {mn})', callback_data=f'svc_edit_min_{svc_key}', color='blue'))
-        skeys.add(btn(f'⬆️ تعديل الحد الأقصى (الحالي: {mx})', callback_data=f'svc_edit_max_{svc_key}', color='blue'))
+        skeys.add(btn(f'⬆️ تعديل ال��د الأقصى (الحالي: {mx})', callback_data=f'svc_edit_max_{svc_key}', color='blue'))
         skeys.add(btn(toggle_lbl, callback_data=f'svc_toggle_{svc_key}', color=toggle_col))
         skeys.add(btn('🔄 إعادة القيم الافتراضية', callback_data=f'svc_reset_{svc_key}', color='red'))
         skeys.add(btn('🔙 رجوع للخدمات', callback_data='adm_svc_panel', color='blue'))
@@ -7560,7 +7663,7 @@ def _c_rs_worker(call):
         p = svc_price(svc_key)
         if svc_key == 'free_member':
             x = bot.edit_message_text(
-                text=f'💰 تعديل سعر خدمة: {SERVICES[svc_key]["label"]}\nالسعر الحالي: {p} نقطة / عضو\n\nأرسل السعر الجديد لكل عضو (رقم فقط):',
+                text=f'💰 تعديل سعر خدمة: {SERVICES[svc_key]["label"]}\nالسعر الحالي: {p} نقطة / عضو\n\nأرسل ال��عر الجديد لكل عضو (رقم فقط):',
                 chat_id=cid, message_id=mid, reply_markup=skeys
             )
             bot.clear_step_handler_by_chat_id(cid)
@@ -7782,7 +7885,7 @@ def _c_rs_worker(call):
 
     for _chset_key, _chset_label, _chset_prompt, _db_key in [
         ('chset_stars_rate',     'سعر النجوم',                  'أرسل عدد النقاط مقابل كل نجمة (مثال: 600):',               'charge_stars_rate'),
-        ('chset_stars_post',     'منشور استقبال النجوم',         'أرسل رابط المنشور لاستقبال النجوم:',                       'charge_stars_post'),
+        ('chset_stars_post',     'منشور استقبال النجوم',         'أرسل رابط المنشور لاستقبال ال��جوم:',                       'charge_stars_post'),
         ('chset_cash_rate',      'سعر الكاش',                   'أرسل عدد النقاط مقابل كل $1 (مثال: 150000):',              'charge_cash_rate'),
         ('chset_usdt_rate',      'سعر USDT',                    'أرسل عدد النقاط مقابل كل 1 USDT (مثال: 150000):',          'charge_usdt_rate'),
         ('chset_cash_contact',   'معرف تواصل الكاش',             'أرسل معرف تيليجرام للتواصل للكاش (بدون @):',              'charge_cash_contact'),
@@ -7820,6 +7923,7 @@ def _c_rs_worker(call):
             btn('✏️ تغيير أسماء الأزرار', callback_data='adm_rename', color='green'),
         )
         keys.add(btn('✨ رموز تعبيرية مميزة للأزرار', callback_data='adm_emoji', color='green'))
+        keys.add(btn('🔀 ترتيب أزرار القائمة الرئيسية', callback_data='adm_menu_order', color='blue'))
         keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         # عرض كل الأزرار مع لونها واسمها الحالي
         txt = '🎛️ *لوحة تخصيص الأزرار*\n\n'
@@ -8078,7 +8182,7 @@ def _c_rs_worker(call):
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
                 text=(
-                    "✅ <b>اكتمل الاستيراد!</b>\n\n"
+                    "✅ <b>اكتمل ال��ستيراد!</b>\n\n"
                     "━━━━━━━━━━━━━━━━━━━\n"
                     f"👥 المستخدمون الجدد المستوردون: <b>{res['users_imported']:,}</b>\n"
                     f"👥 المستخدمون المُحدَّثون: <b>{res['users_updated']:,}</b>\n"
@@ -8375,7 +8479,7 @@ def _c_rs_worker(call):
             text=(
                 "✨ <b>إعداد الإيموجي المخصص للأزرار</b>\n\n"
                 "يمكنك تعيين إيموجي يظهر قبل نص كل زر في الصفحة الرئيسية.\n\n"
-                "📌 أرسل الإيموجي مباشرة كما هو، مثل:\n"
+                "📌 أرسل الإي��وجي مباشرة كما هو، مثل:\n"
                 "💰 أو 🌟 أو 🔥 أو ✅\n\n"
                 "اضغط على أي زر لتعديله:"
             ),
@@ -9770,7 +9874,7 @@ def get_amount(message, type_req):
             try:
                 amount = int(message.text)
             except:
-                r = bot.reply_to(message, f'• رجاء ارسل رقم فقط ، اعد المحاولة مره اخري')
+                r = bot.reply_to(message, f'• رجاء ارسل رقم ف��ط ، اعد المحاولة مره اخري')
                 bot.register_next_step_handler(r, get_amount, type_req)
                 return
             _min, _max = svc_min('react'), svc_max('react')
@@ -9792,7 +9896,7 @@ def get_amount(message, type_req):
                 bot.reply_to(message, f'• عدد حسابات البوت غير كافية لتنفيذ طلبك', reply_markup=bk_cancel, parse_mode="HTML")
                 return
             _req_txt = (
-                f'╔══════════════════════╗\n'
+                f'╔═══════════════════���══╗\n'
                 f'       ⚡ طلب تفاعلات اختياري جديد\n'
                 f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} تفاعل\n\n'
@@ -9810,7 +9914,7 @@ def get_amount(message, type_req):
             try:
                 amount = int(message.text)
             except:
-                r = bot.reply_to(message, f'• رجاء ارسل رقم فقط ، اعد المحاولة مره اخري')
+                r = bot.reply_to(message, f'• رجاء ارسل رقم فقط ، اعد المحا��لة مره اخري')
                 bot.register_next_step_handler(r, get_amount, type_req)
                 return
             _min, _max = svc_min('forward'), svc_max('forward')
@@ -10684,7 +10788,7 @@ def def_execute_order(uid: int, cb=None):
                 except: false += 1
             unit_price = poll_price
 
-        elif otype == 'رسائل مزعجة VIP':
+        elif otype == 'رس��ئل مزعجة VIP':
             text = extra.get('text', '')
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
@@ -10744,7 +10848,7 @@ def def_execute_order(uid: int, cb=None):
                 except: false += 1
             unit_price = svc_price('react')
 
-        elif otype == 'رشق ايموجي مميز':
+        elif otype == 'رشق اي��وجي مميز':
             emoji_text  = extra.get('emoji_text', '')
             custom_id   = extra.get('custom_emoji_id', '')
             for y in load_:
@@ -11130,7 +11234,7 @@ def react_special_get_emoji_first(message):
     if not emoji_text:
         cancel_kb = mk(row_width=1)
         cancel_kb.add(btn('❌ إلغاء ورجوع', callback_data='back', color='red'))
-        x = bot.reply_to(message, '⚠️ الرجاء إرسال إيموجي صحيح', reply_markup=cancel_kb)
+        x = bot.reply_to(message, '⚠️ الرجاء إرسال إي��وجي صحيح', reply_markup=cancel_kb)
         bot.register_next_step_handler(x, react_special_get_emoji_first)
         return
 
@@ -11387,7 +11491,7 @@ def react_special_step2_url(message):
         async def _fetch_reactions():
             try:
                 client = Client("::memory::", api_id=API_ID, api_hash=API_HASH, in_memory=True)
-                # نستخدم أول session متاحة
+                # نستخ��م أول session متاحة
                 sessions = db.get('accounts') or []
                 if sessions:
                     client = Client("::memory::", api_id=API_ID, api_hash=API_HASH,
@@ -11949,7 +12053,7 @@ def adminss(message, type_op):
         else:
             d.remove(uid)
             db.set('admins', d)
-            bot.reply_to(message, f'• تم اذالة العضو من الادمنية بنجاح ✅')
+            bot.reply_to(message, f'• تم ا��الة العضو من الادمنية بنجاح ✅')
             return
 
 def banned(message, type_op):
@@ -12054,7 +12158,7 @@ def get_amount_send(message, uid):
             reply_markup=bk_cancel, parse_mode='HTML'
         )
         return
-    # شاشة تأكيد التحويل
+    # شاشة تأكيد ا��تحويل
     try:
         chat = bot.get_chat(uid)
         name = chat.first_name or str(uid)
@@ -13915,7 +14019,7 @@ def get_url_linkbot(message, amount):
 
 
 def _ensure_user(user_id):
-    """يتأكد أن المستخدم موجود في DB وإلا ينشئه"""
+    """يتأكد أن المستخدم م��جود في DB وإلا ينشئه"""
     if not db.get(f'user_{user_id}'):
         db.set(f'user_{user_id}', {'id': user_id, 'coins': 0, 'premium': False, 'users': []})
 
