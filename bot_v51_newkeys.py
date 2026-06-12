@@ -4393,7 +4393,7 @@ def _show_rec_panel(cid, mid):
         '✅ تحكّم كامل في العدد والنوع\n\n'
         '━━━━━━━━━━━━━━━━━━━\n\n'
         '📞 <b>للاشتراك أو الاستفسار:</b>\n'
-        f'تواصل مع الدعم الفني: <b>{contact_line}</b>'
+        f'تواصل مع الدعم@R3D_19 الفني: <b>{contact_line}</b>'
     )
     if mid:
         try:
@@ -4421,7 +4421,7 @@ def _show_shop_panel(cid, mid):
         keys.add(btn(f'📅 أسبوعي — {week_price:,} نقطة',  url=f'https://t.me/{support_username}', color='green'))
         keys.add(btn(f'📆 شهري — {month_price:,} نقطة',   url=f'https://t.me/{support_username}', color='green'))
         keys.add(btn(f'🏆 سنوي — {year_price:,} نقطة',    url=f'https://t.me/{support_username}', color='green'))
-        keys.add(btn('💬 تواصل مع الدعم',     url=f'https://t.me/{support_username}', color='blue'))
+        keys.add(btn('💬 تواصل مع الدعم',     url=f'https://t.me/{@R3D_19}', color='blue'))
     else:
         keys.add(btn(f'📅 أسبوعي — {week_price:,} نقطة',  callback_data='vip_info', color='green'))
         keys.add(btn(f'📆 شهري — {month_price:,} نقطة',   callback_data='vip_info', color='green'))
