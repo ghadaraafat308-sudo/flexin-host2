@@ -114,17 +114,17 @@ except ImportError:
 FIREBASE_URL = "https://bostgram-default-rtdb.firebaseio.com"
 
 FIREBASE_SA_INFO = {
-    "type": "service_account",
-    "project_id": "bostgram",
-    "private_key_id": "2039a9d57714806f864913c2dda8a3ee137e37aa",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCmGcrc4wMd8n4q\nLmLozJdaoqa3VA9zI/S1xqHf3oVr17JsQ/qNroz0o+ko8swO+I1OXSy640tIn//y\nNr4IyNV8D5HdZ7K5pu2u3ePxg53c1xE4s2HKNsIJOdcyeKTOssAdgXkxSzPx5IoI\nWIIN/RbcS8fwW6ODP/E59l8UC5UagO49u15P6hRGaxTO5BykYljtBBI8sbJUBEDw\n8wuNo0HCSKIZsbNzIXL9qg0UZeERVuXTTJAk9WdPBu4YK04n0VCoPUAZD5+Lpuqo\nUhkmIvw8fFtGnrjCo+fgvnqVOsdFVY/n72forXqEOmM3NdYWvxHawv+pIlVF7Nxg\nW3frcTiTAgMBAAECggEAIMgtZAv/1PzDjsKp7cVXR+GbIsqZ5AEgLnIeB6eM0Jx5\nD+oYvLbLBguFnHnS8U934BP+nIH4nURKyPyp4+TzUXFnOfnZ6c860MzlTIjL8saV\nlQm+TqEhCZ4bTVBHQq4/wXMIvsRXY7HV1lDVljoxtVfVhagobOKFUwm/eR7SFjEz\nleJcyr24rjqTrq5BBEKTdqyqNTFJVEUwJ0JS5fqw8ROPmo5bA1OLTxO1OSvTQr0J\nwT+J0fF+xKtMJMUN8FJbaE4eKmyeXpCeGcJP2nPBjKgFSbIAnrPo4L9W3h4guaYt\nOKq61BtmcVAlZQ8fHbKSxmHlMDM6mh055EMhMPSGfQKBgQDYfB1EPWdv2vWGWLJz\nLoO4CQHC0UXgX/6KxyATDtl7pk18usSeQIfh9E4/qtjuO2fEfzQ1GiwV0PJo1ZZw\nQ80Znyy9mk0TTB9wVBrybHPzLwR3zE72ee2EHPteagNC1C5p6SP7nYh2VKGZOeLU\nJSGnV05l5m9LNgpOPvsmHsZntwKBgQDEa1XT6FLG299yEyfrnXEk+krUn29LDzxr\nEs5x8Wv9q41nz3HREeR0+BRvsIYaFP7YXpG4EKYD2uI5CiaILwrNGvIy5pLLM/YF\n4Acu3VEueJ74E7a9kci3LNLm3B48c/IPEb8XubVPJN4n7aiVuX2pCZKiNbjubPNU\nLfarrGReBQKBgAsMoq3F+I6T/W4i/tC0MhLlmspnxgpCvAo3SaLPYjhWb6QLIFf3\ncTgOMSQ8wx+9tnkoCPEg6dkfNhA1vpzySPii0DTJOF/gxcYE9O8kq/JglvjKW8lm\nxcG1fPr/rDTwAYJ0XNrN2pY3kZvxgWtUjdgts5mt3kZXdsUxn739WiEXAoGARJpg\nrdTVJJOjJYq/RLIG1K1++Wh+TK8ToSo+ZNm3qDAFAZ8Y17byHlCPgrsa+30dzaCq\nMKnP8kS/AsEi2CnmEeE5esHBv6t0YHTwzVOLiTmj/G2WQ/vpKOFFAFEdVmwAvXar\nUbQROYVc+oEtgq34z9OCHZm577yp+FrdbvSVUakCgYEAoCLiloAOiP+wCiyFv8B/\nHRIMI7mYquB5R29yUPWToFzGfS+KVAFjCmfXVpMfGYBTILG/yYdMpJvD8YwJLUfe\nI/Pl4gwKItS1FP4hzbWx82cM+DQN1QV+A5gRtsTp5LQzVoyrWqhvWpCoHzf6gSs0\nLeQduKG8FNxKJfd4rS/L6Mw=\n-----END PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk-fbsvc@bostgram.iam.gserviceaccount.com",
-    "client_id": "109165842728854310464",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40bostgram.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
+    'type': 'service_account',
+    'project_id': 'bostgram',
+    'private_key_id': '5e1bfc11fb3ad2f83a068cce19a09c17e3e7ca9f',
+    'private_key': '-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCo6BufttfGEgoG\n6jvY360VVtg9ZJOkNK1+4tydBJ9V/PhhLnbRQYubfEvg/BVJtYHC9fTf7KVdl+6u\nMyDVR2BPlM2H363Wcxj41v2ODAPOGaZ7TbNjhe248VDhZwIw5QSygE4AaHTxGf6J\nBOv4VsNXe8nhClLVrTcqKCtQFJ7LD96uGT3d0kIeZ40nDXj0AUaityqL26OwNr10\nRCKZUxIlRdCS5NUBcgmlf5LWMYkmHHl6+zPedtWirHLOS0dSonBjgBfowYo0E69k\nGk5ceg0xdPsUTZjytXgBvSJpc2z2VD8ue2uGK1q5cds8rOW4YvPgGnPOz/EBuCY1\n1OUMy0oXAgMBAAECggEAL3FCkRHieZgHiPmx5bCuBRhnlJbzgWPqd4FxRglOV/C+\nM03BwfUPKZU4GvGzaQi6cfBz35GwwSEzwWpLBp0NyEybjladlWau1PZOMd/eEb3S\nrT+d645qv0/I0AcG7oTlVN4FCshMUIxkmkfvn8l/BMuYYMVtjucgX474231vPMm7\nb4Wbk6pg2XZ4+kTbAn6WRPJ+2c6UAWbAudwCQ8YbkOFFmASzwSsvTL97F3BIB+hQ\nU52FLcqIQgiiXKRdgF/hUNWLLZC1ESBRMC3FnwLYXrRyBo+eEfH4A0jNh12FPqwJ\n3JMBZEAOa4Uv88APmoZgdGe1fjTNJGl3NrXLseXQAQKBgQDY0B3b5sE4tuQOUmG6\nThimBDlUxTguhIhfVmOKlLTl93FqM+oT1cfB91fpkRNYa1TZKXo69PmrHmdzVcgP\npkYO1H9OpmaOEV1YUNShOUXSPffxdpvZ0apusXVZphqrteEvGAbTFwZ43AsYZU5S\nel0nX+v2IMR0osdMwefzoE2zAQKBgQDHb2EHDR+o5FovfrM8mVCHpgvbKup4LMFc\n4maZlCIFJGq6WfDpXRPa+/CXe+uThbS1n/gdzZFUnoN2cPcBUH/1oWBMm/lD+0C1\n28UYUl69GVwYe4QRNtlHGU8BKuI0AnZIJvcEB27xDqM8blf25ERk/nRxzfGEQM9P\nmq8pnME1FwKBgBuj9JqLQYjccBiPUhwxRp0rnq968R2lEcmttsT9Dk7fC9txQN9E\netH0mYWSVDgKfuesjQOlJYs2NhQTFI1CMl5DovNA7YQhHJhcva7MIWWbNtfWuim7\nvBGemApUzcOkTU/2rTAOGGoiC1wR1jlXljal2Owo40LHWcckVVDO1/kBAoGAA8nk\n4Ppp2I6F/BL/Gq6a7gjEfuRg0emfvsD6S/6ZatmXQXUF85j2EJnqpyYOgp3uoeip\nEP/fu+jK/IwG1TqPQ75OEwZ/hMAYKZxEMUMXU6ZQrpJiHuWY2RXs/0uuQmitkI9U\n7/moLOInTbWW7DTH69c9pQ/Rf76vcYaxvyugK/8CgYAmLxNZmhPUPFcUwA1xshcB\napVoEmVLv3wLqROg/HwJ/0Es/V2zpAvnD3qXl0MpBVzcUBvb1R2L9FLTTBGVkCF8\nmLjy4zw7OXjILJSYkczZy0YkQS3WeCWb/y1L25Ce3FUAt64i+eBrPwOtbkz35Ktl\nW6gdGiPTq35W+rsesw4gCw==\n-----END PRIVATE KEY-----\n',
+    'client_email': 'firebase-adminsdk-fbsvc@bostgram.iam.gserviceaccount.com',
+    'client_id': '109165842728854310464',
+    'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
+    'token_uri': 'https://oauth2.googleapis.com/token',
+    'auth_provider_x509_cert_url': 'https://www.googleapis.com/oauth2/v1/certs',
+    'client_x509_cert_url': 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40bostgram.iam.gserviceaccount.com',
+    'universe_domain': 'googleapis.com'
 }
 
 class FirebaseDB:
@@ -720,7 +720,7 @@ STATIC_BUTTON_REGISTRY = [
     ("الأزرار الرئيسية", [
         ("ps",            "🛒 الخدمات"),
         ("collect",       "💠 تجميع النقاط"),
-        ("charge_points", " شحن النقاط"),
+        ("charge_points", "💳 شحن النقاط"),
         ("charge_stars",  "⭐ شحن تلقائي بالنجوم"),
         ("charge_vf",     "📱 شحن بفودافون كاش"),
         ("charge_usdt",   "💎 شحن بيوستد"),
@@ -793,6 +793,26 @@ def btn(text, callback_data=None, url=None, color="blue", **kwargs):
 
 def mk(row_width=2):
     return TelebotMarkup(row_width=row_width)
+
+def _normalize_username(u):
+    """ينظف يوزر الوكيل: يشيل @ أو رابط t.me ويرجع اليوزر فقط"""
+    if not u:
+        return None
+    u = str(u).strip()
+    if not u:
+        return None
+    if 't.me/' in u:
+        u = u.split('t.me/')[-1]
+    u = u.split('?')[0].split('/')[0]
+    u = u.lstrip('@').strip()
+    return u or None
+
+def _agent_charge_button():
+    """زر الشحن عبر الوكيل: لو فيه يوزر متضاف يوجه له مباشرة، وإلا يفتح صفحة المعلومات"""
+    uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
+    if uname:
+        return btn('🤝 شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue')
+    return btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue')
 
 # الإعدادات - يمكنك تعديلها هنا مباشرة
 
@@ -1209,8 +1229,13 @@ if _existing_accounts is None:
     _t2.sleep(2)
     _existing_accounts = db._http_get('accounts')
     if _existing_accounts is None:
-        print("[⚠️] accounts غير موجود في Firebase — إنشاء قائمة فارغة جديدة")
-        db.set('accounts', [])
+        if db._get_token() is None:
+            # ⚠️ فشل في توكن Firebase (مش فشل حقيقي إن البيانات فاضية)
+            # لا تصفّر accounts عشان منمسحش بيانات حقيقية بسبب مشكلة اعتماد مؤقتة
+            print("[⚠️] تعذر التحقق من Firebase (مشكلة في التوكن) — تخطي تصفير accounts للحفاظ على البيانات")
+        else:
+            print("[⚠️] accounts غير موجود في Firebase — إنشاء قائمة فارغة جديدة")
+            db.set('accounts', [])
     else:
         # كان موجود لكن الـ cache لم يحمّله — نحدث الـ cache
         with db._lock:
@@ -1890,7 +1915,7 @@ def leaderboard_rent():
             except Exception:
                 name_str = str(uid)
             lines.append(f"{medal} <b>{name_str}</b> — {count} حساب")
-    lines.append("━━━━━━━━━━━━━━━━━━━")
+    lines.append("━━━━━━━━━━━━━━━━��━━")
     return "\n".join(lines)
 
 # ██████████         نظام TOP LEVEL          ██████████
@@ -2357,7 +2382,7 @@ def top_level_text(uid: int) -> str:
         f"  📦 الطلبات      : <b>{stats['orders']:,}</b>",
         f"  💰 النقاط       : <b>{stats['coins']:,}</b>",
         f"  📱 الحسابات     : <b>{stats['accounts']:,}</b>",
-        f"━━━━━━━━━━━━━��━━━━━",
+        f"━━━━━���━━━━━━━��━━━━━",
         f"✨ <b>مميزاتك:</b> {current['perks']}",
         f"━━━━━━━━━━━━━━━━━━━",
         f"📈 <b>التقدم:</b> {progress_bar} ({current['level']}/{len(TOP_LEVELS)})",
@@ -2779,7 +2804,7 @@ def spin_wheel():
 
 
 def _wheel_art_with_prizes(prizes):
-    """يبني رسمة ASCII للعجلة بـ 8 أرقام مأخوذة من الجوائز."""
+    """يبني رسمة ASCII للعجلة بـ 8 أرقام مأخوذة من ال��وائز."""
     try:
         pts = [int(p.get("points", 0)) for p in prizes][:8]
         while len(pts) < 8:
@@ -2885,142 +2910,156 @@ def adds_session(session: str, phone: str, owner_id: int = None) -> bool:
 
 # بوت تيليبوت (الرئيسي)
 
-# ===== ترتيب أزرار القائمة الرئيسية (يتحكم فيه الأدمن من اللوحة) =====
-_MAIN_MENU_DEFAULT_ORDER = [
-    "ps",
-    "collect",
-    "tasks",
-    "register_accounts",
-    "account",
-    "channels",
-    "user_store",
-    "leaderboard",
-    "orders",
+# ===== ترتيب أزرار القائمة الرئيسية (يتحكم فيه الأدمن: فوق/تحت/يمين/شمال) =====
+# القائمة تُعرض للمستخدم كشبكة من عمودين، وكل زر له موقعه في الترتيب
+_MAIN_MENU_BTN_DEFAULT_ORDER = [
+    "ps", "tasks",
+    "collect", "charge_points",
+    "account", "send",
+    "register_accounts", "user_store",
+    "channels", "support",
+    "leaderboard", "top_level",
+    "11",
 ]
 
-# أسماء العناصر كما تظهر في لوحة ترتيب الأزرار للأدمن
-_MAIN_MENU_ITEM_NAMES = {
-    "ps":                "خدمات بوت رشق بلص - 𝖯𝖫𝖴𝖲",
-    "collect":           "تجميع النقاط / شحن النقاط",
-    "tasks":             "قائمة المهام (ربح نقاط)",
+# مفتاح الإظهار/الإخفاء لكل زر (None = ظاهر دائماً)
+_MAIN_MENU_BTN_VIS = {
+    "ps": None,
+    "tasks": "tasks",
+    "collect": "collect",
+    "charge_points": "collect",
+    "account": "account",
+    "send": "account",
+    "register_accounts": "register_accounts",
+    "user_store": "user_store",
+    "channels": "channels",
+    "support": "channels",
+    "leaderboard": "leaderboard",
+    "top_level": "top_level",
+    "11": None,
+}
+
+# (نص عربي، نص إنجليزي، لون) — زر 11 نصه ديناميكي ويُعالَج بشكل خاص
+_MAIN_MENU_BTN_SPECS = {
+    "ps":                ("خدمات بوت BOOSTGRAM", "BOOSTGRAM Bot Services", "green"),
+    "tasks":             ("قائمة المهام (ربح نقاط)", "Tasks list (earn points)", "green"),
+    "collect":           ("تجميع النقاط", "Collect points", "green"),
+    "charge_points":     ("شحن النقاط", "Recharge points", "green"),
+    "account":           ("معلومات حسابك", "Account info", "blue"),
+    "send":              ("تحويل نقاط", "Transfer points", "red"),
+    "register_accounts": ("سجل بحساباتك واتحكم فيهم", "Register & manage your accounts", "green"),
+    "user_store":        ("متجر البوت", "Bot store", "blue"),
+    "channels":          ("قنوات البوت", "Bot channels", "red"),
+    "support":           ("الدعم الفني", "Support", "green"),
+    "leaderboard":       ("Leaderboard", "Leaderboard", "red"),
+    "top_level":         ("TOP LEVEL", "TOP LEVEL", "red"),
+}
+
+# اسم مختصر للزر كما يظهر في لوحة الترتيب للأدمن
+_MAIN_MENU_BTN_NAMES = {
+    "ps":                "خدمات البوت",
+    "tasks":             "قائمة المهام",
+    "collect":           "تجميع النقاط",
+    "charge_points":     "شحن النقاط",
+    "account":           "معلومات حسابك",
+    "send":              "تحويل نقاط",
     "register_accounts": "تسجيل الحسابات",
-    "account":           "معلومات حسابك / تحويل نقاط",
-    "channels":          "قنوات البوت / الدعم الفني",
     "user_store":        "متجر البوت",
-    "leaderboard":       "Leaderboard / TOP LEVEL",
-    "orders":            "عدد الطلبات",
+    "channels":          "قنوات البوت",
+    "support":           "الدعم الفني",
+    "leaderboard":       "Leaderboard",
+    "top_level":         "TOP LEVEL",
+    "11":                "عدد الطلبات",
 }
 
 def _get_main_menu_order():
-    """يرجع ترتيب عناصر القائمة الرئيسية المحفوظ مع ضمان اكتمال كل العناصر"""
+    """يرجع ترتيب أزرار القائمة الرئيسية المحفوظ مع ضمان اكتمال كل الأزرار"""
     order = []
     try:
-        saved = db.get("main_menu_order")
+        saved = db.get("main_menu_btn_order")
         if saved and isinstance(saved, list):
-            order = [x for x in saved if x in _MAIN_MENU_DEFAULT_ORDER]
+            order = [x for x in saved if x in _MAIN_MENU_BTN_DEFAULT_ORDER]
     except:
         order = []
-    for x in _MAIN_MENU_DEFAULT_ORDER:
+    for x in _MAIN_MENU_BTN_DEFAULT_ORDER:
         if x not in order:
             order.append(x)
     return order
 
 def _set_main_menu_order(order):
     try:
-        db.set("main_menu_order", list(order))
+        db.set("main_menu_btn_order", list(order))
     except:
         pass
 
-def _render_menu_order_panel():
-    """يبني نص وأزرار لوحة ترتيب القائمة الرئيسية للأدمن"""
+def _move_main_menu_btn(item_id, direction):
+    """يحرك زر في الشبكة: يمين/شمال = خطوة واحدة، فوق/تحت = صف كامل (خطوتين)"""
     order = _get_main_menu_order()
-    txt = '🔀 <b>ترتيب أزرار القائمة الرئيسية</b>\n\n'
-    txt += 'استخدم ⬆️ / ⬇️ لتحريك الزر لأعلى أو لأسفل:\n\n'
+    if item_id not in order:
+        return
+    i = order.index(item_id)
+    step = {"left": -1, "right": 1, "up": -2, "down": 2}.get(direction)
+    if step is None:
+        return
+    j = i + step
+    if 0 <= j < len(order):
+        order[i], order[j] = order[j], order[i]
+        _set_main_menu_order(order)
+
+def _render_menu_order_panel():
+    """يبني نص وأزرار لوحة ترتيب القائمة الرئيسية للأدمن (شبكة عمودين)"""
+    order = _get_main_menu_order()
     n = len(order)
-    keys = mk(row_width=3)
+    txt = '🔀 <b>ترتيب أزرار القائمة الرئيسية</b>\n\n'
+    txt += 'القائمة بتظهر للمستخدم كشبكة من عمودين 👇\n'
+    txt += '⬅️ ➡️ = تحريك يمين/شمال • ⬆️ ⬇️ = تحريك فوق/تحت\n\n'
+    # عرض الشبكة كنص (صفّين في كل سطر)
+    for r in range(0, n, 2):
+        a = order[r]
+        line = f'صف {r // 2 + 1}:  {r + 1}) {_MAIN_MENU_BTN_NAMES.get(a, a)}'
+        if r + 1 < n:
+            b = order[r + 1]
+            line += f'   |   {r + 2}) {_MAIN_MENU_BTN_NAMES.get(b, b)}'
+        txt += line + '\n'
+    keys = mk(row_width=4)
     for idx, iid in enumerate(order):
-        name = _MAIN_MENU_ITEM_NAMES.get(iid, iid)
-        txt += f'{idx + 1}. {name}\n'
-        up_btn = btn('⬆️', callback_data=f'mord_up_{iid}', color='green') if idx > 0 else btn('➖', callback_data='noop', color='blue')
-        down_btn = btn('⬇️', callback_data=f'mord_down_{iid}', color='green') if idx < n - 1 else btn('➖', callback_data='noop', color='blue')
-        keys.add(
-            btn(f'{idx + 1}. {name}', callback_data='noop', color='blue'),
-            up_btn,
-            down_btn,
-        )
+        name = _MAIN_MENU_BTN_NAMES.get(iid, iid)
+        left_btn  = btn('⬅️', callback_data=f'mord_left_{iid}',  color='green') if idx - 1 >= 0 else btn('▪️', callback_data='noop', color='blue')
+        up_btn    = btn('⬆️', callback_data=f'mord_up_{iid}',    color='green') if idx - 2 >= 0 else btn('▪️', callback_data='noop', color='blue')
+        down_btn  = btn('⬇️', callback_data=f'mord_down_{iid}',  color='green') if idx + 2 < n  else btn('▪️', callback_data='noop', color='blue')
+        right_btn = btn('➡️', callback_data=f'mord_right_{iid}', color='green') if idx + 1 < n  else btn('▪️', callback_data='noop', color='blue')
+        keys.add(btn(f'{idx + 1}. {name}', callback_data='noop', color='blue'))
+        keys.add(left_btn, up_btn, down_btn, right_btn)
     keys.add(btn('♻️ إعادة الترتيب الافتراضي', callback_data='mord_reset', color='red'))
     keys.add(btn('🔙 رجوع للتخصيص', callback_data='adm_btn_panel', color='blue'))
     return txt, keys
 
-def _build_menu_row(item_id, lang, ord_label):
-    """يبني صف القائمة الرئيسية لعنصر معيّن (أو None لو الزر مخفي)"""
-    en = (lang == 'en')
-    if item_id == "ps":
-        return [btn('BOOSTGRAM Bot Services' if en else 'خدمات بوت BOOSTGRAM',
-                    callback_data='ps', color='green')]
-    if item_id == "collect":
-        if not _is_btn_visible('collect'):
-            return None
-        if en:
-            return [btn('Collect points', callback_data='collect', color='green'),
-                    btn('Recharge points', callback_data='charge_points', color='green')]
-        return [btn('تجميع النقاط', callback_data='collect', color='green'),
-                btn('شحن النقا��', callback_data='charge_points', color='green')]
-    if item_id == "tasks":
-        if not _is_btn_visible('tasks'):
-            return None
-        return [btn('Tasks list (earn points)' if en else 'قائمة المهام (ربح نقاط)',
-                    callback_data='tasks', color='green')]
-    if item_id == "register_accounts":
-        if not _is_btn_visible('register_accounts'):
-            return None
-        return [btn('Register & manage your accounts' if en else 'سجل بحساباتك واتحكم فيهم',
-                    callback_data='register_accounts', color='green')]
-    if item_id == "account":
-        if not _is_btn_visible('account'):
-            return None
-        if en:
-            return [btn('Account info', callback_data='account', color='blue'),
-                    btn('Transfer points', callback_data='send', color='red')]
-        return [btn('معلومات حسابك', callback_data='account', color='blue'),
-                btn('تحويل نقاط', callback_data='send', color='red')]
-    if item_id == "channels":
-        if not _is_btn_visible('channels'):
-            return None
-        if en:
-            return [btn('Bot channels', callback_data='channels', color='red'),
-                    btn('Support', callback_data='support', color='green')]
-        return [btn('قنوات البوت', callback_data='channels', color='red'),
-                btn('الدعم الفني', callback_data='support', color='green')]
-    if item_id == "user_store":
-        if not _is_btn_visible('user_store'):
-            return None
-        return [btn('Bot store' if en else 'متجر البوت',
-                    callback_data='user_store', color='blue')]
-    if item_id == "leaderboard":
-        if not (_is_btn_visible('leaderboard') or _is_btn_visible('top_level')):
-            return None
-        lb_btn = btn('Leaderboard', callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
-        tl_btn = btn('TOP LEVEL', callback_data='top_level', color='red') if _is_btn_visible('top_level') else None
-        row = [b for b in (lb_btn, tl_btn) if b]
-        return row or None
-    if item_id == "orders":
-        return [btn(ord_label, callback_data='11', color='green')]
-    return None
-
 def _build_main_keys(user_id):
-    """يبني أزرار الصفحة الرئيسية — الترتيب والألوان والنصوص قابلة للتخصيص من لوحة الأدمن"""
+    """يبني أزرار الصفحة الرئيسية كشبكة عمودين — الترتيب والنصوص قابلة للتخصيص من لوحة الأدمن"""
     ord_label = _get_btn_label('11', default='عدد الطلبات')
     total_orders = db.get('orders')
     total_orders = int(total_orders) if total_orders is not None else 185443
     ord_label = f'{ord_label} : {total_orders:,}'
 
     lang = _user_lang(user_id)
+    en = (lang == 'en')
+    buttons = []
+    for bid in _get_main_menu_order():
+        vis = _MAIN_MENU_BTN_VIS.get(bid)
+        if vis is not None and not _is_btn_visible(vis):
+            continue
+        if bid == "11":
+            buttons.append(btn(ord_label, callback_data='11', color='green'))
+            continue
+        spec = _MAIN_MENU_BTN_SPECS.get(bid)
+        if not spec:
+            continue
+        ar_lbl, en_lbl, color = spec
+        buttons.append(btn(en_lbl if en else ar_lbl, callback_data=bid, color=color))
+
     keys = mk(row_width=2)
-    for item_id in _get_main_menu_order():
-        row = _build_menu_row(item_id, lang, ord_label)
-        if row:
-            keys.add(*row)
+    if buttons:
+        keys.add(*buttons)
     return keys
 
 def _count_pending_referral(join_user):
@@ -3593,7 +3632,7 @@ def start_message(message):
             return
 
         _is_admin = (user_id == sudo) or (user_id in _get_admins_cached())
-        # تحديث بيانات المستخدم من Firebase لو الـ cache اتحمل حديثاً
+        # تحديث بيانات المستخدم من Firebase لو الـ cache اتحمل حد��ثاً
         if db._cache_loaded and f'user_{user_id}' not in db._cache:
             db.refresh_user(user_id)
         # نتحقق من أول ستارت حقيقي بـ flag خاص مش بوجود المستخدم في الـ DB
@@ -4226,7 +4265,7 @@ _ADMIN_CATEGORIES = {
     'adm_cat_points': {
         'title': '💰 النقاط و VIP',
         'buttons': [
-            ('اضافه نقاط',          'addpoints',      'green'),
+            ('اضافه ن��اط',          'addpoints',      'green'),
             ('خصم نقاط',            'lespoints',      'red'),
             ('تفعيل VIP',           'addvip',         'green'),
             ('الغاء VIP',           'lesvip',         'red'),
@@ -4820,7 +4859,7 @@ def _c_rs_worker(call):
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
-        'adm_menu_order', 'mord_up_', 'mord_down_', 'mord_reset', 'noop',
+        'adm_menu_order', 'mord_up_', 'mord_down_', 'mord_left_', 'mord_right_', 'mord_reset', 'noop',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -5566,18 +5605,14 @@ def _c_rs_worker(call):
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
-    if data.startswith('mord_up_') or data.startswith('mord_down_'):
+    if data.startswith('mord_left_') or data.startswith('mord_right_') or data.startswith('mord_up_') or data.startswith('mord_down_'):
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
-        is_up = data.startswith('mord_up_')
-        item_id = data[len('mord_up_'):] if is_up else data[len('mord_down_'):]
-        order = _get_main_menu_order()
-        if item_id in order:
-            i = order.index(item_id)
-            j = i - 1 if is_up else i + 1
-            if 0 <= j < len(order):
-                order[i], order[j] = order[j], order[i]
-                _set_main_menu_order(order)
+        for _d in ('left', 'right', 'up', 'down'):
+            _pref = f'mord_{_d}_'
+            if data.startswith(_pref):
+                _move_main_menu_btn(data[len(_pref):], _d)
+                break
         try:
             _cb_alert(call)
         except Exception:
@@ -5909,7 +5944,7 @@ def _c_rs_worker(call):
         reg_keys.add(btn('🏆 توب 5 تسجيل الحسابات', callback_data='rent_top', color='red'))
         reg_keys.add(btn('رجوع', callback_data='back', color='blue'))
         reg_txt = (
-            "╔══════════════════╗\n"
+            "╔══════════��═══════╗\n"
             "   📲 تسجيل حساباتك للتحكم فيها\n"
             "╚══════════════════╝\n\n"
             f"📱 <b>حساباتك المسجلة :</b> {_my_submitted} حساب\n"
@@ -6208,7 +6243,7 @@ def _c_rs_worker(call):
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         x = bot.edit_message_text(
-            text='➕ أرسل معرف القناة أو يوزرها (مثال: @channel أو -1001234567890):',
+            text='➕ أرسل معرف القناة أو يوزرها (مثا��: @channel أو -1001234567890):',
             chat_id=cid, message_id=mid
         , reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, _cast_add_channel_manual)
@@ -6495,7 +6530,7 @@ def _c_rs_worker(call):
         keys.add(btn_sell)
         keys.add(btn_lvl)
         keys.add(btn('رجوع', callback_data='back', color='blue'))
-        bot.edit_message_text(text='💰 مرحباً بك في قسم تجميع النقاط\n\n• اختر إحدى الطرق التالية لجمع النقاط:', chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
+        bot.edit_message_text(text='💰 مرحباً بك في قس�� تجميع النقاط\n\n• اختر إحدى الطرق التالية لجمع النقاط:', chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
         return
 
     if data == 'submit_account':
@@ -6780,7 +6815,7 @@ def _c_rs_worker(call):
             _ck2.add(btn('🗑 حذف قناة', callback_data='fsub_remove', color='red'))
         _ck2.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_subscription', color='red'))
         bot.edit_message_text(
-            text=f'📡 <b>إدارة قنوات الاشتراك الإجباري</b>\n\n<b>القنوات ({len(_fc2)}):</b>\n{_cl2}',
+            text=f'📡 <b>إدارة قنو��ت الاشتراك الإجباري</b>\n\n<b>القنوات ({len(_fc2)}):</b>\n{_cl2}',
             reply_markup=_ck2, chat_id=cid, message_id=mid, parse_mode='HTML'
         )
 
@@ -7040,7 +7075,7 @@ def _c_rs_worker(call):
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
         keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
         keys.add(btn('💎 شحن بـ USDT', callback_data='charge_usdt', color='green'))
-        keys.add(btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue'))
+        keys.add(_agent_charge_button())
         keys.add(btn('🔙 رجوع للقائمة', callback_data='back', color='red'))
         txt = (
             "شحن النقاط\n\n"
@@ -7131,14 +7166,14 @@ def _c_rs_worker(call):
 
     if data == 'charge_points':
         keys = mk(row_width=1)
-        keys.add(btn(' شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
+        keys.add(btn('��� شحن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
         keys.add(btn('💎 شحن بيوستد', callback_data='charge_usdt', color='blue'))
         keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
-        keys.add(btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue'))
+        keys.add(_agent_charge_button())
         keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(
-            text=' شحن النقاط\n\nاختر طريقة الشحن:',
+            text='💳 شحن النقاط\n\nاختر طريقة الشحن:',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML"
         )
 
@@ -7236,9 +7271,14 @@ def _c_rs_worker(call):
 
     if data == 'charge_agent':
         agent_info = db.get("charge_agent_info") if db.exists("charge_agent_info") else "بأسعار خاصة — تواصل مع الأدمن"
+        agent_uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
         keys = mk(row_width=1)
+        if agent_uname:
+            keys.add(btn('🤝 تواصل مع الوكيل مباشرة', url=f'https://t.me/{agent_uname}', color='green'))
         keys.add(btn('رجوع', callback_data='charge_points', color='red'))
         txt = f"شحن عبر الوكيل\n\n{agent_info}"
+        if agent_uname:
+            txt += f"\n\n👤 الوكيل: @{agent_uname}"
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
     if data == 'share_link':
         bot_user = None
@@ -7327,7 +7367,7 @@ def _c_rs_worker(call):
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
             f'📈 الحد الأقصى : <b>{_mx}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
-            f'أرسل الآن العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
+            f'أرسل الآ�� العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
         )
         db.set(f'memberp_{cid}_proccess', True)
         x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('vips'), chat_id=cid, message_id=mid, parse_mode="HTML")
@@ -7813,6 +7853,7 @@ def _c_rs_worker(call):
         ckeys.add(btn('سعر USDT (USDT = كم نقطة)', callback_data='chset_usdt_rate', color='blue'))
         ckeys.add(btn('محفظة USDT (TRC20)', callback_data='chset_usdt_wallet', color='blue'))
         ckeys.add(btn('معلومات الوكيل', callback_data='chset_agent_info', color='green'))
+        ckeys.add(btn('🤝 يوزر الوكيل (توجيه مباشر)', callback_data='chset_agent_username', color='green'))
         ckeys.add(btn('━━━ 👑 اشتراك VIP بالنقاط ━━━', callback_data='none', color='blue'))
         ckeys.add(btn(f'سعر الشهري ({vip_monthly:,} نقطة)', callback_data='chset_vip_monthly', color='green'))
         ckeys.add(btn(f'سعر السنوي ({vip_yearly:,} نقطة)', callback_data='chset_vip_yearly', color='green'))
@@ -7828,7 +7869,7 @@ def _c_rs_worker(call):
             f"📱 فودافون كاش: 1 جنيه = {vf_rate} نقطة | رقم: {vf_number}\n"
             f"💵 الكاش: $1 = {cash_rate} نقطة\n"
             f"💎 USDT: 1 USDT = {usdt_rate} نقطة\n\n"
-            f"👑 VIP شهري: {vip_monthly:,} | سنوي: {vip_yearly:,} | حياة: {vip_lifetime:,}\n"
+            f"👑 VIP شهري: {vip_monthly:,} | سنو��: {vip_yearly:,} | حياة: {vip_lifetime:,}\n"
             f"📌 شراء VIP: {'✅ مفعّل' if vip_sub_on else '❌ معطّل'}"
         )
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode="HTML")
@@ -7891,6 +7932,7 @@ def _c_rs_worker(call):
         ('chset_cash_contact',   'معرف تواصل الكاش',             'أرسل معرف تيليجرام للتواصل للكاش (بدون @):',              'charge_cash_contact'),
         ('chset_usdt_wallet',    'محفظة USDT',                   'أرسل عنوان محفظة USDT (TRC20):',                          'charge_usdt_wallet'),
         ('chset_agent_info',     'معلومات الوكيل',                'أرسل نص معلومات الشحن عبر الوكيل:',                       'charge_agent_info'),
+        ('chset_agent_username', 'يوزر الوكيل',                   'أرسل يوزر الوكيل اللي هيتوجه له المستخدمين على طول (مثال: @agent أو رابط t.me):', 'charge_agent_username'),
         ('chset_orders_channel', 'قناة الطلبات',                  'أرسل ID القناة (مثال: -1001234567890)\nتأكد أن البوت أدمن في القناة:', 'orders_channel_id'),
         ('chset_logs_channel',   'قناة سجل الأزرار',               'أرسل ID قناة اللوجز (مثال: -1001234567890)\nتأكد أن البوت أدمن في القناة:', 'logs_channel_id'),
         ('chset_vf_rate',        'سعر فودافون كاش',               'أرسل عدد النقاط مقابل كل 1 جنيه (مثال: 1000):',           'charge_vf_rate'),
@@ -8665,7 +8707,7 @@ def _c_rs_worker(call):
         else:
             emoji_display = emoji_char or '⭐'
 
-        _cb_alert(call, text='✅ تم اختيار الإيموجي')
+        _cb_alert(call, text='��� تم اختيار الإيموجي')
         db.set(f'react_special_chosen_{cid}', f'{emoji_char}|||{custom_emoji_id or ""}|||{url}|||{amount}')
 
         _svc_price = svc_price('react_special')
@@ -10101,7 +10143,7 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       🗳️ طلب تصويت مسابقات جديد\n'
-                f'╚══════════════════════╝\n\n'
+                f'╚════════════════��═════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} صوت\n\n'
                 f'⏱ أرسل الآن وقت الانتظار بين التصويت (بالثواني)\n'
                 f'• أرسل 0 لتنفيذ فوري | الحد الأقصى 500\n'
@@ -10383,7 +10425,7 @@ def get_time_votes_fsub(message, amount):
         bot.reply_to(message, text=f'• رجاء ارسل الوقت بشكل صحيح')
         return
     if wait_time < 0 or wait_time > 500:
-        bot.reply_to(message, text=f'• رجاء ارسل وقت بين 0 و 500')
+        bot.reply_to(message, text=f'• رج��ء ارسل وقت بين 0 و 500')
         return
     _req_txt = (
         f'╔══════════════════════╗\n'
@@ -10743,7 +10785,7 @@ def def_execute_order(uid: int, cb=None):
                 except: false += 1
             unit_price = svc_price('votes')
 
-        elif otype == 'أعضاء قناة عامة':
+        elif otype == 'أعضاء قناة ع��مة':
             chat_target = url.replace('https://t.me/', '').replace('@', '') if not detect(url) else url
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
@@ -11448,7 +11490,7 @@ def react_special_step1_amount(message):
     bot.register_next_step_handler(x, react_special_step2_url)
 
 def react_special_step2_url(message):
-    """الخطوة 2: استقبال الرابط وجلب إيموجيات القناة"""
+    """الخطوة 2: استقبال الرابط وجلب إيموجيات ا��قناة"""
     cid = message.from_user.id
     cancel_kb = mk(row_width=1)
     cancel_kb.add(btn('❌ إلغاء ورجوع', callback_data='back', color='red'))
@@ -11766,8 +11808,8 @@ def get_react_special(message, url):
         '╚══════════════════════╝\n\n'
         f'🔗 الرابط : {url}\n'
         f'😀 الايموجي : {emoji_text}\n\n'
-        f'🔢 أرسل الآن العدد المطلوب ({_mn} - {_mx})\n'
-        '━━━━━━━━━━━━━━━━━━━━'
+        f'🔢 أرسل الآن العدد ال��طلوب ({_mn} - {_mx})\n'
+        '━━━━━━━━━━━━��━━━━━━━'
     )
     x = bot.reply_to(message, _req_txt, reply_markup=cancel_kb)
     bot.register_next_step_handler(x, get_url_react_special, url, message)
@@ -13811,7 +13853,7 @@ _pyro_loop_thread = threading.Thread(target=_pyro_loop_runner, daemon=True)
 _pyro_loop_thread.start()
 
 def _pyro_run(coro):
-    """يشغّل coroutine على loop دائم مشترك — آمن للاستدعاء من أي thread وبشكل متزامن."""
+    """يشغّل coroutine على loop دائم مشترك — آمن للاستدعا�� من أي thread وبشكل متزامن."""
     global _pyro_loop, _pyro_loop_thread
     # لو الـ loop اتقفل أو الـ thread وقف لأي سبب — أعد تشغيله
     if _pyro_loop.is_closed() or not _pyro_loop_thread.is_alive():
@@ -14099,7 +14141,7 @@ def _send_order_confirm(cid, service_label, section_label, amount, price, extra=
     txt = (
         f'╔══════════════════════╗\n'
         f'       📋 تأكيد الطلب\n'
-        f'╚══════════════════════╝\n\n'
+        f'╚════════════════��═════╝\n\n'
         f'📂 القسم : {section_label}\n'
         f'🛠 الخدمة : {service_label}\n'
         f'📦 الكمية : {amount:,}\n'
