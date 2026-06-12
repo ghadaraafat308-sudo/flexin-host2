@@ -3729,7 +3729,7 @@ def admin_panel_cmd(message):
     ckeys.add(btn('⭐ سعر النجوم للباقة', callback_data='chset_fsub_stars', color='green'))
     ckeys.add(btn('📱 سعر فودافون كاش للباقة', callback_data='chset_fsub_cash', color='green'))
     ckeys.add(btn('💎 سعر USDT للباقة', callback_data='chset_fsub_usdt', color='green'))
-    ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
+    ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_settings', color='red'))
     txt = (
         "إعدادات الشحن\n\n"
         f"النجوم: 1 نجمة = {stars_rate} نقطة\n"
@@ -4025,7 +4025,7 @@ def _handle_import_db_panel(call):
     keys.add(btn('📱 استيراد الحسابات (الأرقام)', callback_data='adm_import_type_accounts', color='green'))
     keys.add(btn('⚙️ استيراد الإعدادات', callback_data='adm_import_type_settings', color='blue'))
     keys.add(btn('📦 استيراد الكل', callback_data='adm_import_type_all', color='blue'))
-    keys.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
+    keys.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_database', color='red'))
     try:
         bot.edit_message_text(
             chat_id=cid, message_id=mid,
@@ -4067,7 +4067,7 @@ def _handle_import_db_file(message):
         db.set(f"_import_pending_{cid}", _json_db.dumps(store_obj, ensure_ascii=False))
         confirm_kb = mk(row_width=1)
         confirm_kb.add(btn('✅ تأكيد الاستيراد', callback_data=f'adm_import_confirm_{import_type}', color='red'))
-        confirm_kb.add(btn('إلغاء', callback_data='adm_back_main', color='green'))
+        confirm_kb.add(btn('إلغاء', callback_data='adm_cat_database', color='green'))
         cnt = len(store_obj)
         bot.send_message(
             cid,
@@ -4147,92 +4147,137 @@ def _import_db_from_json(jdata, import_type="all"):
 
 # 👑 لوحة الأدمن - أمر /admin
 
+# تعريف فئات لوحة الأدمن — كل فئة بتجمع الأزرار المرتبطة ببعضها
+_ADMIN_CATEGORIES = {
+    'adm_cat_users': {
+        'title': '👥 المستخدمين والصلاحيات',
+        'buttons': [
+            ('حظر شخص',        'banone',   'red'),
+            ('فك حظر',          'unbanone', 'green'),
+            ('اضافة ادمن',      'addadmin', 'green'),
+            ('مسح ادمن',        'deladmin', 'red'),
+            ('الادمنية',        'admins',   'blue'),
+            ('عدد الارقام',     'numbers',  'blue'),
+        ],
+    },
+    'adm_cat_points': {
+        'title': '💰 النقاط و VIP',
+        'buttons': [
+            ('اضافه نقاط',          'addpoints',      'green'),
+            ('خصم نقاط',            'lespoints',      'red'),
+            ('تفعيل VIP',           'addvip',         'green'),
+            ('الغاء VIP',           'lesvip',         'red'),
+            ('عدد الدعوات للـ VIP', 'adm_vip_thresh', 'green'),
+            ('صفر نقاط الجميع',     'adm_reset_coins','red'),
+        ],
+    },
+    'adm_cat_subscription': {
+        'title': '📡 الاشتراك والقنوات',
+        'buttons': [
+            ('تعيين قنوات الاشتراك',          'setforce',            'blue'),
+            ('إحصائيات الاشتراك الإجباري',    'adm_fsub_stats',      'blue'),
+            ('تعيين قنوات البوت',             'adm_set_channels',    'blue'),
+            ('تعيين نص الدعم الفني',          'adm_set_support',     'blue'),
+            ('قناة الطلبات',                  'chset_orders_channel','green'),
+            ('📋 قناة سجل الأزرار',            'chset_logs_channel',  'blue'),
+        ],
+    },
+    'adm_cat_settings': {
+        'title': '⚙️ إعدادات البوت',
+        'buttons': [
+            ('إعدادات الخدمات',     'adm_svc_panel',         'green'),
+            ('إعدادات الشحن',       'adm_charge_panel',      'blue'),
+            ('إعدادات المتجر',      'adm_market_settings',   'green'),
+            ('إعدادات الألعاب',     'adm_games_settings',    'blue'),
+            ('لوحة تخصيص الأزرار',  'adm_btn_panel',         'green'),
+            ('إخفاء/إظهار الأزرار', 'adm_visibility',        'red'),
+            ('إعداد زر قناة البوت', 'adm_set_channel_btn',   'green'),
+            ('إعداد الإيموجي المخصص','adm_set_emojis',       'green'),
+        ],
+    },
+    'adm_cat_tasks': {
+        'title': '📋 المهام والمكافآت',
+        'buttons': [
+            ('إدارة المهام',         'adm_tasks_panel',   'blue'),
+            ('إعدادات المكافآت',     'adm_rewards_panel', 'green'),
+            ('صنع رابط هدية نقاط',   'adm_gift_link',     'green'),
+        ],
+    },
+    'adm_cat_database': {
+        'title': '🗄️ قاعدة البيانات',
+        'buttons': [
+            ('adm_export_db', 'adm_export_db', 'blue'),
+            ('adm_import_db', 'adm_import_db', 'green'),
+        ],
+    },
+    'adm_cat_general': {
+        'title': '📊 عام وإذاعة',
+        'buttons': [
+            ('📊 الاحصائيات',                       'stats',     'blue'),
+            ('📢 اذاعة',                            'cast',      'green'),
+            ('🤖 إدارة الدعم بالذكاء الاصطناعي',    'adm_ai_panel','green'),
+            ('سحب اصوات',                           'dump_votes','red'),
+            ('سبام رسائل',                          'spams',     'red'),
+            ('مغادرة كل الحسابات من قناة',          'leave',     'red'),
+            ('مغادرة كل القنوات والمجموعات',        'lvall',     'red'),
+        ],
+    },
+}
+
+
 def _show_admin_panel(target, is_edit=False, mid=None):
-    """تعرض لوحة الأدمن - target = chat_id أو message"""
+    """تعرض لوحة الأدمن الرئيسية - target = chat_id أو message"""
     if isinstance(target, int):
         cid = target
         send_func = bot.edit_message_text if is_edit else lambda text, **kw: bot.send_message(chat_id=cid, text=text, **kw)
     else:
         cid = target.chat.id
         send_func = bot.edit_message_text if is_edit else lambda text, **kw: bot.reply_to(target, text, **kw)
-    keys_ = mk()
-    btn01 = btn('📊 الاحصائيات', callback_data='stats', color='blue')
-    btn02 = btn("📢 اذاعة", callback_data='cast', color='green')
-    btn05 = btn('حظر شخص', callback_data='banone', color='red')
-    btn06 = btn('فك حظر', callback_data='unbanone', color='green')
-    btn09 = btn('عدد الارقام', callback_data='numbers', color='blue')
-    btna = btn('تفعيل ViP', callback_data='addvip', color='green')
-    btnl = btn('الغاء ViP', callback_data='lesvip', color='red')
-    leave = btn('مغادرة كل الحسابات من قناة', callback_data='leave', color='red')
-    lvall = btn('مغادرة كل القنوات والمجموعات', callback_data='lvall', color='red')
-    btn11 = btn('تعيين قنوات الاشتراك', callback_data='setforce', color='blue')
-    les = btn('خصم نقاط', callback_data='lespoints', color='red')
-    btn10 = btn('اضافه نقاط', callback_data='addpoints', color='green')
-    btn03 = btn('اضافة ادمن', callback_data='addadmin', color='green')
-    btn04 = btn('مسح ادمن', callback_data='deladmin', color='red')
-    btn012 = btn('الادمنية', callback_data='admins', color='blue')
-    btn013 = btn('سحب اصوات', callback_data='dump_votes', color='red')
-    btn105 = btn('سبام رسائل', callback_data='spams', color='red')
-    btn_panel = btn('لوحة تخصيص الأزرار', callback_data='adm_btn_panel', color='green')
-    btn_svc = btn('إعدادات الخدمات', callback_data='adm_svc_panel', color='green')
-    btn_charge = btn('إعدادات الشحن', callback_data='adm_charge_panel', color='blue')
-    btn_orders_ch = btn('قناة الطلبات', callback_data='chset_orders_channel', color='green')
-    btn_logs_ch   = btn('📋 قناة سجل الأزرار', callback_data='chset_logs_channel', color='blue')
-    btn_gift_link = btn('صنع رابط هدية نقاط', callback_data='adm_gift_link', color='green')
-    btn_set_support = btn('تعيين نص الدعم الفني', callback_data='adm_set_support', color='blue')
-    btn_set_channels = btn('تعيين قنوات البوت', callback_data='adm_set_channels', color='blue')
-    btn_vip_thresh = btn('عدد الدعوات للـ VIP', callback_data='adm_vip_thresh', color='green')
-    btn_fsub_stats = btn('إحصائيات الاشتراك الإجباري', callback_data='adm_fsub_stats', color='blue')
-    btn_rewards    = btn('إعدادات المكافآت', callback_data='adm_rewards_panel', color='green')
-    btn_market     = btn('إعدادات المتجر', callback_data='adm_market_settings', color='green')
-    btn_games_set  = btn('إعدادات الألعاب', callback_data='adm_games_settings', color='blue')
-    btn_tasks      = btn('إدارة المهام', callback_data='adm_tasks_panel', color='blue')
-    btn_vis        = btn('إخفاء/إظهار الأزرار', callback_data='adm_visibility', color='red')
-    btn_export_db  = btn(_get_btn_label('adm_export_db', ' تصدير قاعدة البيانات'), callback_data='adm_export_db', color=_get_btn_color('adm_export_db', 'blue'))
-    btn_import_db  = btn(_get_btn_label('adm_import_db', ' استيراد قاعدة البيانات'), callback_data='adm_import_db', color=_get_btn_color('adm_import_db', 'green'))
-    btn_set_ch_btn   = btn('إعداد زر قناة البوت',    callback_data='adm_set_channel_btn', color='green')
-    btn_set_emojis   = btn('إعداد الإيموجي المخصص',   callback_data='adm_set_emojis',      color='green')
-    btn_reset_coins = btn('صفر نقاط الجميع', callback_data='adm_reset_coins', color='red')
+
+    keys_ = mk(row_width=1)
+    for cat_key, cat in _ADMIN_CATEGORIES.items():
+        keys_.add(btn(cat['title'], callback_data=cat_key, color='blue'))
+
     _maint_on = db.get('maintenance_mode')
     btn_maintenance = btn(
         '🔴 وضع الصيانة: مفعّل' if _maint_on else '🟢 وضع الصيانة: معطّل',
         callback_data='adm_toggle_maintenance',
         color='red' if _maint_on else 'green'
     )
-    btn_ai = btn('🤖 إدارة الدعم بالذكاء الاصطناعي', callback_data='adm_ai_panel', color='green')
-    # ===== لوحة الأدمن — تخطيط مدمج (صفوف أقل، زرّين في الصف) =====
-    keys_.add(btn_ai)
-    keys_.add(btn01, btn02)
-    keys_.add(btn05, btn06)
-    keys_.add(btn03, btn04)
-    keys_.add(btn012, btn09)
-    keys_.add(btn10, les)
-    keys_.add(btna, btnl)
-    keys_.add(btn11, btn_vip_thresh)
-    keys_.add(btn013, btn105)
-    keys_.add(leave, lvall)
-    keys_.add(btn_panel, btn_vis)
-    keys_.add(btn_svc, btn_charge)
-    keys_.add(btn_rewards, btn_market)
-    keys_.add(btn_games_set, btn_tasks)
-    keys_.add(btn_orders_ch, btn_logs_ch)
-    keys_.add(btn_set_support, btn_set_channels)
-    keys_.add(btn_set_ch_btn, btn_set_emojis)
-    keys_.add(btn_gift_link, btn_fsub_stats)
-    keys_.add(btn_export_db, btn_import_db)
-    keys_.add(btn_reset_coins, btn_maintenance)
+    keys_.add(btn_maintenance)
+
+    _txt = (
+        '**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n'
+        '- اختر القسم اللي عايز تتحكم فيه من تحت 👇\n\n==================='
+    )
     if is_edit and mid:
-        send_func(
-            text='**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n- يمكنك التحكم في البوت الخاص بك من هنا \n\n===================',
-            chat_id=cid, message_id=mid, reply_markup=keys_, parse_mode='Markdown'
-        )
+        send_func(text=_txt, chat_id=cid, message_id=mid, reply_markup=keys_, parse_mode='Markdown')
     else:
-        send_func(
-            '**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n- يمكنك التحكم في البوت الخاص بك من هنا \n\n===================',
-            reply_markup=keys_, parse_mode='Markdown'
-        )
+        send_func(_txt, reply_markup=keys_, parse_mode='Markdown')
+
+
+def _show_admin_category(cid, mid, cat_key):
+    """تعرض أزرار فئة معينة من لوحة الأدمن"""
+    cat = _ADMIN_CATEGORIES.get(cat_key)
+    if not cat:
+        _show_admin_panel(cid, is_edit=True, mid=mid)
+        return
+    keys_ = mk(row_width=1)
+    for label, cb, color in cat['buttons']:
+        if cb == 'adm_export_db':
+            keys_.add(btn(_get_btn_label('adm_export_db', ' تصدير قاعدة البيانات'), callback_data='adm_export_db', color=_get_btn_color('adm_export_db', 'blue')))
+        elif cb == 'adm_import_db':
+            keys_.add(btn(_get_btn_label('adm_import_db', ' استيراد قاعدة البيانات'), callback_data='adm_import_db', color=_get_btn_color('adm_import_db', 'green')))
+        else:
+            keys_.add(btn(label, callback_data=cb, color=color))
+    keys_.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+    bot.edit_message_text(
+        text=f"**{cat['title']}**\n\n- اختر الإجراء المطلوب:\n\n===================",
+        chat_id=cid, message_id=mid, reply_markup=keys_, parse_mode='Markdown'
+    )
 
 @bot.message_handler(commands=['admin'])
+
 def cmd_admin(message):
     if not _fsub_check_msg(message): return
     cid = message.from_user.id
@@ -5463,7 +5508,7 @@ def _c_rs_worker(call):
             icon = "🟢" if visible else "🔴"
             txt += f'{icon} {label}\n'
             keys.add(btn(f'{"إخفاء" if visible else "إظهار"} {label}', callback_data=f'vis_toggle_{cb}', color='green' if visible else 'red'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -5483,7 +5528,7 @@ def _c_rs_worker(call):
             icon = "🟢" if vis else "🔴"
             txt += f'{icon} {label}\n'
             keys.add(btn(f'{"إخفاء" if vis else "إظهار"} {label}', callback_data=f'vis_toggle_{cb}', color='green' if vis else 'red'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -5499,7 +5544,7 @@ def _c_rs_worker(call):
         keys.add(btn(f'🎯 تخمين — جائزة ({gp})', callback_data='adm_set_guess_prize', color='green'))
         keys.add(btn(f'❌ XO — جائزة ({xp})', callback_data='adm_set_xo_prize', color='green'))
         keys.add(btn(f'🔤 كلمة — جائزة ({wp})', callback_data='adm_set_word_prize', color='green'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(
             text='🎮 <b>إعدادات الألعاب</b>\n\n🆓 الألعاب مجانية — كل ساعة\n\nعدّل الجوائز:',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
@@ -5541,7 +5586,7 @@ def _c_rs_worker(call):
         keys.add(btn(f'{status_btn} المتجر', callback_data='mkt_toggle', color='green' if not market_enabled else 'red'))
         keys.add(btn('💰 تغيير نسبة العمولة', callback_data='mkt_set_fee', color='blue'))
         keys.add(btn('📊 إحصائيات المتجر', callback_data='mkt_stats', color='blue'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(
             text=f'🏪 <b>إعدادات المتجر</b>\n\n'
                  f'🟢 الحالة: {"مفعل" if market_enabled else "معطل"}\n'
@@ -5574,7 +5619,7 @@ def _c_rs_worker(call):
         keys.add(btn(f'{status_btn} المتجر', callback_data='mkt_toggle', color='green' if not market_enabled else 'red'))
         keys.add(btn('💰 تغيير نسبة العمولة', callback_data='mkt_set_fee', color='blue'))
         keys.add(btn('📊 إحصائيات المتجر', callback_data='mkt_stats', color='blue'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(
             text=f'🏪 <b>إعدادات المتجر</b>\n\n🟢 الحالة: {"مفعل" if market_enabled else "معطل"}\n💰 العمولة: {fee}%\n📦 إعلانات نشطة: {active}\n✅ تم بيعها: {sold}',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
@@ -5637,7 +5682,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc} — {reward:,} نقطة\n'
                 keys.add(btn(f'{"تعطيل" if enabled else "تفعيل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
                 keys.add(btn(f'🗑️ حذف {desc}', callback_data=f'task_del_{tid}', color='red'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_tasks', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -5700,7 +5745,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc} — {reward:,} نقطة\n'
                 keys.add(btn(f'{"تعطيل" if enabled else "تفعيل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
                 keys.add(btn(f'🗑️ حذف {desc}', callback_data=f'task_del_{tid}', color='red'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_tasks', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -5729,7 +5774,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc} — {reward:,} نقطة\n'
                 keys.add(btn(f'{"تعطيل" if enabled else "تفع��ل"} {desc}', callback_data=f'task_toggle_{tid}', color='red' if enabled else 'green'))
                 keys.add(btn(f'🗑️ حذف {desc}', callback_data=f'task_del_{tid}', color='red'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_tasks', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
         return
 
@@ -6009,7 +6054,7 @@ def _c_rs_worker(call):
             ckeys.add(btn('➕ إضافة قناة يدوياً', callback_data='cast_add_ch', color='green'))
             ckeys.add(btn('📊 القنوات المكتشفة', callback_data='cast_discovered', color='green'))
             ckeys.add(btn('🔍 مسح وإضافة القنوات تلقائياً', callback_data='cast_auto_scan', color='blue'))
-            ckeys.add(btn('رجوع', callback_data='adm_back_main', color='red'))
+            ckeys.add(btn('رجوع', callback_data='adm_cat_general', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
                 text=(
@@ -6557,7 +6602,7 @@ def _c_rs_worker(call):
             ckeys_sf.add(btn('✏️ تعيين حد الانضمام', callback_data='adm_fsub_stats', color='blue'))
         ckeys_sf.add(btn(f'✏️ زر الاشتراك: {_se} {_st}', callback_data='fsub_edit_sub_btn', color='green'))
         ckeys_sf.add(btn(f'✏️ زر التحقق: {_ce} {_ct}',   callback_data='fsub_edit_check_btn', color='blue'))
-        ckeys_sf.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+        ckeys_sf.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_subscription', color='red'))
         bot.edit_message_text(
             text=(
                 '📡 <b>إدارة قنوات الاشتراك الإجباري</b>\n\n'
@@ -6612,7 +6657,7 @@ def _c_rs_worker(call):
         _ck2.add(btn('➕ إضافة قناة جديدة', callback_data='fsub_add', color='green'))
         if _fc2:
             _ck2.add(btn('🗑 حذف قناة', callback_data='fsub_remove', color='red'))
-        _ck2.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+        _ck2.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_subscription', color='red'))
         bot.edit_message_text(
             text=f'📡 <b>إدارة قنوات الاشتراك الإجباري</b>\n\n<b>القنوات ({len(_fc2)}):</b>\n{_cl2}',
             reply_markup=_ck2, chat_id=cid, message_id=mid, parse_mode='HTML'
@@ -7442,7 +7487,7 @@ def _c_rs_worker(call):
             status_icon = '🟢' if on else '🔴'
             price_str = f'💰{p}/عضو' if svc_key == 'free_member' else f'💰{p * 100}/100'
             skeys.add(btn(f'{status_icon} {svc_info["label"]} | {price_str} | {mn}~{mx}', callback_data=f'svc_pick_{svc_key}', color='green' if on else 'red'))
-        skeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        skeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(
             text='⚙️ إعدادات الخدمات\n\nاضغط على أي خدمة لتعديل سعرها أو حدودها أو تفعيلها/تعطيلها\n\n🟢 = مفعّلة  |  🔴 = معطّلة\nا��تنسيق: 💰السعر لكل وحدة | الحد الأدنى ~ الأقصى',
             chat_id=cid, message_id=mid, reply_markup=skeys
@@ -7649,7 +7694,7 @@ def _c_rs_worker(call):
         ckeys.add(btn('━━���━━━━━━━━━━━', callback_data='none', color='blue'))
         ckeys.add(btn(f'📢 قناة الطلبات (ID: {orders_ch})', callback_data='chset_orders_channel', color='blue'))
         ckeys.add(btn('👁 عرض كل الإعدادات', callback_data='chset_view', color='blue'))
-        ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
+        ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_settings', color='red'))
         txt = (
             "💰 إعدادات الشحن والاشتراكات\n\n"
             f"⭐ النجوم: 1 نجمة = {stars_rate} نقطة\n"
@@ -7751,7 +7796,7 @@ def _c_rs_worker(call):
             btn('✏️ تغيير أسماء الأزرار', callback_data='adm_rename', color='green'),
         )
         keys.add(btn('✨ رموز تعبيرية مميزة للأزرار', callback_data='adm_emoji', color='green'))
-        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         # عرض كل الأزرار مع لونها واسمها الحالي
         txt = '🎛️ *لوحة تخصيص الأزرار*\n\n'
         txt += '📋 *الأزرار الحالية:*\n'
@@ -7839,6 +7884,15 @@ def _c_rs_worker(call):
         except Exception:
             pass
         _show_admin_panel(cid, is_edit=True, mid=mid)
+
+    elif data.startswith('adm_cat_'):
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        try:
+            bot.clear_step_handler_by_chat_id(cid)
+        except Exception:
+            pass
+        _show_admin_category(cid, mid, data)
 
     elif data == 'adm_toggle_maintenance':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -7994,7 +8048,7 @@ def _c_rs_worker(call):
             if res["errors"]:
                 errors_txt = "\n\n⚠️ أخطاء:\n" + "\n".join(f"• {e}" for e in res["errors"][:5])
             done_keys = mk(row_width=1)
-            done_keys.add(btn("🔙 العودة للوحة", callback_data="adm_back_main", color="blue"))
+            done_keys.add(btn("🔙 العودة للوحة", callback_data="adm_cat_database", color="blue"))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
                 text=(
@@ -8191,7 +8245,7 @@ def _c_rs_worker(call):
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
         ckeys = mk(row_width=1)
-        ckeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+        ckeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_tasks', color='blue'))
         x = bot.edit_message_text(
             text='🎁 *صنع رابط هدية نقاط*\n\nأرسل عدد النقاط التي تريد وضعها في رابط الهدية (مثال: 500):',
             chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode='Markdown'
@@ -8244,7 +8298,7 @@ def _c_rs_worker(call):
             return
         cur = db.get("support_info") if db.exists("support_info") else "غير محدد"
         ckeys = mk(row_width=1)
-        ckeys.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
+        ckeys.add(btn('رجوع', callback_data='adm_cat_subscription', color='blue'))
         x = bot.edit_message_text(
             text=f'🎧 *تعيين نص الدعم الفني*\n\nالحالي:\n{cur}\n\nأرسل النص الجديد (يمكن تضمين روابط تيليجرام):',
             chat_id=cid, message_id=mid, reply_markup=ckeys, parse_mode='Markdown'
@@ -8260,7 +8314,7 @@ def _c_rs_worker(call):
         cur_user = db.get("bot_channel_username") if db.exists("bot_channel_username") else "غير محدد"
         cur_desc = db.get("bot_channel_desc")     if db.exists("bot_channel_desc")     else "غير محدد"
         ckeys = mk(row_width=1)
-        ckeys.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
+        ckeys.add(btn('رجوع', callback_data='adm_cat_settings', color='blue'))
         x = bot.edit_message_text(
             text=(
                 f"📣 <b>إعداد زر قناة البوت</b>\n\n"
@@ -8288,7 +8342,7 @@ def _c_rs_worker(call):
         ekeys.add(btn(f'💰 إيموجي الرصيد (حالي: {em_bal})',         callback_data='adm_emoji_bal', color='green'))
         ekeys.add(btn(f'✅ إيموجي الطلبات (حالي: {em_ord})',         callback_data='adm_emoji_ord', color='green'))
         ekeys.add(btn(f'📢 إيموجي قناة البوت (حالي: {em_ch})',       callback_data='adm_emoji_ch',  color='green'))
-        ekeys.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
+        ekeys.add(btn('رجوع', callback_data='adm_cat_settings', color='blue'))
         bot.edit_message_text(
             text=(
                 "✨ <b>إعداد الإيموجي المخصص للأزرار</b>\n\n"
@@ -8795,7 +8849,7 @@ def _c_rs_worker(call):
             cur_txt += f"{i}. @{un.lstrip('@')}" + (f" — {dsc}" if dsc else "") + "\n"
         cur_txt = cur_txt.strip() or "لا توجد قنوات مضافة بعد"
         ckeys = mk(row_width=1)
-        ckeys.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
+        ckeys.add(btn('رجوع', callback_data='adm_cat_subscription', color='blue'))
         x = bot.edit_message_text(
             text=(
                 f"📢 <b>تعيين قنوات البوت</b>\n\n"
@@ -8988,7 +9042,7 @@ def _do_create_gift_link(message, pts):
     uses_txt = 'مرة واحدة فقط ❗' if max_uses == 1 else f'{max_uses:,} مرة 🔁'
     keys = mk(row_width=1)
     keys.add(btn('🎁 صنع رابط هدية آخر', callback_data='adm_gift_link', color='green'))
-    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_tasks', color='blue'))
     bot.reply_to(
         message,
         f'✅ *تم إنشاء رابط الهدية بنجاح!*\n\n'
@@ -9009,7 +9063,7 @@ def _do_set_support_info(message):
         return
     db.set("support_info", txt)
     keys = mk(row_width=1)
-    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_subscription', color='blue'))
     bot.reply_to(message, '✅ تم تحديث نص الدعم الفني بنجاح', reply_markup=keys)
 
 def _do_set_channel_btn(message):
@@ -9025,7 +9079,7 @@ def _do_set_channel_btn(message):
     db.set("bot_channel_username", username)
     db.set("bot_channel_desc", desc)
     keys = mk(row_width=1)
-    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
     bot.reply_to(
         message,
         f'✅ تم تحديث زر قناة البوت\n\n📣 القناة: @{username}\n📝 الوصف: {desc}',
@@ -9053,7 +9107,7 @@ def _do_set_emoji(message, db_key):
         'custom_emoji_channel': 'زر قناة البوت',
     }
     keys = mk(row_width=1)
-    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
     bot.reply_to(
         message,
         f'✅ تم تعيي�� إيموجي {labels.get(db_key, db_key)} بنجاح\nالـ ID: <code>{val}</code>',
@@ -9090,7 +9144,7 @@ def _do_set_channels_info(message):
     db.set('channels_info', txt)
     summary = '\n'.join(f"• @{ch['username']}" + (f" — {ch['desc']}" if ch['desc'] else '') for ch in channels_list)
     keys = mk(row_width=1)
-    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_back_main', color='blue'))
+    keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_subscription', color='blue'))
     bot.reply_to(message,
         f"✅ تم حفظ {len(channels_list)} قناة بنجاح:\n\n{summary}",
         reply_markup=keys)
@@ -12433,7 +12487,7 @@ def _rewards_keys():
     k.add(btn(f'🔮 مكافأة الإحالة: {invite} نقطة  ✏️ تعديل', callback_data='rwd_invite', color='blue'))
     k.add(btn('🎰 جوائز عجلة الحظ  ✏️ تعديل', callback_data='rwd_wheel', color='blue'))
     k.add(btn(remind_lbl, callback_data='rwd_toggle_remind', color='green' if not remind_on else 'red'))
-    k.add(btn('🔙 رجوع للوحة', callback_data='adm_back_main', color='red'))
+    k.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_tasks', color='red'))
     return k
 
 
@@ -13074,7 +13128,7 @@ def _show_ai_panel(cid, mid=None):
                   callback_data='adm_ai_toggle', color=('red' if enabled else 'green')))
     keys_.add(btn('🔑 ضبط Groq API Key', callback_data='adm_ai_setkey', color='blue'))
     keys_.add(btn('🧪 اختبار الاتصال بـ AI', callback_data='adm_ai_test', color='blue'))
-    keys_.add(btn('رجوع', callback_data='adm_back_main', color='blue'))
+    keys_.add(btn('رجوع', callback_data='adm_cat_general', color='blue'))
     txt = (
         '🤖 <b>إدارة الدعم بالذكاء الاصطناعي</b>\n\n'
         f'الحالة: <b>{status_txt}</b>\n'
