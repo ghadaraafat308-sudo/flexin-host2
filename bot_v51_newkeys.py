@@ -6672,8 +6672,8 @@ def _c_rs_worker(call):
         if not check_user(cid):
             return start_message(call.message)
         acc = get(cid)
-        coins = acc['coins']
-        users_count = len(get(cid)['users'])
+        coins = (acc or {}).get('coins', 0)
+        users_count = len((get(cid) or {}).get('users') or [])
         info = db.get(f"user_{call.from_user.id}")
         daily_count = int(db.get(f"user_{user_id}_daily_count")) if db.exists(f"user_{user_id}_daily_count") else 0
         daily_gift = int(db.get("daily_gift")) if db.exists("daily_gift") else 30
@@ -6681,7 +6681,7 @@ def _c_rs_worker(call):
         buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
         trans = int(db.get(f"user_{user_id}_trans")) if db.exists(f"user_{user_id}_trans") else 0
         y = trend()
-        prem = 'Premium' if info['premium'] is True else 'Free'
+        prem = 'Premium' if (info or {}).get('premium') is True else 'Free'
         _phones_list = acc.get('phones', [])
         _phones_txt  = '\n'.join([f'  📞 {p}' for p in _phones_list]) if _phones_list else '  لا يوجد'
         textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحاله التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد التحويلات التي قمت بها : {trans}\n• [📱] الأرقام المسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
@@ -12215,8 +12215,8 @@ def get_info(message):
     if not d:
         bot.reply_to(message, f'• هذا العضو غير موجود')
         return
-    coins = d['coins']
-    users_count = len(d['users'])
+    coins = d.get('coins', 0)
+    users_count = len(d.get('users') or [])
     bot.reply_to(message, f'• ايديه : {uid}.\n• نقاطه: {coins} نقطة \n• عدد مشاركته لرابط الدعوة : {users_count}')
     return
 
