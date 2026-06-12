@@ -2910,156 +2910,69 @@ def adds_session(session: str, phone: str, owner_id: int = None) -> bool:
 
 # بوت تيليبوت (الرئيسي)
 
-# ===== ترتيب أزرار القائمة الرئيسية (يتحكم فيه الأدمن: فوق/تحت/يمين/شمال) =====
-# القائمة تُعرض للمستخدم كشبكة من عمودين، وكل زر له موقعه في الترتيب
-_MAIN_MENU_BTN_DEFAULT_ORDER = [
-    "ps", "tasks",
-    "collect", "charge_points",
-    "account", "send",
-    "register_accounts", "user_store",
-    "channels", "support",
-    "leaderboard", "top_level",
-    "11",
-]
-
-# مفتاح الإظهار/الإخفاء لكل زر (None = ظاهر دائماً)
-_MAIN_MENU_BTN_VIS = {
-    "ps": None,
-    "tasks": "tasks",
-    "collect": "collect",
-    "charge_points": "collect",
-    "account": "account",
-    "send": "account",
-    "register_accounts": "register_accounts",
-    "user_store": "user_store",
-    "channels": "channels",
-    "support": "channels",
-    "leaderboard": "leaderboard",
-    "top_level": "top_level",
-    "11": None,
-}
-
-# (نص عربي، نص إنجليزي، لون) — زر 11 نصه ديناميكي ويُعالَج بشكل خاص
-_MAIN_MENU_BTN_SPECS = {
-    "ps":                ("خدمات بوت BOOSTGRAM", "BOOSTGRAM Bot Services", "green"),
-    "tasks":             ("قائمة المهام (ربح نقاط)", "Tasks list (earn points)", "green"),
-    "collect":           ("تجميع النقاط", "Collect points", "green"),
-    "charge_points":     ("شحن النقاط", "Recharge points", "green"),
-    "account":           ("معلومات حسابك", "Account info", "blue"),
-    "send":              ("تحويل نقاط", "Transfer points", "red"),
-    "register_accounts": ("سجل بحساباتك واتحكم فيهم", "Register & manage your accounts", "green"),
-    "user_store":        ("متجر البوت", "Bot store", "blue"),
-    "channels":          ("قنوات البوت", "Bot channels", "red"),
-    "support":           ("الدعم الفني", "Support", "green"),
-    "leaderboard":       ("Leaderboard", "Leaderboard", "red"),
-    "top_level":         ("TOP LEVEL", "TOP LEVEL", "red"),
-}
-
-# اسم مختصر للزر كما يظهر في لوحة الترتيب للأدمن
-_MAIN_MENU_BTN_NAMES = {
-    "ps":                "خدمات البوت",
-    "tasks":             "قائمة المهام",
-    "collect":           "تجميع النقاط",
-    "charge_points":     "شحن النقاط",
-    "account":           "معلومات حسابك",
-    "send":              "تحويل نقاط",
-    "register_accounts": "تسجيل الحسابات",
-    "user_store":        "متجر البوت",
-    "channels":          "قنوات البوت",
-    "support":           "الدعم الفني",
-    "leaderboard":       "Leaderboard",
-    "top_level":         "TOP LEVEL",
-    "11":                "عدد الطلبات",
-}
-
-def _get_main_menu_order():
-    """يرجع ترتيب أزرار القائمة الرئيسية المحفوظ مع ضمان اكتمال كل الأزرار"""
-    order = []
-    try:
-        saved = db.get("main_menu_btn_order")
-        if saved and isinstance(saved, list):
-            order = [x for x in saved if x in _MAIN_MENU_BTN_DEFAULT_ORDER]
-    except:
-        order = []
-    for x in _MAIN_MENU_BTN_DEFAULT_ORDER:
-        if x not in order:
-            order.append(x)
-    return order
-
-def _set_main_menu_order(order):
-    try:
-        db.set("main_menu_btn_order", list(order))
-    except:
-        pass
-
-def _move_main_menu_btn(item_id, direction):
-    """يحرك زر في الشبكة: يمين/شمال = خطوة واحدة، فوق/تحت = صف كامل (خطوتين)"""
-    order = _get_main_menu_order()
-    if item_id not in order:
-        return
-    i = order.index(item_id)
-    step = {"left": -1, "right": 1, "up": -2, "down": 2}.get(direction)
-    if step is None:
-        return
-    j = i + step
-    if 0 <= j < len(order):
-        order[i], order[j] = order[j], order[i]
-        _set_main_menu_order(order)
-
-def _render_menu_order_panel():
-    """يبني نص وأزرار لوحة ترتيب القائمة الرئيسية للأدمن (شبكة عمودين)"""
-    order = _get_main_menu_order()
-    n = len(order)
-    txt = '🔀 <b>ترتيب أزرار القائمة الرئيسية</b>\n\n'
-    txt += 'القائمة بتظهر للمستخدم كشبكة من عمودين 👇\n'
-    txt += '⬅️ ➡️ = تحريك يمين/شمال • ⬆️ ⬇️ = تحريك فوق/تحت\n\n'
-    # عرض الشبكة كنص (صفّين في كل سطر)
-    for r in range(0, n, 2):
-        a = order[r]
-        line = f'صف {r // 2 + 1}:  {r + 1}) {_MAIN_MENU_BTN_NAMES.get(a, a)}'
-        if r + 1 < n:
-            b = order[r + 1]
-            line += f'   |   {r + 2}) {_MAIN_MENU_BTN_NAMES.get(b, b)}'
-        txt += line + '\n'
-    keys = mk(row_width=4)
-    for idx, iid in enumerate(order):
-        name = _MAIN_MENU_BTN_NAMES.get(iid, iid)
-        left_btn  = btn('⬅️', callback_data=f'mord_left_{iid}',  color='green') if idx - 1 >= 0 else btn('▪️', callback_data='noop', color='blue')
-        up_btn    = btn('⬆️', callback_data=f'mord_up_{iid}',    color='green') if idx - 2 >= 0 else btn('▪️', callback_data='noop', color='blue')
-        down_btn  = btn('⬇️', callback_data=f'mord_down_{iid}',  color='green') if idx + 2 < n  else btn('▪️', callback_data='noop', color='blue')
-        right_btn = btn('➡️', callback_data=f'mord_right_{iid}', color='green') if idx + 1 < n  else btn('▪️', callback_data='noop', color='blue')
-        keys.add(btn(f'{idx + 1}. {name}', callback_data='noop', color='blue'))
-        keys.add(left_btn, up_btn, down_btn, right_btn)
-    keys.add(btn('♻️ إعادة الترتيب الافتراضي', callback_data='mord_reset', color='red'))
-    keys.add(btn('🔙 رجوع للتخصيص', callback_data='adm_btn_panel', color='blue'))
-    return txt, keys
-
 def _build_main_keys(user_id):
-    """يبني أزرار الصفحة الرئيسية كشبكة عمودين — الترتيب والنصوص قابلة للتخصيص من لوحة الأدمن"""
+    """يبني أزرار الصفحة الرئيسية بالترتيب الأصلي (بدون إيموجي) — الألوان من نظام BTN_KEYS"""
     ord_label = _get_btn_label('11', default='عدد الطلبات')
     total_orders = db.get('orders')
     total_orders = int(total_orders) if total_orders is not None else 185443
     ord_label = f'{ord_label} : {total_orders:,}'
 
-    lang = _user_lang(user_id)
-    en = (lang == 'en')
-    buttons = []
-    for bid in _get_main_menu_order():
-        vis = _MAIN_MENU_BTN_VIS.get(bid)
-        if vis is not None and not _is_btn_visible(vis):
-            continue
-        if bid == "11":
-            buttons.append(btn(ord_label, callback_data='11', color='green'))
-            continue
-        spec = _MAIN_MENU_BTN_SPECS.get(bid)
-        if not spec:
-            continue
-        ar_lbl, en_lbl, color = spec
-        buttons.append(btn(en_lbl if en else ar_lbl, callback_data=bid, color=color))
-
+    if _user_lang(user_id) == 'en':
+        ek = mk(row_width=2)
+        ek.add(btn('BOOSTGRAM Bot Services', callback_data='ps', color='green'))
+        if _is_btn_visible('collect'):
+            ek.add(btn('Collect points', callback_data='collect', color='green'),
+                   btn('Recharge points', callback_data='charge_points', color='green'))
+        if _is_btn_visible('tasks'):
+            ek.add(btn('Tasks list (earn points)', callback_data='tasks', color='green'))
+        if _is_btn_visible('register_accounts'):
+            ek.add(btn('Register & manage your accounts', callback_data='register_accounts', color='green'))
+        if _is_btn_visible('account'):
+            ek.add(btn('Account info', callback_data='account', color='blue'),
+                   btn('Transfer points', callback_data='send', color='red'))
+        if _is_btn_visible('channels'):
+            ek.add(btn('Bot channels', callback_data='channels', color='red'),
+                   btn('Support', callback_data='support', color='green'))
+        if _is_btn_visible('user_store'):
+            ek.add(btn('Bot store', callback_data='user_store', color='blue'))
+        if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
+            _lb = btn('Leaderboard', callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
+            _tl = btn('TOP LEVEL', callback_data='top_level', color='red') if _is_btn_visible('top_level') else None
+            if _lb and _tl:
+                ek.add(_lb, _tl)
+            elif _lb:
+                ek.add(_lb)
+            elif _tl:
+                ek.add(_tl)
+        ek.add(btn(f'Total orders : {total_orders:,}', callback_data='11', color='green'))
+        return ek
     keys = mk(row_width=2)
-    if buttons:
-        keys.add(*buttons)
+    keys.add(btn('خدمات بوت BOOSTGRAM', callback_data='ps',            color='green'))
+    if _is_btn_visible('collect'):
+        keys.add(btn('تجميع النقاط',  callback_data='collect',       color='green'),
+                 btn('شحن النقاط',    callback_data='charge_points', color='green'))
+    if _is_btn_visible('tasks'):
+        keys.add(btn('قائمة المهام (ربح نقاط)', callback_data='tasks', color='green'))
+    if _is_btn_visible('register_accounts'):
+        keys.add(btn('سجل بحساباتك واتحكم فيهم', callback_data='register_accounts', color='green'))
+    if _is_btn_visible('account'):
+        keys.add(btn('معلومات حسابك', callback_data='account',       color='blue'),
+                 btn('تحويل نقاط',    callback_data='send',           color='red'))
+    if _is_btn_visible('channels'):
+        keys.add(btn('قنوات البوت',  callback_data='channels', color='red'),
+                 btn('الدعم الفني',  callback_data='support',  color='green'))
+    if _is_btn_visible('user_store'):
+        keys.add(btn('متجر البوت', callback_data='user_store', color='blue'))
+    if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
+        lb_btn = btn('Leaderboard',  callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
+        tl_btn = btn('TOP LEVEL', callback_data='top_level',   color='red') if _is_btn_visible('top_level') else None
+        if lb_btn and tl_btn:
+            keys.add(lb_btn, tl_btn)
+        elif lb_btn:
+            keys.add(lb_btn)
+        elif tl_btn:
+            keys.add(tl_btn)
+    keys.add(btn(ord_label, callback_data='11', color='green'))
     return keys
 
 def _count_pending_referral(join_user):
@@ -4859,7 +4772,6 @@ def _c_rs_worker(call):
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
-        'adm_menu_order', 'mord_up_', 'mord_down_', 'mord_left_', 'mord_right_', 'mord_reset', 'noop',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -5594,53 +5506,6 @@ def _c_rs_worker(call):
                 keys.add(btn(f'✅ تنفيذ: {t.get("description", "مهمة")}', callback_data=f'task_do_{tid}', color='green'))
         keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
-        return
-
-    # 🔀 ترتيب أزرار القائمة الرئيسية (للأدمن)
-
-    if data == 'adm_menu_order':
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        txt, keys = _render_menu_order_panel()
-        bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
-        return
-
-    if data.startswith('mord_left_') or data.startswith('mord_right_') or data.startswith('mord_up_') or data.startswith('mord_down_'):
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        for _d in ('left', 'right', 'up', 'down'):
-            _pref = f'mord_{_d}_'
-            if data.startswith(_pref):
-                _move_main_menu_btn(data[len(_pref):], _d)
-                break
-        try:
-            _cb_alert(call)
-        except Exception:
-            pass
-        txt, keys = _render_menu_order_panel()
-        try:
-            bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
-        except Exception:
-            pass
-        return
-
-    if data == 'mord_reset':
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        _set_main_menu_order(list(_MAIN_MENU_DEFAULT_ORDER))
-        _cb_alert(call, '✅ تم إعادة الترتيب الافتراضي', show_alert=True)
-        txt, keys = _render_menu_order_panel()
-        try:
-            bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML')
-        except Exception:
-            pass
-        return
-
-    if data == 'noop':
-        try:
-            _cb_alert(call)
-        except Exception:
-            pass
         return
 
     # 👁 لوحة إخفاء/إظهار الأزرار (للأدمن)
@@ -7965,7 +7830,6 @@ def _c_rs_worker(call):
             btn('✏️ تغيير أسماء الأزرار', callback_data='adm_rename', color='green'),
         )
         keys.add(btn('✨ رموز تعبيرية مميزة للأزرار', callback_data='adm_emoji', color='green'))
-        keys.add(btn('🔀 ترتيب أزرار القائمة الرئيسية', callback_data='adm_menu_order', color='blue'))
         keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         # عرض كل الأزرار مع لونها واسمها الحالي
         txt = '🎛️ *لوحة تخصيص الأزرار*\n\n'
