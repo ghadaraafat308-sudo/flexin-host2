@@ -2943,14 +2943,14 @@ def _build_main_keys(user_id):
         ek.add(btn(f'Total orders : {total_orders:,}', callback_data='11', color='green'))
         return ek
     keys = mk(row_width=2)
-    keys.add(btn('🤖 خدمات بوت BOOSTGRAM', callback_data='ps',            color='green'))
+    keys.add(btn(' خدمات بوت رشق بلص - 𝖯𝖫𝖴𝖲', callback_data='ps',            color='green'))
     if _is_btn_visible('collect'):
         keys.add(btn('تجميع النقاط',  callback_data='collect',       color='green'),
                  btn('شحن النقاط',    callback_data='charge_points', color='green'))
     if _is_btn_visible('tasks'):
-        keys.add(btn('📋 المهام اليومية', callback_data='tasks', color='green'))
+        keys.add(btn(' المهام اليومية', callback_data='tasks', color='green'))
     if _is_btn_visible('register_accounts'):
-        keys.add(btn('📲 سجل بحساباتك واتحكم فيهم', callback_data='register_accounts', color='green'))
+        keys.add(btn(' سجل بحساباتك واتحكم فيهم', callback_data='register_accounts', color='green'))
     if _is_btn_visible('account'):
         keys.add(btn('معلومات حسابك', callback_data='account',       color='blue'),
                  btn('تحويل نقاط',    callback_data='send',           color='red'))
@@ -2960,10 +2960,10 @@ def _build_main_keys(user_id):
         keys.add(btn('قنوات البوت',  callback_data='channels', color='red'),
                  btn('الدعم الفني',  callback_data='support',  color='green'))
     if _is_btn_visible('user_store'):
-        keys.add(btn('🏪 متجر المستخدمين', callback_data='user_store', color='blue'))
+        keys.add(btn(' متجر المستخدمين', callback_data='user_store', color='blue'))
     if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
         lb_btn = btn('Leaderboard',  callback_data='leaderboard', color='red') if _is_btn_visible('leaderboard') else None
-        tl_btn = btn('🏅 TOP LEVEL', callback_data='top_level',   color='red') if _is_btn_visible('top_level') else None
+        tl_btn = btn(' TOP LEVEL', callback_data='top_level',   color='red') if _is_btn_visible('top_level') else None
         if lb_btn and tl_btn:
             keys.add(lb_btn, tl_btn)
         elif lb_btn:
