@@ -3009,10 +3009,10 @@ def _count_pending_referral(join_user):
     db.set(f'ref_counted_{join_user}', str(to_user))
 
 def _settle_pending_referral(join_user):
-    """\n    تُشغَّل بعد تأكيد اشتراك المدعو في القنوات الإجبارية.\n    تضيف الن��اط للداعي وترسل الرسائل وتمسح الإحالة المعلقة.\n    """
+    """\n    تُشغَّل بعد تأكيد اشتراك المدعو في القنوات الإجبارية.\n    تضيف النقاط للداعي وترسل الرسائل وتمسح الإحالة المعلقة.\n    """
     _pending_key = f'ref_pending_{join_user}'
     if not db.exists(_pending_key):
-        return  # لا توجد إحالة معل��ة
+        return  # لا توجد إحالة معلقة
 
     _ref_key = f'ref_used_{join_user}'
     if db.exists(_ref_key):
@@ -3214,7 +3214,7 @@ def _handle_mkt_add_step(message):
     step = data.get("step")
     if step == "phone":
         if len(txt) < 5:
-            bot.reply_to(message, '❌ الرقم قصير جداً، أرسل رق�� صحيح')
+            bot.reply_to(message, '❌ الرقم قصير جداً، أرسل رقم صحيح')
             bot.register_next_step_handler(message, _handle_mkt_add_step)
             return
         data["phone"] = txt
@@ -3378,7 +3378,7 @@ def _handle_admin_task_step(message):
         pending_admin_action.pop(cid, None)
         bot.reply_to(
             message,
-            f'✅ <b>تم إضافة ال��همة بنجاح!</b>\n\n'
+            f'✅ <b>تم إضافة المهمة بنجاح!</b>\n\n'
             f'📝 الوصف: {task_desc}\n'
             f'💰 المكافأة: {reward:,} نقطة\n'
             f'🎯 النو����: {task_type}\n'
@@ -4503,7 +4503,7 @@ def _do_football_guess(call, guess):
         _last = 0
     if _now - _last < 3600:
         _rem = int(3600 - (_now - _last))
-        _cb_alert(call, f'⏳ استنى {fmt_remaining(_rem)} قبل ما تلعب تاني', show_alert=True)
+        _game_notice(call, f'⏳ استنى {fmt_remaining(_rem)} قبل ما تلعب تاني')
         return
     db.set(_fcd_key, _now)
     prize = int(db.get("football_prize") or 300)
@@ -4741,6 +4741,21 @@ def _cb_alert(call, text=None, show_alert=False):
         pass
 
 
+def _game_notice(call, text):
+    # كليشه مضمونة الظهور — تتبعت كرسالة وتتمسح تلقائياً
+    try:
+        cid_ = call.message.chat.id
+    except Exception:
+        cid_ = getattr(getattr(call, "from_user", None), "id", None)
+    if not cid_:
+        return
+    try:
+        _m = bot.send_message(cid_, text)
+        threading.Timer(12.0, _safe_del_msg, args=(cid_, _m.message_id)).start()
+    except Exception:
+        pass
+
+
 def _c_rs_worker(call):
     # ✅ رد فوري على Telegram لإزالة دوران الزر — قبل أي عملية
     try:
@@ -4756,7 +4771,7 @@ def _c_rs_worker(call):
     count_ord = int(count_ord) if count_ord is not None else 815645
     admins = db.get('admins')
     d = db.get('admins')
-    # لا نمسح الـ next_step إلا للعم��يات العادية، وليس لعمليات الأدمن
+    # لا نمسح الـ next_step إلا للعمليات العادية، وليس لعمليات الأدمن
     _admin_callbacks = (
         'rnm_pick_', 'rnm_reset_', 'adm_rename', 'adm_btn_panel',
         'adm_colors', 'adm_emoji', 'adm_svc_panel', 'svc_pick_', 'react_special',
@@ -4831,12 +4846,12 @@ def _c_rs_worker(call):
             cid_ = _ch_id(ch)
             # عداد الانضمامات
             ck = f'force_join_count_{cid_}'
-            cur = _to_int(db.get(ck)) if db.exists(ck) else 0
+            cur = int(db.get(ck)) if db.exists(ck) else 0
             db.set(ck, cur + 1)
             # فحص الحد الأقصى — لو وصل يُحذف من القائمة
             lk = f'force_join_limit_{cid_}'
             if db.exists(lk):
-                lim = _to_int(db.get(lk))
+                lim = int(db.get(lk))
                 if lim > 0 and cur + 1 >= lim:
                     raw = db.get('force') or []
                     updated = [c for c in raw
@@ -5221,7 +5236,7 @@ def _c_rs_worker(call):
         except Exception:
             _fbcd_last = 0
         if _fbcd_now - _fbcd_last < 3600:
-            _cb_alert(call, '⏳ استنى ' + fmt_remaining(int(3600 - (_fbcd_now - _fbcd_last))) + ' وتعالى العب كورة تاني ⚽', show_alert=True)
+            _game_notice(call, '⏳ استنى ' + fmt_remaining(int(3600 - (_fbcd_now - _fbcd_last))) + ' وتعالى العب كورة تاني ⚽')
             return
         _show_football_menu(call.from_user.id, cid, mid)
         return
@@ -5242,7 +5257,7 @@ def _c_rs_worker(call):
         keys.add(btn('⚽ كورة قدم (مجاناً)', callback_data='football', color='green'))
         keys.add(btn('❌ XO (مجاناً)', callback_data='xo_menu', color='blue'))
         keys.add(btn('رجوع', callback_data='back', color='blue'))
-        bot.edit_message_text(
+        _safe_edit_msg(
             text='╔══════════════════╗\n'
                  '       🎮 قائمة الألعاب\n'
                  '╚══════════════════╝\n\n'
@@ -5261,13 +5276,13 @@ def _c_rs_worker(call):
         except Exception:
             _xmcd_last = 0
         if _xmcd_now - _xmcd_last < 3600:
-            _cb_alert(call, '⏳ استنى ' + fmt_remaining(int(3600 - (_xmcd_now - _xmcd_last))) + ' وتعالى العب XO تاني ❌', show_alert=True)
+            _game_notice(call, '⏳ استنى ' + fmt_remaining(int(3600 - (_xmcd_now - _xmcd_last))) + ' وتعالى العب XO تاني ❌')
             return
         xo_prize = int(db.get("xo_prize") or 300)
         keys = mk(row_width=1)
         keys.add(btn('❌ ابدأ لعبة XO (مجاناً)', callback_data='xo_start', color='green'))
         keys.add(btn('رجوع', callback_data='show_games', color='blue'))
-        bot.edit_message_text(
+        _safe_edit_msg(
             text=f'╔══════════════════╗\n       ❌ لعبة XO (تيك تاك تو)\n╚══════════════════╝\n\n🎮 العب ضد البوت\n🆓 الرسوم: مجانية\n🏆 الجائزة: {xo_prize:,} نقطة\n⏰ كل ساعة لعبة مجانية',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
         )
@@ -5280,12 +5295,12 @@ def _c_rs_worker(call):
         _xcd_last = db.get(_xcd_key) or 0
         if _xcd_now - _xcd_last < 3600:
             _rem = int(3600 - (_xcd_now - _xcd_last))
-            _cb_alert(call, f'⏳ انتظر {fmt_remaining(_rem)} قبل اللعب مجدداً', show_alert=True)
+            _game_notice(call, f'⏳ انتظر {fmt_remaining(_rem)} قبل اللعب مجدداً')
             return
         db.set(_xcd_key, _xcd_now)
         board = [" "] * 9
         xo_games[cid] = {"board": board, "turn": "X"}
-        bot.edit_message_text(
+        _safe_edit_msg(
             text='❌ <b>XO — دورك</b>\n\n🆓 اللعبة مجانية!\n\nاختر خانة لوضع ❌:',
             chat_id=cid, message_id=mid, reply_markup=_build_xo_board({"board": board}),
             parse_mode='HTML'
@@ -6457,7 +6472,7 @@ def _c_rs_worker(call):
 
     if data == 'collect':
         keys = mk(row_width=2)
-        btn1    = btn('🎁 الهدية الي��مية',  callback_data='dailygift',      color='green')
+        btn1    = btn('🎁 الهدية اليومية',  callback_data='dailygift',      color='green')
         btn3    = btn('🌀 رابط الدعوة',      callback_data='share_link',     color='green')
         btn_w   = btn('🎡 عجلة الحظ',        callback_data='wheel',          color='red')
         btn_sell= btn('💸 بيع الأرقام',       callback_data='sell_numbers',   color='green')
@@ -6681,9 +6696,9 @@ def _c_rs_worker(call):
             stats_txt = '\n📊 <b>إحصائيات الانضمام:</b>\n'
             for _ch in force_ch:
                 _cid_clean = _ch_id(_ch) if isinstance(_ch, dict) else _ch.lstrip('@')
-                _count = _to_int(db.get(f'force_join_count_{_cid_clean}')) if db.exists(f'force_join_count_{_cid_clean}') else 0
+                _count = int(db.get(f'force_join_count_{_cid_clean}')) if db.exists(f'force_join_count_{_cid_clean}') else 0
                 _limit = db.get(f'force_join_limit_{_cid_clean}') if db.exists(f'force_join_limit_{_cid_clean}') else None
-                _limit_txt = f'{_to_int(_limit):,}' if _to_int(_limit) else 'غير محدود'
+                _limit_txt = f'{int(_limit):,}' if _limit else 'غير محدود'
                 stats_txt += f'  • @{_cid_clean} : 👥 {_count:,} | حد: {_limit_txt}\n'
 
         _se  = (db.get('fsub_sub_emoji')   or '📢').strip()
@@ -6908,9 +6923,9 @@ def _c_rs_worker(call):
                 ch_clean = str(ch).lstrip('@')
             if not ch_clean:
                 continue
-            count    = _to_int(db.get(f'force_join_count_{ch_clean}')) if db.exists(f'force_join_count_{ch_clean}') else 0
+            count    = int(db.get(f'force_join_count_{ch_clean}')) if db.exists(f'force_join_count_{ch_clean}') else 0
             limit    = db.get(f'force_join_limit_{ch_clean}') if db.exists(f'force_join_limit_{ch_clean}') else None
-            limit_txt = f'{_to_int(limit):,}' if _to_int(limit) else 'غير محدود'
+            limit_txt = f'{int(limit):,}' if limit else 'غير محدود'
             txt += f'\n📢 @{ch_clean}\n'
             txt += f'   👥 عدد الداخلين : <b>{count:,}</b>\n'
             txt += f'   🔢 الحد الأقصى  : <b>{limit_txt}</b>\n'
@@ -6925,7 +6940,7 @@ def _c_rs_worker(call):
             return
         ch_clean = data.replace('adm_fsub_limit_', '')
         cur_limit = db.get(f'force_join_limit_{ch_clean}') if db.exists(f'force_join_limit_{ch_clean}') else None
-        cur_txt = f'{_to_int(cur_limit):,}' if _to_int(cur_limit) else 'غير محدود'
+        cur_txt = f'{int(cur_limit):,}' if cur_limit else 'غير محدود'
         x = bot.edit_message_text(
             text=(
                 f'✏️ <b>تعيين حد الدخول لقناة @{ch_clean}</b>\n\n'
@@ -9439,7 +9454,7 @@ def handle_free_reaction(message):
         '📡 جاري إرسال الطلب...           [▰▰▱▱▱▱▱▱▱▱] 20%',
         '⚙️ جاري معالجة الطلب...          [▰▰▰▰▱▱▱▱▱▱] 40%',
         '🚀 جاري إضافة التفاعلات...       [▰▰▰▰▰▰▱▱▱▱] 60%',
-        '✨ اكتمل الإرسال...               [▰▰▰▰��▰▰▰▱▱] 80%',
+        '✨ اكتمل الإرسال...               [▰▰▰▰▰▰▰▰▱▱] 80%',
         '✅ جاري التحقق من النتيجة...      [▰▰▰▰▰▰▰▰▰▰] 100%',
     ]
 
@@ -9801,7 +9816,7 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       👥 طلب أعضاء قناة عامة جديد\n'
-                f'╚═════════���════════════╝\n\n'
+                f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} عضو\n\n'
                 f'🔗 أرسل الآن معرف قناتك أو رابطها\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
@@ -12070,22 +12085,6 @@ def banned(message, type_op):
             db.set('badguys', d)
             bot.reply_to(message, f'• تم الغاء حظر العضو بنجاح ✅')
             return
-
-def _to_int(v, default=0):
-    try:
-        if isinstance(v, bool):
-            return default
-        if isinstance(v, dict):
-            for _k in ('count', 'value', 'val', 'n', 'number', 'limit', 'id'):
-                if _k in v:
-                    return _to_int(v.get(_k), default)
-            return default
-        if v is None:
-            return default
-        return int(v)
-    except (TypeError, ValueError):
-        return default
-
 
 def _safe_edit_msg(text=None, chat_id=None, message_id=None, reply_markup=None, parse_mode=None, **kwargs):
     try:
