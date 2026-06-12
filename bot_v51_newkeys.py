@@ -4772,6 +4772,9 @@ def _c_rs_worker(call):
         'pick_react_',
         'pick_special_',
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
+        'setforce', 'fsub_add', 'fsub_remove', 'fsub_del_', 'fsub_edit_',
+        'adm_fsub_stats', 'adm_fsub_limit_',
+        'stats', 'adm_cat_subscription', 'adm_set_channels',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -5859,6 +5862,8 @@ def _c_rs_worker(call):
         return
 
     if data == 'stats':
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
         today = datetime.datetime.now().strftime("%Y-%m-%d")
 
 
@@ -6599,6 +6604,8 @@ def _c_rs_worker(call):
         bot.edit_message_text(text=textt, chat_id=cid, message_id=mid, reply_markup=bk_cancel, parse_mode="HTML")
         return
     if data == 'setforce':
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
         force_ch = _get_force_channels()
         ch_list  = '\n'.join([f'• {_ch_name(c)} → {_ch_url(c)}' for c in force_ch]) if force_ch else 'لا توجد قنوات بعد'
 
