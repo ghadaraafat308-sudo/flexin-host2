@@ -450,6 +450,7 @@ BTN_KEYS = {
     "charge_stars": "شحن تلقائي بالنجوم",
     "charge_vf": "شحن بفودافون كاش",
     "charge_usdt": "شحن بيوستد",
+    "charge_agent": "شحن عبر الوكيل",
     "account": "معلومات حسابك",
     "send": "تحويل نقاط",
     "normal": "الخدمات العادية",
@@ -767,13 +768,15 @@ def _label_for_cb(cb):
     return BTN_KEYS.get(cb, cb)
 
 
-def btn(text, callback_data=None, url=None, color="blue", **kwargs):
+def btn(text, callback_data=None, url=None, color="blue", emoji_key=None, **kwargs):
     """إنشاء زر ملوّن مع دعم Custom Emoji ID — اللون والاسم والإيموجي يُقرآن من DB"""
     emoji_id = None
     if callback_data and callback_data in BTN_KEYS:
         color    = _get_btn_color(callback_data, default=color)
         text     = _get_btn_label(callback_data, default=text)
         emoji_id = _resolve_btn_emoji(callback_data)
+    elif emoji_key and emoji_key in BTN_KEYS:
+        emoji_id = _resolve_btn_emoji(emoji_key)
 
     style = _STYLE_MAP.get(color, "primary")
     b = TelebotButton(text=text, callback_data=callback_data, url=url, **kwargs)
@@ -811,7 +814,7 @@ def _agent_charge_button():
     """زر الشحن عبر الوكيل: لو فيه يوزر متضاف يوجه له مباشرة، وإلا يفتح صفحة المعلومات"""
     uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
     if uname:
-        return btn('🤝 شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue')
+        return btn('🤝 شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue', emoji_key='charge_agent')
     return btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue')
 
 # الإعدادات - يمكنك تعديلها هنا مباشرة
@@ -4183,8 +4186,6 @@ _ADMIN_CATEGORIES = {
         'title': '👥 المستخدمين والصلاحيات',
         'buttons': [
             ('🛠 إدارة المستخدمين', 'adm_usermgmt', 'green'),
-            ('حظر شخص',        'banone',   'red'),
-            ('فك حظر',          'unbanone', 'green'),
             ('اضافة ادمن',      'addadmin', 'green'),
             ('مسح ادمن',        'deladmin', 'red'),
             ('الادمنية',        'admins',   'blue'),
@@ -4194,8 +4195,6 @@ _ADMIN_CATEGORIES = {
     'adm_cat_points': {
         'title': '💰 النقاط و VIP',
         'buttons': [
-            ('اضافه ن��اط',          'addpoints',      'green'),
-            ('خصم نقاط',            'lespoints',      'red'),
             ('تفعيل VIP',           'addvip',         'green'),
             ('الغاء VIP',           'lesvip',         'red'),
             ('عدد الدعوات للـ VIP', 'adm_vip_thresh', 'green'),
@@ -4223,7 +4222,6 @@ _ADMIN_CATEGORIES = {
             ('لوحة تخصيص الأزرار',  'adm_btn_panel',         'green'),
             ('إخفاء/إظهار الأزرار', 'adm_visibility',        'red'),
             ('إعداد زر قناة البوت', 'adm_set_channel_btn',   'green'),
-            ('إعداد الإيموجي المخصص','adm_set_emojis',       'green'),
         ],
     },
     'adm_cat_tasks': {
@@ -7102,7 +7100,6 @@ def _c_rs_worker(call):
         keys = mk(row_width=1)
         keys.add(btn('⭐ شحن بالنجوم (Stars)', callback_data='charge_stars', color='green'))
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
-        keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
         keys.add(btn('💎 شحن بـ USDT', callback_data='charge_usdt', color='green'))
         keys.add(_agent_charge_button())
         keys.add(btn('🔙 رجوع للقائمة', callback_data='back', color='red'))
@@ -7198,7 +7195,6 @@ def _c_rs_worker(call):
         keys.add(btn('��� ��حن تلقائي بالنجوم', callback_data='charge_stars', color='green'))
         keys.add(btn('📱 شحن بفودافون كاش', callback_data='charge_vf', color='red'))
         keys.add(btn('💎 شحن بيوستد', callback_data='charge_usdt', color='blue'))
-        keys.add(btn('💵 شحن بالكاش (يدوي)', callback_data='charge_cash', color='blue'))
         keys.add(_agent_charge_button())
         keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(
