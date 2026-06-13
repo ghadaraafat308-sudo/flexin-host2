@@ -4945,6 +4945,10 @@ def _c_rs_worker(call):
             pass
         _cb_alert(call, text='✅ تم التحقق! أهلاً بك في البوت 🎉', show_alert=True)
         start_message(call.message)
+        try:
+            bot.delete_message(cid, mid)
+        except Exception:
+            pass
         return
 
     if data == 'support':
@@ -5921,7 +5925,7 @@ def _c_rs_worker(call):
                 _gu = "nnnlllq1_bot"
         _give_bot_link = f'https://t.me/{_gu}?start=earn_{cid}'
         _my_submitted = int(db.get(f'user_{cid}_rent_submitted') or 0)
-        _rent_pts_val = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+        _rent_pts_val = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
         reg_keys = mk(row_width=1)
         reg_keys.add(btn('📲 تسجيل حساب الآن', url=_give_bot_link, color='green'))
         reg_keys.add(btn('🏆 توب 5 ت��جيل الحسابات', callback_data='rent_top', color='red'))
@@ -6568,7 +6572,7 @@ def _c_rs_worker(call):
                 _GIVE_BOT_USERNAME = _gu
             except:
                 _gu = "nnnlllq1_bot"
-        _rent_reward_val = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+        _rent_reward_val = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
         give_link = f'https://t.me/{_gu}?start=earn_{cid}'
         keys = mk(row_width=1)
         keys.add(btn('📱 تسجيل الحساب', url=give_link, color='green'))
@@ -8642,7 +8646,7 @@ def _c_rs_worker(call):
     if data == 'rwd_rent_reward':
         if cid not in (db.get('admins') or []) and cid != sudo:
             return
-        cur = int(db.get('rent_reward')) if db.exists('rent_reward') else 100
+        cur = int(db.get('rent_reward')) if db.exists('rent_reward') else CONFIG.get("rent_reward", 100)
         x = bot.edit_message_text(
             chat_id=cid, message_id=mid,
             text=(f"📲 <b>تعديل مكافأة تسجيل/تسليم حساب</b>\n\n"
@@ -12801,7 +12805,7 @@ def _rewards_text():
     """يبني نص لوحة المكافآت مع القيم الحالية من DB"""
     daily  = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
     invite = int(db.get("link_price"))  if db.exists("link_price")  else link_price
-    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
     prizes = get_wheel_prizes()
     remind_on = db.get('daily_remind_enabled')
     remind_on = remind_on if remind_on is not None else True
@@ -12827,7 +12831,7 @@ def _rewards_keys():
     """يبني أزرار لوحة المكافآت"""
     daily  = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
     invite = int(db.get("link_price"))  if db.exists("link_price")  else link_price
-    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
     remind_on = db.get('daily_remind_enabled')
     remind_on = remind_on if remind_on is not None else True
     remind_lbl = '🔔 تذكير الهدية: مفعّل  🔴 إيقاف' if remind_on else '🔕 تذكير الهدية: متوقف  🟢 تفعيل'
@@ -13291,7 +13295,7 @@ def _finish_registration_sync(message, data, uid, txt_session):
     """تنهي التسجيل وتضيف النقاط"""
     referrer  = data.get('referrer')
     phone     = data.get('phone')
-    _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+    _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
 
     _added = adds_session(txt_session, phone, owner_id=uid)
     if not _added:
@@ -13526,7 +13530,7 @@ def _do_set_groq_key(message):
 
 
 def _gen_start_menu(uid, first_name):
-    _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+    _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
     _user_submitted = int(db.get(f'user_{uid}_rent_submitted') or 0)
     _allowed, _remaining = _check_daily_limit(uid)
     _daily_txt = '✅ متاح (غير محدود)'
@@ -13710,7 +13714,7 @@ def _gen_cb_worker(call):
 
     elif data == 'reg_howto':
         answer()
-        _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+        _rent_pts = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
         kb = _gikb(
             [_gbtn('📱 ابدأ التسجيل', cb='reg_start')],
             [_gbtn('رجوع', cb='reg_back_main')]
@@ -13780,7 +13784,7 @@ def _gen_cb_worker(call):
     elif data == 'reg_myaccounts':
         answer()
         _submitted = int(db.get(f'user_{uid}_rent_submitted') or 0)
-        _rent_pts  = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
+        _rent_pts  = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
         _total_earned = _submitted * _rent_pts
         accounts = db.get('accounts') or []
         user_accounts = [a for a in accounts if str(a.get('owner_id', '')) == str(uid)]
