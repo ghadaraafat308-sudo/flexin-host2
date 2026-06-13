@@ -4346,7 +4346,7 @@ def cmd_tasks(message):
             txt += f'{icon} {i}. {desc}\n'
             txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
     txt += '━━━━━━━━━━━━━━━━━━━\n'
-    txt += '💡 استخدم /guess للعبة التخمين'
+    txt += '💡 استخدم /play لفتح الالعاب '
     if active_tasks:
         keys = mk(row_width=1)
         for t in active_tasks:
@@ -5619,7 +5619,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc}\n'
                 txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
         txt += '━━━━━━━━━━━━━━━━━━━\n'
-        txt += '💡 استخدم /guess للعبة التخمين'
+        txt += '💡 استخدم /play لفتح الالعاب '
         keys = mk(row_width=1)
         for t in active_tasks:
             tid = t.get("id", "")
