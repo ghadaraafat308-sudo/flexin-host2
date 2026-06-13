@@ -503,6 +503,8 @@ BTN_KEYS = {
     "force_add": "إضافة قناة اشتراك",
     "force_del": "حذف قناة اشتراك",
     "force_list": "قنوات الاشتراك الإجباري",
+    "fsub_sub": "زر الاشتراك الإجباري",
+    "fsub_check": "زر التحقق من الاشتراك",
     "free_reactions": "الخدمات المجانية",
     "free_react_go": "تفاعلات مجانية على منشور",
     "free_react_plus": "⚡ تفاعلات + مشاهدات مستقبلية",
@@ -814,8 +816,8 @@ def _agent_charge_button():
     """زر الشحن عبر الوكيل: لو فيه يوزر متضاف يوجه له مباشرة، وإلا يفتح صفحة المعلومات"""
     uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
     if uname:
-        return btn(' شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue', emoji_key='charge_agent')
-    return btn(' شحن عبر الوكيل', callback_data='charge_agent', color='blue')
+        return btn('🤝 شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue', emoji_key='charge_agent')
+    return btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue')
 
 # الإعدادات - يمكنك تعديلها هنا مباشرة
 
@@ -1068,8 +1070,8 @@ def _build_force_sub_keyboard(not_subscribed_ids: list, all_channels: list = Non
         is_done = cid_ not in ns_ids
         label   = f'✅ {name_}' if is_done else f'{_sub_emoji} {_sub_text} • {name_}'
         color   = 'blue' if is_done else 'green'
-        keys.add(btn(label, url=url_, color=color))
-    keys.add(btn(f'{_check_emoji} {_check_text}', callback_data='check_force_sub', color='blue'))
+        keys.add(btn(label, url=url_, color=color, emoji_key='fsub_sub'))
+    keys.add(btn(f'{_check_emoji} {_check_text}', callback_data='check_force_sub', color='blue', emoji_key='fsub_check'))
     return keys
 
 def _force_sub_text(not_subscribed: list, all_channels: list = None) -> str:
@@ -4344,7 +4346,7 @@ def cmd_tasks(message):
             txt += f'{icon} {i}. {desc}\n'
             txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
     txt += '━━━━━━━━━━━━━━━━━━━\n'
-    txt += '💡 استخدم /play للالعاب '
+    txt += '💡 استخدم /guess للعبة التخمين'
     if active_tasks:
         keys = mk(row_width=1)
         for t in active_tasks:
@@ -5613,7 +5615,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc}\n'
                 txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
         txt += '━━━━━━━━━━━━━━━━━━━\n'
-        txt += '💡 استخدم /play  للالعاب '
+        txt += '💡 استخدم /guess للعبة التخمين'
         keys = mk(row_width=1)
         for t in active_tasks:
             tid = t.get("id", "")
@@ -7299,7 +7301,7 @@ def _c_rs_worker(call):
         agent_uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
         keys = mk(row_width=1)
         if agent_uname:
-            keys.add(btn(' تواصل مع الوكيل مباشرة', url=f'https://t.me/{agent_uname}', color='green'))
+            keys.add(btn('🤝 تواصل مع الوكيل مباشرة', url=f'https://t.me/{agent_uname}', color='green'))
         keys.add(btn('رجوع', callback_data='charge_points', color='red'))
         txt = f"شحن عبر الوكيل\n\n{agent_info}"
         if agent_uname:
