@@ -814,8 +814,8 @@ def _agent_charge_button():
     """زر الشحن عبر الوكيل: لو فيه يوزر متضاف يوجه له مباشرة، وإلا يفتح صفحة المعلومات"""
     uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
     if uname:
-        return btn('🤝 شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue', emoji_key='charge_agent')
-    return btn('🤝 شحن عبر الوكيل', callback_data='charge_agent', color='blue')
+        return btn(' شحن عبر الوكيل', url=f'https://t.me/{uname}', color='blue', emoji_key='charge_agent')
+    return btn(' شحن عبر الوكيل', callback_data='charge_agent', color='blue')
 
 # الإعدادات - يمكنك تعديلها هنا مباشرة
 
@@ -4344,7 +4344,7 @@ def cmd_tasks(message):
             txt += f'{icon} {i}. {desc}\n'
             txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
     txt += '━━━━━━━━━━━━━━━━━━━\n'
-    txt += '💡 استخدم /guess للعبة التخمين'
+    txt += '💡 استخدم /play للالعاب '
     if active_tasks:
         keys = mk(row_width=1)
         for t in active_tasks:
@@ -5613,7 +5613,7 @@ def _c_rs_worker(call):
                 txt += f'{icon} {i}. {desc}\n'
                 txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
         txt += '━━━━━━━━━━━━━━━━━━━\n'
-        txt += '💡 استخدم /guess للعبة التخمين'
+        txt += '💡 استخدم /play  للالعاب '
         keys = mk(row_width=1)
         for t in active_tasks:
             tid = t.get("id", "")
@@ -7299,7 +7299,7 @@ def _c_rs_worker(call):
         agent_uname = _normalize_username(db.get("charge_agent_username") if db.exists("charge_agent_username") else None)
         keys = mk(row_width=1)
         if agent_uname:
-            keys.add(btn('🤝 تواصل مع الوكيل مباشرة', url=f'https://t.me/{agent_uname}', color='green'))
+            keys.add(btn(' تواصل مع الوكيل مباشرة', url=f'https://t.me/{agent_uname}', color='green'))
         keys.add(btn('رجوع', callback_data='charge_points', color='red'))
         txt = f"شحن عبر الوكيل\n\n{agent_info}"
         if agent_uname:
