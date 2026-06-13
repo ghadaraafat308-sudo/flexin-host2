@@ -8639,6 +8639,20 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_rwd_invite)
 
+    if data == 'rwd_rent_reward':
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        cur = int(db.get('rent_reward')) if db.exists('rent_reward') else 100
+        x = bot.edit_message_text(
+            chat_id=cid, message_id=mid,
+            text=(f"📲 <b>تعديل مكافأة تسجيل/تسليم حساب</b>\n\n"
+                  f"القيمة الحالية: <b>{cur} نقطة</b>\n\n"
+                  "أرسل القيمة الجديدة (رقم صحيح):"),
+            parse_mode='HTML'
+        , reply_markup=bk_cancel)
+        bot.clear_step_handler_by_chat_id(cid)
+        bot.register_next_step_handler(x, _do_rwd_rent_reward)
+
     if data == 'rwd_wheel':
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
@@ -12787,6 +12801,7 @@ def _rewards_text():
     """يبني نص لوحة المكافآت مع القيم الحالية من DB"""
     daily  = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
     invite = int(db.get("link_price"))  if db.exists("link_price")  else link_price
+    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
     prizes = get_wheel_prizes()
     remind_on = db.get('daily_remind_enabled')
     remind_on = remind_on if remind_on is not None else True
@@ -12800,6 +12815,7 @@ def _rewards_text():
         "━━━━━━━━━━━━━━━━━━━\n\n"
         f"🎁 الهدية اليومية   : <b>{daily} نقطة</b>\n"
         f"🔮 مكافأة الإحالة  : <b>{invite} نقطة</b>\n"
+        f"📲 مكافأة تسجيل حساب: <b>{rent} نقطة</b>\n"
         f"🔔 تذكير الهدية    : <b>{remind_status}</b>\n\n"
         "🎰 <b>جوائز عجلة الحظ:</b>\n"
         f"{wheel_lines}\n\n"
@@ -12811,12 +12827,14 @@ def _rewards_keys():
     """يبني أزرار لوحة المكافآت"""
     daily  = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
     invite = int(db.get("link_price"))  if db.exists("link_price")  else link_price
+    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else 100
     remind_on = db.get('daily_remind_enabled')
     remind_on = remind_on if remind_on is not None else True
     remind_lbl = '🔔 تذكير الهدية: مفعّل  🔴 إيقاف' if remind_on else '🔕 تذكير الهدية: متوقف  🟢 تفعيل'
     k = mk(row_width=1)
     k.add(btn(f'🎁 الهدية اليومية: {daily} نقطة  ✏️ تعديل', callback_data='rwd_daily', color='green'))
     k.add(btn(f'🔮 مكافأة الإحالة: {invite} نقطة  ✏️ تعديل', callback_data='rwd_invite', color='blue'))
+    k.add(btn(f'📲 مكافأة تسجيل حساب: {rent} نقطة  ✏️ تعديل', callback_data='rwd_rent_reward', color='green'))
     k.add(btn('🎰 جوائز عجلة الحظ  ✏️ تعديل', callback_data='rwd_wheel', color='blue'))
     k.add(btn(remind_lbl, callback_data='rwd_toggle_remind', color='green' if not remind_on else 'red'))
     k.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_tasks', color='red'))
@@ -12926,6 +12944,21 @@ def _do_rwd_invite(message):
         bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
 
 
+
+
+def _do_rwd_rent_reward(message):
+    cid = message.from_user.id
+    if cid not in (db.get('admins') or []) and cid != sudo:
+        return
+    try:
+        val = int(message.text.strip())
+        if val < 0:
+            raise ValueError
+        db.set('rent_reward', val)
+        bot.reply_to(message, f"✅ تم تعيين مكافأة تسجيل الحساب إلى <b>{val} نقطة</b>", parse_mode='HTML')
+        bot.send_message(cid, _rewards_text(), reply_markup=_rewards_keys(), parse_mode='HTML')
+    except Exception:
+        bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
 def cb_rwd_wheel(call):
     cid = call.from_user.id
     if cid not in (db.get("admins") or []) and cid != sudo:
