@@ -839,7 +839,7 @@ CONFIG = {
         "comments": 100,
         "spam": 100
     },
-    "bot_token": "8608887988:AAE0TWNFwFKhTBoyJbGzDXhPi2P4Q1c-A4Y",
+    "bot_token": "8757096951:AAGp9T2j2ffCMCtw5KLnbIHTu9s0Ir--Hyg",
     "give_bot_token": "8961757018:AAEMW-tTREk2wmozthM6DIPEHsglr0Csk1M",
     "sell_gmail":     "bbbabdullah9@gmail.com",
     "rent_reward":    100
