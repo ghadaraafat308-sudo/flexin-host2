@@ -8926,7 +8926,7 @@ def _c_rs_worker(call):
         }
         info  = db.get(f'user_{cid}') or {}
         coins = int(info.get('coins', 0))
-        confirm_txt = (
+        confirm_txt = )
             f"╔══════════════════════╗\n"
             f"       ✅ تأكيد الطلب\n"
             f"╚══════════════════════╝\n\n"
