@@ -8926,19 +8926,19 @@ def _c_rs_worker(call):
         }
         info  = db.get(f'user_{cid}') or {}
         coins = int(info.get('coins', 0))
-        confirm_txt = )
-            f"╔══════════════════════╗\n"
-            f"       ✅ تأكيد الطلب\n"
-            f"╚══════════════════════╝\n\n"
-            f"📋 <b>النوع</b>    : تفاعلات اختياري {emoji}\n"
-            f"🔢 <b>الكمية</b>   : {amount:,}\n"
-            f: <b>الرابط</b>   : <code>{url}</code>\n"
-            f"💰 <b>السعر</b>    : {price:,} نقطة\n"
-            f"💳 <b>رصيدك</b>   : {coins:,} نقطة\n"
-            f"💳 <b>بعد الطلب</b>: {max(0, coins - price):,} نقطة\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"هل تريد تأكيد الطلب؟"
-        )
+        confirm_txt = (
+    f"╔══════════════════════╗\n"
+    f"       ✅ تأكيد الطلب\n"
+    f"╚══════════════════════╝\n\n"
+    f"📋 <b>النوع</b>    : تفاعلات اختياري {emoji}\n"
+    f"🔢 <b>الكمية</b>   : {amount:,}\n"
+    f"🔗 <b>الرابط</b>   : <code>{url}</code>\n"
+    f"💰 <b>السعر</b>    : {price:,} نقطة\n"
+    f"💳 <b>رصيدك</b>   : {coins:,} نقطة\n"
+    f"💳 <b>بعد الطلب</b>: {max(0, coins - price):,} نقطة\n"
+    f"━━━━━━━━━━━━━━━━━━━━\n"
+    f"هل تريد تأكيد الطلب؟"
+)
         keys = mk(row_width=2)
         keys.add(
             btn('✅ تأكيد', callback_data='confirm_order', color='green'),
