@@ -871,6 +871,20 @@ mm = CONFIG["start_msg"]
 
 def get_welcome_msg(user_id):
     """يبني رسالة الترحيب الديناميكية بناءً على بيانات المستخدم"""
+    # ── استيراد الرسائل من ملف الإعدادات ──
+    try:
+        from config_messages import (
+            WELCOME_MSG_AR, WELCOME_MSG_EN,
+            RATING_NEW_AR, RATING_TRUSTED_AR, RATING_VERIFIED_AR, RATING_VIP_AR,
+            RATING_NEW_EN, RATING_TRUSTED_EN, RATING_VERIFIED_EN, RATING_VIP_EN,
+        )
+    except ImportError:
+        # قيم افتراضية لو الملف مش موجود
+        WELCOME_MSG_AR = "🎉 السلام عليكم؛ أهلاً بِكَ في أقوى بوت عربي يقدم لك جميع خدمات تيلجرام  🫡\n\n- 🛰 البوت العربي الوحيد الذي يجعلك تدخل في عالم خدمات تيليجرام ❤️‍🔥⚡️\n\n- 🏆 يمكنك إستعراض الأقسام المتاحة عبر الأزرار أدناهُ\n\n"
+        WELCOME_MSG_EN = "🎉 Welcome! This is the most powerful bot for all Telegram services 🫡\n\n- 🛰 The only bot that opens the world of Telegram services for you ❤️‍🔥⚡️\n\n- 🏆 Browse the available sections using the buttons below\n\n"
+        RATING_NEW_AR = "جديد 🆕"; RATING_TRUSTED_AR = "حقيقي ✅"; RATING_VERIFIED_AR = "موثوق 🔰"; RATING_VIP_AR = "VIP ⭐"
+        RATING_NEW_EN = "New 🆕"; RATING_TRUSTED_EN = "Trusted ✅"; RATING_VERIFIED_EN = "Verified 🔰"; RATING_VIP_EN = "VIP ⭐"
+
     try:
         info = db.get(f'user_{user_id}')
         coins = int(info['coins']) if info else 0
@@ -879,13 +893,13 @@ def get_welcome_msg(user_id):
     # تقييم الحساب بناءً على عدد الطلبات
     buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
     if buys == 0:
-        rating = "جديد 🆕"
+        rating = RATING_NEW_AR
     elif buys < 5:
-        rating = "حقيقي ✅"
+        rating = RATING_TRUSTED_AR
     elif buys < 20:
-        rating = "موثوق 🔰"
+        rating = RATING_VERIFIED_AR
     else:
-        rating = "VIP ⭐"
+        rating = RATING_VIP_AR
     # مستوى المستخدم
     try:
         _lv_num = int(db.get(f'user_{user_id}_top_level') or 1)
@@ -894,27 +908,23 @@ def get_welcome_msg(user_id):
     lang = _user_lang(user_id)
     if lang == 'en':
         if buys == 0:
-            rating = "New 🆕"
+            rating = RATING_NEW_EN
         elif buys < 5:
-            rating = "Trusted ✅"
+            rating = RATING_TRUSTED_EN
         elif buys < 20:
-            rating = "Verified 🔰"
+            rating = RATING_VERIFIED_EN
         else:
-            rating = "VIP ⭐"
+            rating = RATING_VIP_EN
         _wnl = chr(10)
         return (
-            "🎉 Welcome! This is the most powerful bot for all Telegram services 🫡" + _wnl + _wnl +
-            "- 🛰 The only bot that opens the world of Telegram services for you ❤️‍🔥⚡️" + _wnl + _wnl +
-            "- 🏆 Browse the available sections using the buttons below" + _wnl + _wnl +
+            WELCOME_MSG_EN +
             f"- 💸 Your points: {coins:,}" + _wnl +
             f"- 🆔 Your account ID: {user_id}" + _wnl +
             f"- 📮 Account rating: {rating}" + _wnl +
             f"- 🧧 Your level: {_lv_num}"
         )
     return (
-        "🎉 السلام عليكم؛ أهلاً بِكَ في أقوى بوت عربي يقدم لك جميع خدمات تيلجرام  🫡\n\n"
-        "- 🛰 البوت العربي الوحيد الذي يجعلك تدخل في عالم خدمات تيليجرام ❤️‍🔥⚡️\n\n"
-        "- 🏆 يمكنك إستعراض الأقسام المتاحة عبر الأزرار أدناهُ\n\n"
+        WELCOME_MSG_AR +
         f"- 💸 نقاطك : {coins:,}\n"
         f"- 🆔 آيدي حسابك : {user_id}\n"
         f"- 📮 تقييم حسابك : {rating}\n"
@@ -2950,9 +2960,8 @@ def _build_main_keys(user_id):
         if _is_btn_visible('account'):
             ek.add(btn('Account info', callback_data='account', color='blue'),
                    btn('Transfer points', callback_data='send', color='red'))
-        if _is_btn_visible('channels'):
-            ek.add(btn('Bot channels', callback_data='channels', color='red'),
-                   btn('Support', callback_data='support', color='green'))
+        if _is_btn_visible('support'):
+            ek.add(btn('Support', callback_data='support', color='green'))
         if _is_btn_visible('user_store'):
             ek.add(btn('Bot store', callback_data='user_store', color='blue'))
         if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
@@ -2978,9 +2987,8 @@ def _build_main_keys(user_id):
     if _is_btn_visible('account'):
         keys.add(btn('معلومات حسابك', callback_data='account',       color='blue'),
                  btn('تحويل نقاط',    callback_data='send',           color='red'))
-    if _is_btn_visible('channels'):
-        keys.add(btn('قنوات البوت',  callback_data='channels', color='red'),
-                 btn('الدعم الفني',  callback_data='support',  color='green'))
+    if _is_btn_visible('support'):
+        keys.add(btn('الدعم الفني',  callback_data='support',  color='green'))
     if _is_btn_visible('user_store'):
         keys.add(btn('متجر البوت', callback_data='user_store', color='blue'))
     if _is_btn_visible('leaderboard') or _is_btn_visible('top_level'):
