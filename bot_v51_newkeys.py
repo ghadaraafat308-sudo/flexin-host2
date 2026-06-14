@@ -5004,7 +5004,6 @@ def _c_rs_worker(call):
 
     if data == 'sell_numbers':
         sell_keys = mk(row_width=1)
-        sell_keys.add(btn('💬 تواصل مع المالك', url='https://t.me/XOU_J', color='green'))
         sell_keys.add(btn('💬 تواصل مع المالك 2', url='https://t.me/R3D_93', color='green'))
         sell_keys.add(btn('رجوع', callback_data='back', color='blue'))
         sell_txt = (
