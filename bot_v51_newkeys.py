@@ -839,9 +839,9 @@ CONFIG = {
         "comments": 100,
         "spam": 100
     },
-    "bot_token": "8608887988:AAGlQfLL8EcWYColpd66iZ6pCUk1RlV1yRE",
+    "bot_token": "8608887988:AAE0TWNFwFKhTBoyJbGzDXhPi2P4Q1c-A4Y",
     "give_bot_token": "8961757018:AAEMW-tTREk2wmozthM6DIPEHsglr0Csk1M",
-    "sell_gmail":     "mmppp6231@gmail.com",
+    "sell_gmail":     "bbbabdullah9@gmail.com",
     "rent_reward":    100
 }
 
@@ -901,16 +901,6 @@ def get_welcome_msg(user_id):
             rating = "Verified 🔰"
         else:
             rating = "VIP ⭐"
-        # ← رسالة ترحيب إنجليزية مخصصة من DB
-        custom_en = db.get('welcome_en') if db.exists('welcome_en') else ''
-        if custom_en:
-            try:
-                return custom_en.format(
-                    coins=f"{coins:,}", user_id=user_id,
-                    rating=rating, level=_lv_num
-                )
-            except Exception:
-                return custom_en
         _wnl = chr(10)
         return (
             "🎉 Welcome! This is the most powerful bot for all Telegram services 🫡" + _wnl + _wnl +
@@ -921,16 +911,6 @@ def get_welcome_msg(user_id):
             f"- 📮 Account rating: {rating}" + _wnl +
             f"- 🧧 Your level: {_lv_num}"
         )
-    # ← رسالة ترحيب عربية مخصصة من DB
-    custom_ar = db.get('welcome_ar') if db.exists('welcome_ar') else ''
-    if custom_ar:
-        try:
-            return custom_ar.format(
-                coins=f"{coins:,}", user_id=user_id,
-                rating=rating, level=_lv_num
-            )
-        except Exception:
-            return custom_ar
     return (
         "🎉 السلام عليكم؛ أهلاً بِكَ في أقوى بوت عربي يقدم لك جميع خدمات تيلجرام  🫡\n\n"
         "- 🛰 البوت العربي الوحيد الذي يجعلك تدخل في عالم خدمات تيليجرام ❤️‍🔥⚡️\n\n"
@@ -4244,7 +4224,6 @@ _ADMIN_CATEGORIES = {
             ('لوحة تخصيص الأزرار',  'adm_btn_panel',         'green'),
             ('إخفاء/إظهار الأزرار', 'adm_visibility',        'red'),
             ('إعداد زر قناة البوت', 'adm_set_channel_btn',   'green'),
-            ('✏️ تعديل رسائل البوت', 'adm_messages',         'green'),
         ],
     },
     'adm_cat_tasks': {
@@ -4865,7 +4844,7 @@ def _c_rs_worker(call):
         'rnm_pick_', 'rnm_reset_', 'adm_rename', 'adm_btn_panel',
         'adm_colors', 'adm_emoji', 'adm_svc_panel', 'svc_pick_', 'react_special',
         'svc_edit_', 'adm_charge_panel', 'chset_', 'adm_gift_link',
-        'adm_set_support', 'adm_set_channels', 'adm_back_main', 'adm_messages',
+        'adm_set_support', 'adm_set_channels', 'adm_back_main',
         'cast_msg', 'cast_link', 'cast_add_ch',
         'chset_vip_toggle', 'buy_vip_sub', 'vip_buy_',
         'charge_points',
@@ -4884,7 +4863,6 @@ def _c_rs_worker(call):
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
         'setforce', 'fsub_', 'adm_fsub_stats', 'adm_fsub_limit_',
         'adm_usermgmt', 'umg_',
-        'adm_edit_msg_', 'adm_del_msg_',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -5065,17 +5043,13 @@ def _c_rs_worker(call):
         store_keys.add(btn('📋 إعلاناتي', callback_data='mkt_mine', color='blue'))
         store_keys.add(btn('📊 Leaderboard', callback_data='leaderboard', color='red'))
         store_keys.add(btn('رجوع', callback_data='back', color='blue'))
-        _store_custom = db.get('store_msg') if db.exists('store_msg') else ''
-        _store_default = (
-            '╔══════════════════╗\n'
-            '       🏪 متجر البوت\n'
-            '╚══════════════════╝\n\n'
-            '📌 متجر بيع وشراء الحسابات بين المستخدمين\n\n'
-            f'📦 إعلانات نشطة: {len(active)}\n'
-            '━━━━━━━━━━━━━━━━━━━'
-        )
         bot.edit_message_text(
-            text=_store_custom if _store_custom else _store_default,
+            text='╔══════════════════╗\n'
+                 '       🏪 متجر البوت\n'
+                 '╚══════════════════╝\n\n'
+                 '📌 متجر بيع وشراء الحسابات ��ين المستخدمين\n\n'
+                 f'📦 إعلانات نشطة: {len(active)}\n'
+                 '━━━━━━━━━━━━━━━━━━━',
             chat_id=cid, message_id=mid, reply_markup=store_keys, parse_mode='HTML'
         )
         return
@@ -5627,14 +5601,10 @@ def _c_rs_worker(call):
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         completed_key = f"user_{cid}_tasks_{today}"
         completed = db.get(completed_key) or []
-        _tasks_custom_header = db.get('tasks_msg') if db.exists('tasks_msg') else ''
-        if _tasks_custom_header:
-            txt = _tasks_custom_header + '\n\n'
-        else:
-            txt = '╔══════════════════╗\n'
-            txt += '       📋 المهام اليومية\n'
-            txt += '╚══════════════════╝\n\n'
-            txt += '🎯 أكمل المهام واربح نقاطاً إضافية!\n\n'
+        txt = '╔══════════════════╗\n'
+        txt += '       📋 المهام اليومية\n'
+        txt += '╚══════════════════╝\n\n'
+        txt += '🎯 أكمل المهام واربح نقاطاً إضافية!\n\n'
         if not active_tasks:
             txt += '❌ لا توجد مهام متاحة حالياً!\n'
             txt += '✨ تابعنا قريباً للحصول على مهام جديدة وجوائز حصرية! 🎁\n'
@@ -5992,35 +5962,19 @@ def _c_rs_worker(call):
         return
 
     if data == 'channels':
-        raw_chs = db.get('channels_list') if db.exists('channels_list') else []
-        # ← إصلاح: يدعم الصيغة القديمة (list of strings) والجديدة (list of dicts)
-        chs = []
-        for ch in (raw_chs or []):
-            if isinstance(ch, dict):
-                chs.append(ch)
-            elif isinstance(ch, str) and ch.strip():
-                chs.append({'username': ch.strip().lstrip('@'), 'desc': ''})
+        chs = db.get('channels_list') if db.exists('channels_list') else []
         keys = mk(row_width=1)
         if chs:
             for ch in chs:
-                un  = ch.get('username', '').lstrip('@').strip()
-                dsc = (ch.get('desc', '') or un or '').strip()
+                un  = ch.get('username', '').lstrip('@')
+                dsc = ch.get('desc', '') or un
                 if un:
-                    keys.add(btn(f'📢 {dsc}' if dsc else f'📢 @{un}', url=f'https://t.me/{un}', color='blue'))
+                    keys.add(btn(f'📢 {dsc}', url=f'https://t.me/{un}', color='blue'))
         keys.add(btn('رجوع', callback_data='back', color='blue'))
-        if chs:
-            desc_txt = '\n'.join(
-                f"• @{ch.get('username','').lstrip('@').strip()}" +
-                (f" — {ch.get('desc','').strip()}" if ch.get('desc','').strip() else '')
-                for ch in chs
-            )
-        else:
-            desc_txt = 'لا توجد قنوات مضافة بعد'
-        # ← رسالة القنوات المخصصة من DB (لو متعينة)
-        custom_channels_msg = db.get('channels_page_msg') if db.exists('channels_page_msg') else ''
-        header_text = custom_channels_msg if custom_channels_msg else f"📢 <b>قنوات البوت</b>\n\n{desc_txt}"
+        ch_count = len(chs)
+        desc_txt = '\n'.join(f"• @{ch.get('username','').lstrip('@')}" + (f" — {ch.get('desc','')}" if ch.get('desc') else '') for ch in chs) if chs else 'لا توجد قنوات مضافة بعد'
         bot.edit_message_text(
-            text=header_text,
+            text=f"📢 <b>قنوات البوت</b>\n\n{desc_txt}",
             chat_id=cid, message_id=mid,
             reply_markup=keys, parse_mode='HTML'
         )
@@ -6415,16 +6369,14 @@ def _c_rs_worker(call):
         keys.add(btn_vip)
         keys.add(btn_free_r)
         keys.add(btn('رجوع', callback_data='back', color='blue'))
-        _ps_custom = db.get('ps_msg') if db.exists('ps_msg') else ''
-        _ps_default = (
-            '🛒 <b>قسم الخدمات</b>\n\n'
-            '• 🛍️ <b>الخدمات العادية</b> — خدمات مدفوعة بالنقاط للجميع\n'
-            '• 👑 <b>الخدمات الـ ViP</b> — خدمات حصرية للمشتركين\n'
-            '• <b>الخدمات المجانية FREE</b> — تفاعلات ومشاهدات مجاناً بدون نقاط\n\n'
-            'اختر القسم الذي تريده 👇'
-        )
         bot.edit_message_text(
-            text=_ps_custom if _ps_custom else _ps_default,
+            text=(
+                '🛒 <b>قسم الخدمات</b>\n\n'
+                '• 🛍️ <b>الخدمات العادية</b> — خدمات مدفوعة بالنقاط للجميع\n'
+                '• 👑 <b>الخدمات الـ ViP</b> — خدمات حصرية للمشتركين\n'
+                '• <b>الخدمات المجانية FREE</b> — تفاعلات ومشاهدات مجاناً بدون نقاط\n\n'
+                'اختر القسم الذي تريده 👇'
+            ),
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML"
         )
         return
@@ -6608,9 +6560,7 @@ def _c_rs_worker(call):
         keys.add(btn_sell)
         keys.add(btn_lvl)
         keys.add(btn('رجوع', callback_data='back', color='blue'))
-        _collect_custom = db.get('charge_msg') if db.exists('charge_msg') else ''
-        _collect_txt = _collect_custom if _collect_custom else '💰 مرحباً بك في قسم تجميع النقاط\n\n• اختر إحدى الطرق التالية لجمع النقاط:'
-        bot.edit_message_text(text=_collect_txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
+        bot.edit_message_text(text='💰 مرحباً بك في قس�� تجميع النقاط\n\n• اختر إحدى الطرق التالية لجمع النقاط:', chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
         return
 
     if data == 'submit_account':
@@ -8584,97 +8534,6 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_set_channel_btn)
 
-
-    # ✏️ محرر رسائل البوت ——————————————————————————————————————
-
-    if data == 'adm_messages':
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        # تعريف الرسائل القابلة للتعديل
-        _MSG_KEYS = [
-            ('welcome_ar',     '🎉 رسالة الترحيب (عربي)'),
-            ('welcome_en',     '🎉 رسالة الترحيب (إنجليزي)'),
-            ('channels_page_msg', '📢 نص صفحة قنوات البوت'),
-            ('ps_msg',         '🛒 رسالة صفحة الخدمات'),
-            ('charge_msg',     '💰 رسالة صفحة تجميع النقاط'),
-            ('tasks_msg',      '📋 رسالة صفحة المهام'),
-            ('store_msg',      '🛍️ رسالة صفحة المتجر'),
-        ]
-        mkeys = mk(row_width=1)
-        for mk_key, mk_label in _MSG_KEYS:
-            cur_val = db.get(mk_key) if db.exists(mk_key) else ''
-            status = '✅' if cur_val else '⬜'
-            mkeys.add(btn(f'{status} {mk_label}', callback_data=f'adm_edit_msg_{mk_key}', color='green'))
-        mkeys.add(btn('🔙 رجوع للإعدادات', callback_data='adm_cat_settings', color='blue'))
-        bot.edit_message_text(
-            text=(
-                "✏️ <b>تعديل رسائل البوت</b>\n\n"
-                "✅ = تم تعيين رسالة مخصصة\n"
-                "⬜ = يستخدم الرسالة الافتراضية\n\n"
-                "اضغط على أي رسالة لتعديلها:\n"
-                "<i>يمكنك استخدام أي إيموجي وHTML عادي</i>"
-            ),
-            chat_id=cid, message_id=mid, reply_markup=mkeys, parse_mode='HTML'
-        )
-        return
-
-    if data.startswith('adm_edit_msg_'):
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        msg_key = data[len('adm_edit_msg_'):]
-        _MSG_LABELS = {
-            'welcome_ar':        '🎉 رسالة الترحيب (عربي)',
-            'welcome_en':        '🎉 رسالة الترحيب (إنجليزي)',
-            'channels_page_msg': '📢 نص صفحة قنوات البوت',
-            'ps_msg':            '🛒 رسالة صفحة الخدمات',
-            'charge_msg':        '💰 رسالة صفحة تجميع النقاط',
-            'tasks_msg':         '📋 رسالة صفحة المهام',
-            'store_msg':         '🛍️ رسالة صفحة المتجر',
-        }
-        label = _MSG_LABELS.get(msg_key, msg_key)
-        cur_val = db.get(msg_key) if db.exists(msg_key) else ''
-        _placeholders = {
-            'welcome_ar': 'المتغيرات المتاحة:\n{coins} = نقاط المستخدم\n{user_id} = الـ ID\n{rating} = التقييم\n{level} = المستوى',
-            'welcome_en': 'Available variables:\n{coins} = user points\n{user_id} = ID\n{rating} = rating\n{level} = level',
-        }
-        extra_hint = _placeholders.get(msg_key, '')
-        hint_txt = f'\n\n📌 {extra_hint}' if extra_hint else ''
-        cur_display = cur_val[:400] + ('...' if len(cur_val) > 400 else '') if cur_val else 'غير محدد (يستخدم الرسالة الافتراضية)'
-        ekeys = mk(row_width=2)
-        if cur_val:
-            ekeys.add(btn('🗑️ حذف (رجوع للافتراضي)', callback_data=f'adm_del_msg_{msg_key}', color='red'))
-        ekeys.add(btn('🔙 رجوع', callback_data='adm_messages', color='blue'))
-        x = bot.edit_message_text(
-            text=(
-                f"✏️ <b>{label}</b>\n\n"
-                f"الحالي:\n<code>{cur_display}</code>\n\n"
-                f"أرسل الرسالة الجديدة — يدعم:{hint_txt}\n"
-                "• أي إيموجي 🔥✅😍\n"
-                "• <b>غامق</b> <i>مائل</i> <code>كود</code>\n"
-                "• تنسيق HTML عادي"
-            ),
-            chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode='HTML'
-        )
-        bot.clear_step_handler_by_chat_id(cid)
-        bot.register_next_step_handler(x, _do_save_bot_msg, msg_key)
-        return
-
-    if data.startswith('adm_del_msg_'):
-        if cid not in (db.get("admins") or []) and cid != sudo:
-            return
-        msg_key = data[len('adm_del_msg_'):]
-        try:
-            db.delete(msg_key)
-        except Exception:
-            pass
-        dkeys = mk(row_width=1)
-        dkeys.add(btn('🔙 رجوع لمحرر الرسائل', callback_data='adm_messages', color='blue'))
-        bot.edit_message_text(
-            text='✅ تم حذف الرسالة المخصصة — البوت سيستخدم الرسالة الافتراضية الآن.',
-            chat_id=cid, message_id=mid, reply_markup=dkeys, parse_mode='HTML'
-        )
-        return
-
     # ✨ إعداد الإيموجي المخصص
 
     if data == 'adm_set_emojis':
@@ -9204,19 +9063,12 @@ def _c_rs_worker(call):
     if data == 'adm_set_channels':
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
-        raw_chs = db.get("channels_list") if db.exists("channels_list") else []
-        # إصلاح: يدعم الصيغة القديمة (strings) والجديدة (dicts)
-        chs = []
-        for _ch in (raw_chs or []):
-            if isinstance(_ch, dict):
-                chs.append(_ch)
-            elif isinstance(_ch, str) and _ch.strip():
-                chs.append({'username': _ch.strip().lstrip('@'), 'desc': ''})
+        chs = db.get("channels_list") if db.exists("channels_list") else []
         cur_txt = ""
         for i, ch in enumerate(chs, 1):
-            un  = ch.get("username", "").lstrip('@').strip()
-            dsc = ch.get("desc", "").strip()
-            cur_txt += f"{i}. @{un}" + (f" — {dsc}" if dsc else "") + "\n"
+            un  = ch.get("username", "")
+            dsc = ch.get("desc", "")
+            cur_txt += f"{i}. @{un.lstrip('@')}" + (f" — {dsc}" if dsc else "") + "\n"
         cur_txt = cur_txt.strip() or "لا توجد قنوات مضافة بعد"
         ckeys = mk(row_width=1)
         ckeys.add(btn('رجوع', callback_data='adm_cat_subscription', color='blue'))
@@ -9444,40 +9296,6 @@ def _do_set_support_info(message):
     keys = mk(row_width=1)
     keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_subscription', color='blue'))
     bot.reply_to(message, '✅ تم تحديث نص الدعم الفني بنجاح', reply_markup=keys)
-
-def _do_save_bot_msg(message, msg_key):
-    """يحفظ رسالة البوت المخصصة — يدعم أي إيموجي وHTML"""
-    cid = message.from_user.id
-    if cid not in (db.get("admins") or []) and cid != sudo:
-        return
-    # اقبل النص أو Caption (للصور)
-    txt = (message.text or message.caption or "").strip()
-    if not txt:
-        ekeys = mk(row_width=1)
-        ekeys.add(btn('🔙 رجوع', callback_data='adm_messages', color='blue'))
-        bot.reply_to(message, '❌ نص فارغ، لم يتم الحفظ.', reply_markup=ekeys)
-        return
-    db.set(msg_key, txt)
-    _MSG_LABELS = {
-        'welcome_ar':        '🎉 رسالة الترحيب (عربي)',
-        'welcome_en':        '🎉 رسالة الترحيب (إنجليزي)',
-        'channels_page_msg': '📢 نص صفحة قنوات البوت',
-        'ps_msg':            '🛒 رسالة صفحة الخدمات',
-        'charge_msg':        '💰 رسالة صفحة تجميع النقاط',
-        'tasks_msg':         '📋 رسالة صفحة المهام',
-        'store_msg':         '🛍️ رسالة صفحة المتجر',
-    }
-    label = _MSG_LABELS.get(msg_key, msg_key)
-    keys = mk(row_width=1)
-    keys.add(btn('✏️ تعديل رسائل أخرى', callback_data='adm_messages', color='green'))
-    keys.add(btn('🔙 رجوع للإعدادات', callback_data='adm_cat_settings', color='blue'))
-    preview = txt[:300] + ('...' if len(txt) > 300 else '')
-    bot.reply_to(
-        message,
-        f'✅ <b>تم حفظ {label}</b>\n\nمعاينة:\n{preview}',
-        reply_markup=keys, parse_mode='HTML'
-    )
-
 
 def _do_set_channel_btn(message):
     cid = message.from_user.id
