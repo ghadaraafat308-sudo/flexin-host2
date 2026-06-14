@@ -835,7 +835,7 @@ CONFIG = {
         "comments": 100,
         "spam": 100
     },
-    "bot_token": "8608887988:AAGlQfLL8EcWYColpd66iZ6pCUk1RlV1yRE",
+    "bot_token": "8608887988:AAE0TWNFwFKhTBoyJbGzDXhPi2P4Q1c-A4Y",
     "give_bot_token": "8961757018:AAEMW-tTREk2wmozthM6DIPEHsglr0Csk1M",
     "sell_gmail":     "bbbabdullah9@gmail.com",
     "rent_reward":    100
@@ -900,6 +900,10 @@ def get_welcome_msg(user_id):
     except:
         _lv_num = 1
     lang = _user_lang(user_id)
+    _ce_points = db.get('custom_emoji_points') if db.exists('custom_emoji_points') else ''
+    _ce_uid    = db.get('custom_emoji_uid')    if db.exists('custom_emoji_uid')    else ''
+    _ce_rating = db.get('custom_emoji_rating') if db.exists('custom_emoji_rating') else ''
+    _ce_level  = db.get('custom_emoji_level')  if db.exists('custom_emoji_level')  else ''
     if lang == 'en':
         if buys == 0:
             rating = "New 🆕"
@@ -911,16 +915,16 @@ def get_welcome_msg(user_id):
             rating = "VIP ⭐"
         _wnl = chr(10)
         return (db.get('msg:welcome_en') if db.exists('msg:welcome_en') else WELCOME_INTRO_EN) + chr(10) + chr(10) + (
-            f"- 💸 Your points: {coins:,}" + chr(10) +
-            f"- 🆔 Your account ID: {user_id}" + chr(10) +
-            f"- 📮 Account rating: {rating}" + chr(10) +
-            f"- 🧧 Your level: {_lv_num}"
+            f"- " + pe('💸', _ce_points) + f" Your points: {coins:,}" + chr(10) +
+            f"- " + pe('🆔', _ce_uid) + f" Your account ID: {user_id}" + chr(10) +
+            f"- " + pe('📮', _ce_rating) + f" Account rating: {rating}" + chr(10) +
+            f"- " + pe('🧧', _ce_level) + f" Your level: {_lv_num}"
         )
     return (db.get('msg:welcome_ar') if db.exists('msg:welcome_ar') else WELCOME_INTRO_AR) + chr(10) + chr(10) + (
-        f"- 💸 نقاطك : {coins:,}" + chr(10) +
-        f"- 🆔 آيدي حسابك : {user_id}" + chr(10) +
-        f"- 📮 تقييم حسابك : {rating}" + chr(10) +
-        f"- 🧧 مستواك : {_lv_num}"
+        f"- " + pe('💸', _ce_points) + f" نقاطك : {coins:,}" + chr(10) +
+        f"- " + pe('🆔', _ce_uid) + f" آيدي حسابك : {user_id}" + chr(10) +
+        f"- " + pe('📮', _ce_rating) + f" تقييم حسابك : {rating}" + chr(10) +
+        f"- " + pe('🧧', _ce_level) + f" مستواك : {_lv_num}"
     )
 
 # ===== محرر رسائل البوت =====
@@ -950,6 +954,7 @@ def _msgs_panel_keys():
     for _key, _label in EDITABLE_MSGS:
         _mark = '  ✅' if db.exists('msg:' + _key) else ''
         _k.add(btn(_label + '  ✏️' + _mark, callback_data='admsg_edit_' + _key, color='green'))
+    _k.add(btn('✨ إيموجي سطور الترحيب (بريميوم)', callback_data='admsg_emojis', color='blue'))
     _k.add(btn('🔙 رجوع', callback_data='adm_cat_settings', color='red'))
     return _k
 
@@ -965,6 +970,52 @@ def _do_set_msg(message, key):
     _keys = mk(row_width=1)
     _keys.add(btn('🔙 رجوع لرسائل البوت', callback_data='adm_msgs_panel', color='blue'))
     bot.reply_to(message, '✅ تم تحديث الرسالة بنجاح', reply_markup=_keys)
+
+
+WELCOME_EMOJI_FIELDS = [
+    ('custom_emoji_points', '💸 إيموجي النقاط', 'admsg_em_points'),
+    ('custom_emoji_uid',    '🆔 إيموجي الآيدي', 'admsg_em_uid'),
+    ('custom_emoji_rating', '📮 إيموجي التقييم', 'admsg_em_rating'),
+    ('custom_emoji_level',  '🧧 إيموجي المستوى', 'admsg_em_level'),
+]
+
+def _welcome_emoji_text():
+    return ('✨ <b>إيموجي سطور الترحيب (بريميوم)</b>' + chr(10) + chr(10) + 'اضغط على أي سطر وابعت إيموجي تيليجرام بريميوم — أو رقم الـ ID بتاعه.' + chr(10) + 'ابعت 0 لإرجاع الإيموجي العادي.')
+
+def _welcome_emoji_keys():
+    _k = mk(row_width=1)
+    for _dbk, _lbl, _cb in WELCOME_EMOJI_FIELDS:
+        _cur = db.get(_dbk) if db.exists(_dbk) else '—'
+        _k.add(btn(_lbl + '  (' + str(_cur) + ')', callback_data=_cb, color='green'))
+    _k.add(btn('🔙 رجوع', callback_data='adm_msgs_panel', color='red'))
+    return _k
+
+def _do_set_welcome_emoji(message, db_key):
+    cid = message.from_user.id
+    if cid not in (db.get('admins') or []) and cid != sudo:
+        return
+    eid = ''
+    ents = message.entities or []
+    for e in ents:
+        if getattr(e, 'type', '') == 'custom_emoji':
+            eid = str(getattr(e, 'custom_emoji_id', '') or '')
+            if eid:
+                break
+    if not eid:
+        t = (message.text or '').strip()
+        if t == '0':
+            db.delete(db_key)
+            bot.reply_to(message, '✅ تم استرجاع الإيموجي الافتراضي')
+            return
+        if t.isdigit():
+            eid = t
+    if not eid:
+        bot.reply_to(message, '❌ ابعت إيموجي بريميوم نفسه، أو رقم الـ ID، أو 0 للإلغاء')
+        return
+    db.set(db_key, eid)
+    _keys = mk(row_width=1)
+    _keys.add(btn('🔙 رجوع', callback_data='admsg_emojis', color='blue'))
+    bot.reply_to(message, '✅ تم تعيين الإيموجي بنجاح', reply_markup=_keys)
 
 # الأسعار تُقرأ ديناميكياً عبر svc_price() من DB
 # هذه القيم الافتراضية فقط للتوافق مع الكود القديم
@@ -8622,6 +8673,26 @@ def _c_rs_worker(call):
         bot.edit_message_text(chat_id=cid, message_id=mid, text=_msgs_panel_text(), reply_markup=_msgs_panel_keys(), parse_mode='HTML')
         return
 
+    if data == 'admsg_emojis':
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        bot.edit_message_text(chat_id=cid, message_id=mid, text=_welcome_emoji_text(), reply_markup=_welcome_emoji_keys(), parse_mode='HTML')
+        return
+
+    if data.startswith('admsg_em_'):
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        _suf = data[len('admsg_em_'):]
+        if _suf not in ('points', 'uid', 'rating', 'level'):
+            return
+        _dbk = 'custom_emoji_' + _suf
+        _cur = db.get(_dbk) if db.exists(_dbk) else '—'
+        _ptxt = '✨ تعيين الإيموجي' + chr(10) + chr(10) + 'الحالي: ' + str(_cur) + chr(10) + chr(10) + 'ابعت إيموجي بريميوم نفسه، أو رقم الـ ID، أو 0 للإلغاء:'
+        _px = bot.edit_message_text(chat_id=cid, message_id=mid, text=_ptxt, reply_markup=bk_cancel, parse_mode=None)
+        bot.clear_step_handler_by_chat_id(cid)
+        bot.register_next_step_handler(_px, lambda m, k=_dbk: _do_set_welcome_emoji(m, k))
+        return
+
     if data == 'adm_rewards_panel':
         if cid not in (db.get("admins") or []) and cid != sudo:
             return
@@ -14306,6 +14377,11 @@ def _send_daily_reminder(uid: int):
     """
     with _remind_lock:
         _remind_next.pop(uid, None)
+    try:
+        if db.get('user_%d_daily_reminded' % uid):
+            return
+    except Exception:
+        pass
 
     # فحص: هل التذكير مفعّل؟
     remind_enabled = db.get('daily_remind_enabled')
@@ -14324,7 +14400,10 @@ def _send_daily_reminder(uid: int):
         )
         bot.send_message(uid, txt, reply_markup=keys, parse_mode='HTML')
         # ✅ بعت التذكير — جدول تاني بعد 24 ساعة لو ما ضغطش
-        _schedule_reminder(uid, 24 * 60 * 60)
+        try:
+            db.set('user_%d_daily_reminded' % uid, True)
+        except Exception:
+            pass
     except Exception as _e:
         err = str(_e).lower()
         # BUG 5 FIX: لو المستخدم blocked البوت أو محذوف → وقف التذكير
@@ -14354,6 +14433,11 @@ def _schedule_reminder_for_user(uid: int):
       - بداية البوت  (لكل المستخدمين)
       - بعد ما المستخدم يسحب الهدية  (يجدد التذكير لـ 24 ساعة)
     """
+    try:
+        if db.get('user_%d_daily_reminded' % uid):
+            return
+    except Exception:
+        pass
     WAIT = 24 * 60 * 60
     now = time.time()
 
