@@ -649,13 +649,6 @@ def _toggle_btn_visibility(callback_data):
 # نظام الإيموجي المميز (Custom Emoji ID) — النظام الجديد
 
 
-def _db_get_btn_emoji(cb):
-    """جلب custom_emoji_id لزر معين"""
-    try:
-        v = db.get(f"btn_emoji:{cb}")
-        return str(v) if v else ""
-    except:
-        return ""
 
 def _db_set_btn_emoji(cb, emoji_id):
     """ضبط custom_emoji_id لزر معين — لو فارغ يُحذف"""
@@ -667,10 +660,6 @@ def _db_set_btn_emoji(cb, emoji_id):
     except:
         pass
 
-def _db_list_btn_emojis():
-    """إرجاع dict {cb: emoji_id} لكل الأزرار المضبوطة"""
-    # kvsqlite لا يدعم LIKE مباشرة، نعتمد على الكاش
-    return dict(_BTN_EMOJI_CACHE) if _BTN_EMOJI_CACHE else {}
 
 def _db_clear_all_btn_emojis():
     """مسح كل رموز الأزرار المميزة"""
@@ -757,13 +746,6 @@ STATIC_BUTTON_REGISTRY = [
     ]),
 ]
 
-def _label_for_cb(cb):
-    """يرجع اسم الزر من السجل"""
-    for _grp, items in STATIC_BUTTON_REGISTRY:
-        for k, lbl in items:
-            if k == cb:
-                return lbl
-    return BTN_KEYS.get(cb, cb)
 
 
 def btn(text, callback_data=None, url=None, color="blue", emoji_key=None, **kwargs):
@@ -940,11 +922,6 @@ def _msg_default(key):
         return WELCOME_INTRO_EN
     return ''
 
-def _msg_current(key):
-    _dbk = 'msg:' + key
-    if db.exists(_dbk):
-        return db.get(_dbk)
-    return _msg_default(key)
 
 def _msgs_panel_text():
     return ('✏️ <b>تعديل رسائل البوت</b>' + chr(10) + chr(10) + 'اختر الرسالة اللي عايز تعدلها 👇' + chr(10) + chr(10) + '• الرسالة اللي عليها ✅ متعدّلة بالفعل.' + chr(10) + '• في رسالة الترحيب اكتب النص اللي انت عايزه والآيدي والرصيد هيتضافوا تلقائياً تحته.')
@@ -958,6 +935,45 @@ def _msgs_panel_keys():
     _k.add(btn('🔙 رجوع', callback_data='adm_cat_settings', color='red'))
     return _k
 
+def _msg_to_html(message):
+    # يحوّل نص الرسالة + إيموجي البريميوم إلى HTML يدعم tg-emoji
+    import html as _h
+    text = message.text or ''
+    ents = message.entities or []
+    ce = []
+    for e in ents:
+        if getattr(e, 'type', '') == 'custom_emoji':
+            ce.append(e)
+    if not ce:
+        return _h.escape(text)
+    u16 = text.encode('utf-16-le')
+    total = len(u16) // 2
+    def _sub(o, l):
+        return u16[o*2:(o+l)*2].decode('utf-16-le', 'ignore')
+    ce.sort(key=lambda e: getattr(e, 'offset', 0))
+    out = []
+    pos = 0
+    for e in ce:
+        o = int(getattr(e, 'offset', 0) or 0)
+        l = int(getattr(e, 'length', 0) or 0)
+        eid = str(getattr(e, 'custom_emoji_id', '') or '')
+        if o < pos or l <= 0 or not eid:
+            continue
+        out.append(_h.escape(_sub(pos, o - pos)))
+        out.append('<tg-emoji emoji-id="' + eid + '">' + _h.escape(_sub(o, l)) + '</tg-emoji>')
+        pos = o + l
+    out.append(_h.escape(_sub(pos, total - pos)))
+    return ''.join(out)
+
+
+def _msg_preview(key):
+    import html as _h
+    _dbk = 'msg:' + key
+    if db.exists(_dbk):
+        return db.get(_dbk)
+    return _h.escape(_msg_default(key))
+
+
 def _do_set_msg(message, key):
     cid = message.from_user.id
     if cid not in (db.get('admins') or []) and cid != sudo:
@@ -966,7 +982,7 @@ def _do_set_msg(message, key):
     if txt is None or not txt.strip():
         bot.reply_to(message, '❌ نص فارغ، حاول مرة أخرى')
         return
-    db.set('msg:' + key, txt)
+    db.set('msg:' + key, _msg_to_html(message))
     _keys = mk(row_width=1)
     _keys.add(btn('🔙 رجوع لرسائل البوت', callback_data='adm_msgs_panel', color='blue'))
     bot.reply_to(message, '✅ تم تحديث الرسالة بنجاح', reply_markup=_keys)
@@ -2574,11 +2590,12 @@ def generate_gift_link(points: int, max_uses: int = 1) -> str:
     return code
 
 def addord():
-    d = db.get('orders')
-    if d is None:
-        db.set('orders', 185444)
-    else:
-        db.set('orders', int(d) + 1)
+    try:
+        d = db.get('orders')
+        cur = int(d) if d is not None else 185443
+    except Exception:
+        cur = 185443
+    db.set('orders', cur + 1)
     return True
 
 def get_order_num():
@@ -3305,7 +3322,6 @@ def _settle_pending_referral(join_user):
 
 # دوال مساعدة لمتجر المستخدمين
 
-import uuid as _uuid_mod
 
 def _gen_market_listing_id():
     return str(_uuid_mod.uuid4().hex[:12])
@@ -3364,53 +3380,6 @@ def _handle_mkt_add_step(message):
 
 # دوال مساعدة للألعاب والإدارة
 
-def _handle_guess(message):
-    cid = message.from_user.id
-    if not message.text:
-        bot.reply_to(message, '❌ أرسل رقماً فقط')
-        return
-    txt = message.text.strip()
-    game = guess_games.get(cid)
-    if not game:
-        bot.reply_to(message, '❌ لا توجد لعبة نشطة، استخدم /guess لبدء لعبة جديدة')
-        return
-    try:
-        guess = int(txt)
-        if guess < 1 or guess > 100:
-            bot.reply_to(message, '❌ الرقم يجب أن يكون بين 1 و 100، حاول مرة أخرى')
-            return
-    except:
-        bot.reply_to(message, '❌ أرسل رقماً صحيحاً فقط (1-100)')
-        return
-    secret = game["secret"]
-    game["attempts"] += 1
-    guess_prize = int(db.get("guess_prize") or 500)
-    if guess == secret:
-        info = get(cid)
-        info["coins"] = int(info.get("coins", 0)) + guess_prize
-        set_user(cid, info)
-        guess_games.pop(cid, None)
-        bot.reply_to(
-            message,
-            f'🎉 <b>تهانينا! لقد فزت!</b>\n\n'
-            f'🔢 الرقم الصحيح: {secret}\n'
-            f'🎯 عدد المحاولات: {game["attempts"]}\n'
-            f'🏆 الجائزة: {guess_prize:,} نقطة\n'
-            f'💰 رصيدك الجديد: {int(info["coins"]):,} نقطة',
-            reply_markup=bk, parse_mode='HTML'
-        )
-    else:
-        hint = "أكبر" if guess < secret else "أصغر"
-        keys = mk(row_width=1)
-        keys.add(btn('🔙 إنهاء اللعبة', callback_data='back', color='red'))
-        bot.reply_to(
-            message,
-            f'❌ رقم {guess} خطأ!\n'
-            f'💡 الرقم {hint} من {guess}\n'
-            f'📝 المحاولات: {game["attempts"]}\n\n'
-            f'أرسل رقماً آخر:',
-            reply_markup=keys, parse_mode='HTML'
-        )
 
 def _handle_set_market_fee(message):
     cid = message.from_user.id
@@ -3521,39 +3490,6 @@ def _handle_set_game_value(message):
 
 _FSUB_EXEMPT_COMMANDS = {'/start'}  # الأوامر المستثناة من الفحص
 
-def _fsub_check(message_or_call):
-    """
-    يتحقق من الاشتراك الإجباري.
-    يرجع True لو المستخدم مشترك أو مفيش قنوات إجبارية.
-    يرجع False ويبعت رسالة الاشتراك لو مش مشترك.
-    """
-    try:
-        if hasattr(message_or_call, 'from_user'):
-            user_id = message_or_call.from_user.id
-            chat_id = message_or_call.chat.id if hasattr(message_or_call, 'chat') else user_id
-            is_call = False
-        else:
-            return True
-
-        # الأدمن والسودو مستثنيان
-        _is_admin = (user_id == sudo) or (user_id in _get_admins_cached())
-        if _is_admin:
-            return True
-
-        # لو مفيش قنوات إجبارية
-        channels = _get_force_channels()
-        if not channels:
-            return True
-
-        ok, not_sub = _check_user_subs(user_id)
-        if ok:
-            return True
-
-        # مش مشترك — ابعت رسالة الاشتراك
-        _send_force_sub_msg(bot, chat_id, not_sub)
-        return False
-    except Exception:
-        return True  # في حالة خطأ — اسمح للمستخدم
 
 def _fsub_check_msg(message):
     """يتحقق من الاشتراك — يرجع True لو مسموح، False لو محظور"""
@@ -3835,38 +3771,6 @@ def start_message(message):
     except Exception as _e:
         print(f'[start] error: {_e}')
 
-def admin_panel_cmd(message):
-    user_id = message.from_user.id
-    if user_id not in (db.get("admins") or []) and user_id != sudo:
-        return
-    stars_rate   = int(db.get("charge_stars_rate"))   if db.exists("charge_stars_rate")   else 600
-    stars_post   = db.get("charge_stars_post")         if db.exists("charge_stars_post")   else "غير محدد"
-    cash_rate    = int(db.get("charge_cash_rate"))    if db.exists("charge_cash_rate")     else 150000
-    usdt_rate    = int(db.get("charge_usdt_rate"))    if db.exists("charge_usdt_rate")     else 150000
-    usdt_wallet  = db.get("charge_usdt_wallet")        if db.exists("charge_usdt_wallet")  else "غير محدد"
-    ckeys = mk(row_width=1)
-    ckeys.add(btn('سعر النجوم (نجمة = كم نقطة)', callback_data='chset_stars_rate', color='green'))
-    ckeys.add(btn('⭐ منشور استقبال النجوم', callback_data='chset_stars_post', color='green'))
-    ckeys.add(btn('سعر الكاش ($ = كم نقطة)', callback_data='chset_cash_rate', color='blue'))
-    ckeys.add(btn('سعر USDT (USDT = كم نقطة)', callback_data='chset_usdt_rate', color='blue'))
-    ckeys.add(btn('رقم فودافون كاش', callback_data='chset_cash_contact', color='green'))
-    ckeys.add(btn('عرض إعدادات الشحن', callback_data='chset_view', color='blue'))
-    ckeys.add(btn('━━ إعدادات الاشتراك الإجباري ━━', callback_data='none', color='blue'))
-    ckeys.add(btn('🔢 عدد الأعضاء في الباقة', callback_data='chset_fsub_amount', color='green'))
-    ckeys.add(btn('📅 مدة الباقة (أيام)', callback_data='chset_fsub_duration', color='green'))
-    ckeys.add(btn('⭐ سعر النجوم للباقة', callback_data='chset_fsub_stars', color='green'))
-    ckeys.add(btn('📱 سعر فودافون كاش للباقة', callback_data='chset_fsub_cash', color='green'))
-    ckeys.add(btn('💎 سعر USDT للباقة', callback_data='chset_fsub_usdt', color='green'))
-    ckeys.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_settings', color='red'))
-    txt = (
-        "إعدادات الشحن\n\n"
-        f"النجوم: 1 نجمة = {stars_rate} نقطة\n"
-        f"⭐ منشور النجوم: {stars_post}\n"
-        f"الكاش: $1 = {cash_rate} نقطة\n"
-        f"USDT: 1 USDT = {usdt_rate} نقطة\n"
-        f"محفظة USDT: {usdt_wallet}"
-    )
-    bot.reply_to(message, txt, reply_markup=ckeys, parse_mode="HTML")
 
 @bot.message_handler(regexp='^/start (.*)')
 def start_asinvite(message):
@@ -5083,7 +4987,7 @@ def _c_rs_worker(call):
                 '🤖 <b>المساعد الذكي</b>\n'
                 '━━━━━━━━━━━━━━━━━\n\n'
                 '👋 اسألني أي حاجة عن البوت وخدماته:\n'
-                '• تسجيل الأرقام والمكافآت\n'
+                '• تسجي�� الأرقام والمكافآت\n'
                 '• الشحن والمتجر و VIP\n'
                 '• الألعاب والمهام\n\n'
                 '✍️ اكتب سؤالك الآن...'
@@ -5098,8 +5002,8 @@ def _c_rs_worker(call):
 
     if data == 'sell_numbers':
         sell_keys = mk(row_width=1)
-        sell_keys.add(btn('💬 تواصل مع المالك', url='https://t.me/XOU_J', color='green'))
-        sell_keys.add(btn('💬 تواصل مع المالك 2', url='https://t.me/R3D_93', color='green'))
+        sell_keys.add(btn('💬 تواصل مع المالك', url='https://t.me/DA3M_6', color='green'))
+        sell_keys.add(btn('💬 تواصل مع المالك 2', url='https://t.me/R3D_19', color='green'))
         sell_keys.add(btn('رجوع', callback_data='back', color='blue'))
         sell_txt = (
             "╔══════════════════╗\n"
@@ -5111,8 +5015,7 @@ def _c_rs_worker(call):
             "💎 أسعار مميزة للأرقام\n\n"
             "━━━━━━━━━━━━━━━━━━━\n"
             "📩 لبيع أرقامك مقابل نقاط تواصل مع المالك:\n"
-            "👤 <b>@XOU_J</b>\n"
-            "👤 <b>@R3D_93</b>\n"
+            "👤 <b>@DA3M_6</b>\n"
             "━━━━━━━━━━━━━━━━━━━"
         )
         bot.edit_message_text(text=sell_txt, chat_id=cid, message_id=mid, reply_markup=sell_keys, parse_mode='HTML')
@@ -8520,7 +8423,7 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_gift_ask_uses)
 
-    # 🎧 تعيين نص الدعم الفني
+    # 🎧 تعي��ن نص الدعم الفني
 
     if data == 'adm_ai_panel':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -8654,13 +8557,13 @@ def _c_rs_worker(call):
         if cid not in (db.get('admins') or []) and cid != sudo:
             return
         _mkey = data[len('admsg_edit_'):]
-        _mcur = _msg_current(_mkey)
+        _mcur = _msg_preview(_mkey)
         _mkk = mk(row_width=1)
         if db.exists('msg:' + _mkey):
             _mkk.add(btn('♻️ استرجاع النص الافتراضي', callback_data='admsg_reset_' + _mkey, color='red'))
         _mkk.add(btn('🔙 رجوع', callback_data='adm_msgs_panel', color='blue'))
-        _mtext = '✏️ تعديل الرسالة' + chr(10) + chr(10) + 'النص الحالي:' + chr(10) + _mcur + chr(10) + chr(10) + '📝 أرسل النص الجديد:'
-        _mx = bot.edit_message_text(chat_id=cid, message_id=mid, text=_mtext, reply_markup=_mkk, parse_mode=None)
+        _mtext = '✏️ تعديل الرسالة' + chr(10) + chr(10) + 'النص الحالي:' + chr(10) + _mcur + chr(10) + chr(10) + '📝 أرسل النص الجديد:' + chr(10) + '✨ تقدر تبعت إيموجي بريميوم وهيتحفظ في الرسالة.'
+        _mx = bot.edit_message_text(chat_id=cid, message_id=mid, text=_mtext, reply_markup=_mkk, parse_mode='HTML')
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(_mx, lambda m, k=_mkey: _do_set_msg(m, k))
         return
@@ -9962,7 +9865,7 @@ def get_amount(message, type_req):
                 f'╔══════════════════════╗\n'
                 f'       🔐 طلب أعضاء قناة خاصة جديد\n'
                 f'╚══════════════════════╝\n\n'
-                f'✅ الكمية المطلوبة : {amount} عضو\n\n'
+                f'✅ الكمية ��لمطلوبة : {amount} عضو\n\n'
                 f'🔗 أرسل الآن رابط الدعوة الخاص بقناتك الخاصة\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
             )
@@ -10080,7 +9983,7 @@ def get_amount(message, type_req):
                 return
             _req_txt = (
                 f'╔══════════════════════╗\n'
-                f'       📊 طلب استفتاء جديد\n'
+                f'       📊 طلب استفتا�� جديد\n'
                 f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} صوت\n\n'
                 f'🔗 أرسل الآن رابط المنشور\n'
@@ -10879,7 +10782,7 @@ def def_execute_order(uid: int, cb=None):
                 except: false += 1
             unit_price = forward_price
 
-        elif otype == 'استفتاء':
+        elif otype == '��ستفتاء':
             poll_idx = extra.get('poll_idx', 0)
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
@@ -11274,7 +11177,7 @@ def get_react(message, amount):
 def get_url_votes(message, amount, wait_time):
     url = message.text
     if not checks(url):
-        bot.reply_to(message, text=f'• رجاء ارسل الرابط بشكل صحيح')
+        bot.reply_to(message, text=f'��� رجاء ارسل الرابط بشكل صحيح')
         return
     acc = db.get(f'user_{message.from_user.id}')
     price = vote_price * amount
@@ -12349,7 +12252,7 @@ def send(message):
     coins = int(from_user.get('coins', 0))
     x2 = bot.reply_to(
         message,
-        f'👤 <b>تحويل النقاط إلى:</b> {name}\n'
+        f'👤 <b>تحويل ��لنقاط إلى:</b> {name}\n'
         f'💳 رصيدك الحالي: <b>{coins:,} نقطة</b>\n\n'
         f'• أرسل الآن عدد النقاط التي تريد تحويلها:',
         reply_markup=bk_cancel, parse_mode='HTML'
@@ -12431,9 +12334,6 @@ def addpoints_final(message, uid):
     bot.reply_to(message, f'تم بنجاح نقاطه الان : {b["coins"]} ')
     return
 
-def setfo(message):
-    """دالة قديمة للتوافق — محوّلة لـ setfo_add"""
-    setfo_add(message)
 
 def setfo_add(message):
     """إضافة قناة اشتراك إجباري جديدة بالصيغة الجديدة"""
@@ -12853,35 +12753,8 @@ def _rewards_keys():
     return k
 
 
-def cb_rewards_panel(call):
-    cid = call.from_user.id
-    if cid not in (db.get("admins") or []) and cid != sudo:
-        return
-    bot.edit_message_text(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        text=_rewards_text(),
-        reply_markup=_rewards_keys(),
-        parse_mode='HTML'
-    )
 
 
-def cb_rwd_daily(call):
-    cid = call.from_user.id
-    if cid not in (db.get("admins") or []) and cid != sudo:
-        return
-    cur = int(db.get("daily_gift")) if db.exists("daily_gift") else 30
-    x = bot.edit_message_text(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        text=(
-            f"🎁 <b>تعديل الهدية اليومية</b>\n\n"
-            f"القيمة الحالية: <b>{cur} نقطة</b>\n\n"
-            "أرسل القيمة الجديدة (رقم صحيح):"
-        ),
-        parse_mode='HTML'
-    , reply_markup=bk_cancel)
-    bot.register_next_step_handler(x, _do_rwd_daily)
 
 def _do_rwd_daily(message):
     cid = message.from_user.id
@@ -12924,22 +12797,6 @@ def cb_rwd_toggle_remind(call):
         pass
 
 
-def cb_rwd_invite(call):
-    cid = call.from_user.id
-    if cid not in (db.get("admins") or []) and cid != sudo:
-        return
-    cur = int(db.get("link_price")) if db.exists("link_price") else link_price
-    x = bot.edit_message_text(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        text=(
-            f"🔮 <b>تعديل مكافأة الإحالة</b>\n\n"
-            f"القيمة الحالية: <b>{cur} نقطة</b>\n\n"
-            "أرسل القيمة الجديدة (رقم صحيح):"
-        ),
-        parse_mode='HTML'
-    , reply_markup=bk_cancel)
-    bot.register_next_step_handler(x, _do_rwd_invite)
 
 def _do_rwd_invite(message):
     cid = message.from_user.id
@@ -12971,30 +12828,6 @@ def _do_rwd_rent_reward(message):
         bot.send_message(cid, _rewards_text(), reply_markup=_rewards_keys(), parse_mode='HTML')
     except Exception:
         bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
-def cb_rwd_wheel(call):
-    cid = call.from_user.id
-    if cid not in (db.get("admins") or []) and cid != sudo:
-        return
-    prizes = get_wheel_prizes()
-    cur_txt = "\n".join(f"{p['points']} {p['weight']}" for p in prizes)
-    x = bot.edit_message_text(
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        text=(
-            "🎰 <b>تعديل جوائز عجلة الحظ</b>\n\n"
-            "أرسل الجوائز — كل سطر بالشكل:\n"
-            "<code>نقاط  احتمالية</code>\n\n"
-            "• الاحتمالية رقم نسبي (كلما زاد = أكثر ظهوراً)\n"
-            "• أضف جائزتين على الأقل\n\n"
-            "<b>مثال:</b>\n"
-            "<code>50 35\n100 25\n200 18\n350 10\n500 7\n750 3\n1000 2</code>\n\n"
-            "━━━━━━━━━━━━━━\n"
-            f"<b>الحالي:</b>\n<code>{cur_txt}</code>"
-        ),
-        parse_mode='HTML',
-        reply_markup=bk_cancel
-    )
-    bot.register_next_step_handler(x, _do_rwd_wheel)
 
 def _do_rwd_wheel(message):
     cid = message.from_user.id
@@ -13192,17 +13025,6 @@ _gen_cache = {}
 _gen_cache_ts = {}
 _GEN_CACHE_TTL = 300  # 5 دقائق
 
-def _gc(key, default=None):
-    """يجيب قيمة من cache أو Firebase"""
-    now = time.time()
-    if key in _gen_cache and now - _gen_cache_ts.get(key, 0) < _GEN_CACHE_TTL:
-        return _gen_cache[key]
-    val = db.get(key)
-    if val is None:
-        val = default
-    _gen_cache[key] = val
-    _gen_cache_ts[key] = now
-    return val
 
 
 _reg_state      = {}     # uid -> 'phone' | 'code' | 'pass'
@@ -13223,8 +13045,6 @@ def _gcache_get(key):
 def _gcache_set(key, val, ttl=_GEN_CACHE_TTL):
     _gen_cache[key] = (val, _time_module.time() + ttl)
 
-def _gcache_del(key):
-    _gen_cache.pop(key, None)
 
 _REG_DAILY_LIMIT = 999999  # غير محدود
 
@@ -14232,7 +14052,7 @@ def on_channel_post(message):
         print(f'[future_views listener] {_fve}')
 
 # ══════════════════════════════════════════════════════════════
-#  دوال مكتملة — كانت مستدعاة بس مش معرّفة أو ناقصة
+#  دوال مكتملة — ��انت مستدعاة بس مش معرّفة أو ناقصة
 # ══════════════════════════════════════════════════════════════
 
 def get_url_linkbot(message, amount):
@@ -14259,57 +14079,14 @@ def get_url_linkbot(message, amount):
     bot.register_next_step_handler(x, link_bot, amount)
 
 
-def _ensure_user(user_id):
-    """يتأكد أن المستخدم موجود في DB وإلا ينشئه"""
-    if not db.get(f'user_{user_id}'):
-        db.set(f'user_{user_id}', {'id': user_id, 'coins': 0, 'premium': False, 'users': []})
 
 
-def _safe_edit(chat_id, message_id, text, reply_markup=None, parse_mode='HTML'):
-    """edit_message_text آمن — لو فشل يبعت رسالة جديدة"""
-    try:
-        bot.edit_message_text(text=text, chat_id=chat_id, message_id=message_id,
-                              reply_markup=reply_markup, parse_mode=parse_mode)
-    except Exception:
-        try:
-            bot.send_message(chat_id, text, reply_markup=reply_markup, parse_mode=parse_mode)
-        except Exception:
-            pass
 
 
-def _deduct_coins(user_id: int, amount: int) -> bool:
-    """يخصم نقاط من المستخدم — يرجع True لو نجح"""
-    try:
-        info = db.get(f'user_{user_id}') or {}
-        current = int(info.get('coins', 0))
-        if current < amount:
-            return False
-        info['coins'] = current - amount
-        db.set(f'user_{user_id}', info)
-        return True
-    except Exception as e:
-        print(f'[deduct_coins] {e}')
-        return False
 
 
-def _add_coins(user_id: int, amount: int):
-    """يضيف نقاط للمستخدم"""
-    try:
-        info = db.get(f'user_{user_id}') or {'id': user_id, 'coins': 0, 'premium': False, 'users': []}
-        info['coins'] = int(info.get('coins', 0)) + amount
-        db.set(f'user_{user_id}', info)
-    except Exception as e:
-        print(f'[add_coins] {e}')
 
 
-def _svc_not_enough_accounts(message, amount):
-    """رسالة موحدة: عدد الحسابات غير كافٍ"""
-    bot.reply_to(message,
-        f'⚠️ <b>عدد الحسابات غير كافٍ</b>\n\n'
-        f'• الكمية المطلوبة: {amount}\n'
-        f'• الحسابات المتاحة: {len(db.get("accounts") or [])}\n\n'
-        f'يرجى تقليل الكمية أو المحاولة لاحقاً.',
-        reply_markup=bk, parse_mode='HTML')
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
