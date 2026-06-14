@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -839,7 +838,7 @@ CONFIG = {
         "comments": 100,
         "spam": 100
     },
-    "bot_token": "8608887988:AAE0TWNFwFKhTBoyJbGzDXhPi2P4Q1c-A4Y",
+    "bot_token": "8608887988:AAGlQfLL8EcWYColpd66iZ6pCUk1RlV1yRE",
     "give_bot_token": "8961757018:AAEMW-tTREk2wmozthM6DIPEHsglr0Csk1M",
     "sell_gmail":     "bbbabdullah9@gmail.com",
     "rent_reward":    100
