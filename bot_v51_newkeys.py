@@ -12052,6 +12052,9 @@ def adminss(message, type_op):
         except:
             bot.reply_to(message, f'• ارسل الايدي بشكل صحيح')
             return
+        if uid == sudo:
+            bot.reply_to(message, f'• ⛔️ لا يمكن ازالة الادمن الرئيسي (المالك) من الادمنية')
+            return
         d = db.get('admins')
         if uid not in d:
             bot.reply_to(message, f'• هذا العضو ليس من الادمنية بالبوت')
