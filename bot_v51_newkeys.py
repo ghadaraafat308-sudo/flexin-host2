@@ -461,6 +461,7 @@ BTN_KEYS = {
     "wheel": "عجلة الحظ",
     "votes": "تصويت مسابقات",
     "votes_fsub": "تصويت مسابقات اشتراك إجباري",
+    "votes_sarab": "تصويت بوت مسابقات سراب",
     "react": "تفاعلات اختياري",
     "reacts": "تفاعلات عشوائي",
     "react_special": "رشق ايموجي ( مميز )",
@@ -800,7 +801,7 @@ def _agent_charge_button():
 # الإعدادات - يمكنك تعديلها هنا مباشرة
 
 CONFIG = {
-    "sudo": 8202070583,
+    "sudo": 6472365461,
     "start_msg": "︎مرحبا بكم في اقوي بوت رشق علي الساحه",
     "prices": {
         "member": 1000,
@@ -814,6 +815,7 @@ CONFIG = {
         "linkbot": 100,
         "linkbot2": 100,
         "votes_fsub": 150,
+        "votes_sarab": 150,
         "comments": 100,
         "spam": 100
     },
@@ -1048,6 +1050,7 @@ linkbot_price  = CONFIG["prices"]["linkbot"]
 comment_price  = CONFIG["prices"]["comments"]
 linkbot2_price = CONFIG["prices"]["linkbot2"]
 votes_fsub_price = CONFIG["prices"]["votes_fsub"]
+votes_sarab_price = CONFIG["prices"].get("votes_sarab", 150)
 
 # قاعدة البيانات — Firebase Realtime Database
 
@@ -1072,29 +1075,6 @@ except Exception as _ge:
     print('[تحذير] تعذر تفعيل حماية الأدمن: ' + str(_ge))
 # البوت يبدأ فوراً — البيانات تتحمل في الخلفية (cache يعمل من أول request)
 print("[🔥] Firebase متصل — البوت جاهز فوراً، البيانات تتحمل في الخلفية...")
-
-# 🔒 أقفال لكل مستخدم/هدية لمنع تكرار العمليات الحسّاسة (race conditions)
-_user_locks = {}
-_user_locks_master = threading.Lock()
-def _get_user_lock(uid):
-    key = str(uid)
-    with _user_locks_master:
-        lk = _user_locks.get(key)
-        if lk is None:
-            lk = threading.RLock()
-            _user_locks[key] = lk
-        return lk
-
-_gift_locks = {}
-_gift_locks_master = threading.Lock()
-def _get_gift_lock(code):
-    key = str(code)
-    with _gift_locks_master:
-        lk = _gift_locks.get(key)
-        if lk is None:
-            lk = threading.RLock()
-            _gift_locks[key] = lk
-        return lk
 
 # إخفاء افتراضي لليدربورد + تصفير المهام القديمة (مرّة واحدة)
 try:
@@ -1125,6 +1105,7 @@ SERVICES = {
     "poll":     {"label": "استفتاء",                   "price_key": "poll_price",     "min_key": "poll_min",     "max_key": "poll_max",     "default_price": 100,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_poll"},
     "votes":     {"label": "تصويت مسابقات",             "price_key": "votes_price",    "min_key": "votes_min",    "max_key": "votes_max",    "default_price": 100,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_votes"},
     "votes_fsub":{"label": "تصويت مسابقات اشتراك إجباري", "price_key": "votes_fsub_price","min_key": "votes_fsub_min","max_key": "votes_fsub_max","default_price": 150,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_votes_fsub"},
+    "votes_sarab":{"label": "تصويت بوت مسابقات سراب", "price_key": "votes_sarab_price","min_key": "votes_sarab_min","max_key": "votes_sarab_max","default_price": 150,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_votes_sarab"},
     "userbot":  {"label": "مستخدمين البوت",            "price_key": "userbot_price",  "min_key": "userbot_min",  "max_key": "userbot_max",  "default_price": 100,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_userbot"},
     "linkbot":  {"label": "روابط دعوة مجانية",         "price_key": "linkbot_price",  "min_key": "linkbot_min",  "max_key": "linkbot_max",  "default_price": 100,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_linkbot"},
     "linkbot2": {"label": "روابط دعوة VIP",            "price_key": "linkbot2_price", "min_key": "linkbot2_min", "max_key": "linkbot2_max", "default_price": 100,  "default_min": 1,   "default_max": 500, "enabled_key": "svc_enabled_linkbot2"},
@@ -1668,6 +1649,134 @@ async def vote_one_fsub(session, link, wait_time, channels_force):
         else:
             return False
     else:
+        return False
+
+# ===== تصويت بوت مسابقات سراب (اشتراك إجباري + ضغط الزر + حل تحقق الإيموجي) =====
+_SARAB_EMOJI_RE = re.compile(
+    "["
+    "\U0001F300-\U0001FAFF"
+    "\U00002600-\U000027BF"
+    "\U0001F000-\U0001F0FF"
+    "\U00002B00-\U00002BFF"
+    "\U00002190-\U000021FF"
+    "\U0000FE00-\U0000FE0F"
+    "\U0001F1E6-\U0001F1FF"
+    "]"
+)
+
+def _sarab_extract_emojis(s):
+    try:
+        return _SARAB_EMOJI_RE.findall(s or "")
+    except Exception:
+        return []
+
+async def _solve_sarab_captcha(c, bot_username=None, tries=4):
+    """يقرأ رسالة تحقق سراب ويضغط الزر المطابق للإيموجي المطلوب"""
+    for _ in range(tries):
+        try:
+            target = bot_username
+            if not target:
+                async for d in c.get_dialogs(limit=15):
+                    _t = str(getattr(d.chat, 'type', '')).lower()
+                    if 'bot' in _t:
+                        target = d.chat.username or d.chat.id
+                        break
+            if not target:
+                return False
+            last = None
+            async for mm in c.get_chat_history(target, limit=6):
+                if mm.reply_markup and getattr(mm, 'text', None):
+                    last = mm
+                    break
+            if not last:
+                await asyncio.sleep(2)
+                continue
+            text = last.text or ''
+            target_emoji = None
+            for p in re.findall(r'\(([^)]*)\)', text):
+                em = _sarab_extract_emojis(p)
+                if em:
+                    target_emoji = em[-1]
+                    break
+            if not target_emoji:
+                allem = _sarab_extract_emojis(text)
+                if allem:
+                    target_emoji = allem[-1]
+            if not target_emoji:
+                return False
+            for row in last.reply_markup.inline_keyboard:
+                for b in row:
+                    if getattr(b, 'text', None) and target_emoji in b.text:
+                        try:
+                            await last.click(b.text)
+                            return True
+                        except Exception as _ce:
+                            print(f'[votes_sarab] click captcha error: {_ce}')
+                            return False
+            return False
+        except Exception as e:
+            print(f'[votes_sarab] captcha error: {e}')
+            await asyncio.sleep(2)
+    return False
+
+async def vote_one_sarab(session, link, wait_time, channels_force):
+    """تصويت بوت مسابقات سراب: يفتح رابط المتسابق (deep link) ثم يحل تحقق الإيموجي"""
+    if isinstance(channels_force, str):
+        channels = [channels_force] if channels_force else []
+    else:
+        channels = list(channels_force or [])
+    c = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
+               lang_code="ar", no_updates=True, session_string=session)
+    try:
+        await c.start()
+    except:
+        return False
+    if db.exists(f'isvote_sarab_{session[:15]}_{link}'):
+        return 'o'
+    # استخراج يوزر البوت وبراميتر التصويت من رابط المتسابق
+    mm = re.search(r't\.me/([A-Za-z0-9_]+)\?start=([A-Za-z0-9_\-=]+)', link)
+    if not mm:
+        return False
+    bot_username = mm.group(1)
+    start_param = mm.group(2)
+    # الاشتراك في قنوات الاشتراك الإجباري (إن وُجدت)
+    for ch in channels:
+        if not ch:
+            continue
+        try:
+            await c.join_chat(ch)
+        except Exception as e:
+            print(f'[votes_sarab] join error {ch}: {e}')
+    if wait_time:
+        await asyncio.sleep(wait_time)
+    try:
+        # فتح البوت عبر deep link (يُحتسب كتصويت حقيقي)
+        try:
+            await c.invoke(
+                __import__('pyrogram.raw.functions.messages', fromlist=['StartBot']).StartBot(
+                    bot=await c.resolve_peer(bot_username),
+                    peer=await c.resolve_peer(bot_username),
+                    random_id=__import__('random').randint(0, 2**63),
+                    start_param=start_param
+                )
+            )
+        except Exception as e:
+            print(f'[votes_sarab] StartBot error: {e}')
+            try:
+                await c.send_message(bot_username, f'/start {start_param}')
+            except Exception as e2:
+                print(f'[votes_sarab] send start error: {e2}')
+                return False
+        # حل تحقق الإيموجي (الإيموجي يتغير كل مرة — يُقرأ لحظياً)
+        await asyncio.sleep(2)
+        try:
+            await _solve_sarab_captcha(c, bot_username)
+        except Exception as e:
+            print(f'[votes_sarab] solve error: {e}')
+        db.set(f'isvote_sarab_{session[:15]}_{link}', True)
+        return True
+    except Exception as e:
+        print(f'[votes_sarab] vote error: {e}')
         return False
 
 async def reactions(session, link, like):
@@ -3627,7 +3736,7 @@ def start_message(message):
         return
 
     try:
-        for temp in ['leave','member','vote','spam','userbot','forward','linkbot','view','poll','react','reacts','react_special','votes_fsub']:
+        for temp in ['leave','member','vote','spam','userbot','forward','linkbot','view','poll','react','reacts','react_special','votes_fsub','votes_sarab']:
             db.delete(f'{temp}_{user_id}_proccess')
 
         if user_id in (db.get('badguys') or []):
@@ -3734,7 +3843,7 @@ def start_message(message):
                         txt = (
                             f'╔══════════════════╗\n'
                             f'       🤖 مستخدم وهمي دخل البوت!\n'
-                            f'╚══════════════════╝\n\n'
+                            f'╚═══════════════��══╝\n\n'
                             f'👤 الاسم : {_new_fname}\n'
                             f'📛 اليوزر : {_new_uname}\n'
                             f'🆔 الأيدي : <code>{user_id}</code>\n\n'
@@ -3773,7 +3882,7 @@ def start_message(message):
 
             _count_pending_referral(user_id)
 
-            # سجّل المستخدم أولاً
+            # سجّل ا��مستخدم أولاً
             if not db.exists(f'user_{user_id}'):
                 data = {'id': user_id, 'users': [], 'coins': 0, 'premium': False}
                 set_user(user_id, data)
@@ -3859,38 +3968,37 @@ def start_asinvite(message):
     # معالجة روابط الهدية
     if param.startswith("gift_"):
         code = param.replace("gift_", "")
-        with _get_gift_lock(code):
-            gift = db.get(f"gift_{code}")
-            if not gift:
-                bot.reply_to(message, '❌ رابط الهدية غير صالح أو منتهي الصلاحية')
-                start_message(message)
-                return
-            max_uses = int(gift.get("max_uses", 1))
-            uses = int(gift.get("uses", 0))
-            used_by = gift.get("used_by", [])
-            if gift.get("used") or uses >= max_uses:
-                bot.reply_to(message, '❌ تم استنفاد استخدامات هذا الرابط')
-                start_message(message)
-                return
-            if join_user in used_by:
-                bot.reply_to(message, '❌ لقد استخدمت هذا الرابط من قبل، لا يمكن استخدامه مرة أخرى')
-                start_message(message)
-                return
-            # تسجيل المستخدم إن لم يكن موجوداً
-            if not check_user(join_user):
-                data = {'id': join_user, 'users': [], 'coins': 0, 'premium': False}
-                set_user(join_user, data)
-            info = get(join_user)
-            pts = int(gift.get("points", 0))
-            info['coins'] = int(info.get('coins', 0)) + pts
-            set_user(join_user, info)
-            uses += 1
-            used_by.append(join_user)
-            gift["uses"] = uses
-            gift["used_by"] = used_by
-            if uses >= max_uses:
-                gift["used"] = True
-            db.set(f"gift_{code}", gift)
+        gift = db.get(f"gift_{code}")
+        if not gift:
+            bot.reply_to(message, '❌ رابط الهدية غير صالح أو منتهي الصلاحية')
+            start_message(message)
+            return
+        max_uses = int(gift.get("max_uses", 1))
+        uses = int(gift.get("uses", 0))
+        used_by = gift.get("used_by", [])
+        if gift.get("used") or uses >= max_uses:
+            bot.reply_to(message, '❌ تم استنفاد استخدامات هذا الرابط')
+            start_message(message)
+            return
+        if join_user in used_by:
+            bot.reply_to(message, '❌ لقد استخدمت هذا الرابط من قبل، لا يمكن استخدامه مرة أخرى')
+            start_message(message)
+            return
+        # تسجيل المستخدم إن لم يكن موجوداً
+        if not check_user(join_user):
+            data = {'id': join_user, 'users': [], 'coins': 0, 'premium': False}
+            set_user(join_user, data)
+        info = get(join_user)
+        pts = int(gift.get("points", 0))
+        info['coins'] = int(info.get('coins', 0)) + pts
+        set_user(join_user, info)
+        uses += 1
+        used_by.append(join_user)
+        gift["uses"] = uses
+        gift["used_by"] = used_by
+        if uses >= max_uses:
+            gift["used"] = True
+        db.set(f"gift_{code}", gift)
         remaining = max_uses - uses
         remaining_txt = f'\n📊 الاستخدامات المتبقية: *{remaining}*' if max_uses > 1 else ''
         keys = mk(row_width=1)
@@ -4421,7 +4529,7 @@ def _show_rec_panel(cid, mid):
     contact_line = f'@{support_username}' if support_username else '@admin'
     txt = (
         '┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
-        '   🛰️ <b>خدمة ال��فاعل التلقائي</b>\n'
+        '   🛰️ <b>خدمة التفاعل التلقائي</b>\n'
         '┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
         '✨ <b>ما هي الخدمة؟</b>\n'
         'اشتراك احترافي يجعل قناتك تحصل على\n'
@@ -4788,7 +4896,7 @@ def _log_btn(call):
             f'🔘 الزر : <b>{label}</b>\n'
             f'🔑 الكود : <code>{data}</code>\n'
             f'🕐 الوقت : {now}\n'
-            f'━━━━━━━━━━━━━━━━'
+            f'━���━━━━━━━━━━━━━━'
         )
         threading.Thread(
             target=lambda: bot.send_message(int(logs_ch), txt, parse_mode='HTML'),
@@ -4847,7 +4955,7 @@ def _cb_alert(call, text=None, show_alert=False):
 
 
 def _game_notice(call, text):
-    # كليشه مضمونة الظهور — تتبعت كرسالة وتتمسح تلقائياً
+    # كليشه مضمونة الظهور — تتبعت كرسالة وتتمسح تل��ائياً
     try:
         cid_ = call.message.chat.id
     except Exception:
@@ -5229,7 +5337,7 @@ def _c_rs_worker(call):
         keys.add(btn('🔙 إلغاء', callback_data='user_store', color='red'))
         bot.edit_message_text(
             text='💰 <b>إضافة إعلان في المتجر</b>\n\n'
-                 '🏷️ أرسل اسم السلعة التي تريد بيعها:',
+                 '🏷️ أرسل اسم السلعة ال��ي تريد بيعها:',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
         )
         bot.register_next_step_handler_by_chat_id(cid, _handle_mkt_add_step)
@@ -5542,13 +5650,13 @@ def _c_rs_worker(call):
             _start_param = f'btask_{task_id}_{cid}'
             link = f"https://t.me/{_bot_username}?start={_start_param}"
             bot_keys = mk(row_width=1)
-            bot_keys.add(btn('🤖 افتح البوت وابد��', url=link))
+            bot_keys.add(btn('🤖 افتح البوت وابدأ', url=link))
             bot_keys.add(btn('✅ تحقق تلقائي', callback_data=f'task_verify_{task_id}', color='green'))
             bot_keys.add(btn('رجوع', callback_data='tasks', color='blue'))
             bot.edit_message_text(
                 text=(
                     f'📋 <b>{desc}</b>\n\n'
-                    f'1️⃣ اضغط «افتح البوت وابدأ» — سيفتح البوت برابط خاص بك\n'
+                    f'1️⃣ اضغط «افتح البوت وابدأ» — ��يفتح البوت برابط خاص بك\n'
                     f'2️⃣ ابعت /start داخل البوت\n'
                     f'3️⃣ ارجع واضغط «تحقق تلقائي»\n\n'
                     f'⚠️ يجب أن تكون <b>أول مرة</b> تفتح البوت\n'
@@ -6051,7 +6159,7 @@ def _c_rs_worker(call):
             f'  • عدد الطلبات : {orders_yesterday:,}\n'
             f'  • نقاط مُنفقة : {points_yesterday:,}\n\n'
             f'🔢 <b>إجمالي الطلبات الكلي :</b> {total_orders:,}\n\n'
-            f'���━━━━━━━━━━━━━━━━━━\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
             f'🏆 <b>الخدمات الأكثر طلباً اليوم :</b>'
             f'{top_txt}\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
@@ -6304,7 +6412,7 @@ def _c_rs_worker(call):
         bot.register_next_step_handler(x, lespoints)
     if data == 'back':
         bot.clear_step_handler_by_chat_id(cid)  # إلغاء أي خطوة معلّقة
-        a = ['leave', 'member', 'vote', 'spam', 'userbot', 'forward', 'linkbot', 'view', 'poll', 'react', 'reacts', 'react_special', 'votes_fsub']
+        a = ['leave', 'member', 'vote', 'spam', 'userbot', 'forward', 'linkbot', 'view', 'poll', 'react', 'reacts', 'react_special', 'votes_fsub', 'votes_sarab']
         for temp in a:
             db.delete(f'{temp}_{user_id}_proccess')
         keys = _build_main_keys(user_id)
@@ -6455,6 +6563,10 @@ def _c_rs_worker(call):
         if svc_enabled('votes_fsub'):
             keys.add(btn('🏆 تصويت مسابقات اشتراك إجباري', callback_data='votes_fsub', color='green'))
 
+        # صف 5ب: تصويت بوت مسابقات سراب — عرض كامل
+        if svc_enabled('votes_sarab'):
+            keys.add(btn('🗳️ تصويت بوت مسابقات سراب', callback_data='votes_sarab', color='green'))
+
         # صف 6: سبام رسائل — عرض كامل
         if svc_enabled('spam'):
             keys.add(btn('💣 سبام رسائل', callback_data='spams', color='blue'))
@@ -6555,7 +6667,7 @@ def _c_rs_worker(call):
 
     if data == 'collect':
         keys = mk(row_width=2)
-        btn1    = btn('🎁 الهدية اليومية',  callback_data='dailygift',      color='green')
+        btn1    = btn('🎁 ا��هدية اليومية',  callback_data='dailygift',      color='green')
         btn3    = btn('🌀 رابط الدعوة',      callback_data='share_link',     color='green')
         btn_w   = btn('🎡 عجلة الحظ',        callback_data='wheel',          color='red')
         btn_sell= btn('💸 بيع الأرقام',       callback_data='sell_numbers',   color='green')
@@ -6603,27 +6715,18 @@ def _c_rs_worker(call):
             _cb_alert(call, "⚠️ انتهت صلاحية الطلب", show_alert=True)
             return
         uid    = order['uid']
-        try:
-            amount = int(order['amount'])
-        except (TypeError, ValueError):
-            _cb_alert(call, "⚠️ مبلغ غير صالح", show_alert=True)
-            return
+        amount = order['amount']
         name   = order['name']
-        if amount < 1:
-            _cb_alert(call, "❌ لا يمكن تحويل عدد أقل من 1", show_alert=True)
+        from_user = db.get(f'user_{cid}') or {}
+        to_user   = db.get(f'user_{uid}')  or {}
+        if int(from_user.get('coins', 0)) < amount + 500:
+            _cb_alert(call, "❌ نقاطك غير كافية (المبلغ + 500 عمولة)", show_alert=True)
             return
-        _la, _lb = sorted([int(cid), int(uid)])
-        with _get_user_lock(_la), _get_user_lock(_lb):
-            from_user = db.get(f'user_{cid}') or {}
-            to_user   = db.get(f'user_{uid}')  or {}
-            if int(from_user.get('coins', 0)) < amount + 500:
-                _cb_alert(call, "❌ نقاطك غير كافية (المبلغ + 500 عمولة)", show_alert=True)
-                return
-            old_to = int(to_user.get('coins', 0))
-            from_user['coins'] = int(from_user.get('coins', 0)) - amount - 500
-            to_user['coins']   = old_to + amount
-            db.set(f'user_{cid}', from_user)
-            db.set(f'user_{uid}', to_user)
+        old_to = int(to_user.get('coins', 0))
+        from_user['coins'] = int(from_user.get('coins', 0)) - amount - 500
+        to_user['coins']   = old_to + amount
+        db.set(f'user_{cid}', from_user)
+        db.set(f'user_{uid}', to_user)
         try:
             bot.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=None)
         except: pass
@@ -6776,7 +6879,7 @@ def _c_rs_worker(call):
         prem = 'Premium' if (info or {}).get('premium') is True else 'Free'
         _phones_list = acc.get('phones', [])
         _phones_txt  = '\n'.join([f'  📞 {p}' for p in _phones_list]) if _phones_list else '  لا يوجد'
-        textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحاله التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد التحويلات التي قمت بها : {trans}\n• [📱] الأرقام المسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
+        textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحاله التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد ال��حويلات التي قمت بها : {trans}\n• [📱] الأرقام المسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
         bot.edit_message_text(text=textt, chat_id=cid, message_id=mid, reply_markup=bk_cancel, parse_mode="HTML")
         return
     if data == 'setforce':
@@ -7110,6 +7213,26 @@ def _c_rs_worker(call):
         db.set(f'votes_fsub_{cid}_proccess', True)
         x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('vips'), chat_id=cid, message_id=mid, parse_mode="HTML")
         bot.register_next_step_handler(x, get_amount, 'votes_fsub')
+    if data == 'votes_sarab':
+        info = db.get(f'user_{cid}')
+        if not (info and info.get('premium')):
+            _cb_alert(call, '⛔ هذه الخدمة للمشتركين VIP فقط!', show_alert=True)
+            return
+        _pr = svc_price('votes_sarab'); _mn = svc_min('votes_sarab'); _mx = svc_max('votes_sarab')
+        _svc_txt = (
+            f'🗳️ <b>خدمة تصويت بوت مسابقات سراب</b>\n\n'
+            f'━━━━━━━━━━━━━━━━━\n'
+            f'📌 <b>كيف تعمل؟</b>\n'
+            f'• كل حساب يشترك في قناتك أولاً، يضغط زر التصويت، ويعدّي خطوة التحقق تلقائياً\n\n'
+            f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
+            f'📉 الحد الأدنى : <b>{_mn}</b>\n'
+            f'📈 الحد الأقصى : <b>{_mx}</b>\n'
+            f'━━━━━━━━━━━━━━━━━\n\n'
+            f'أرسل الآن العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
+        )
+        db.set(f'votes_sarab_{cid}_proccess', True)
+        x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('vips'), chat_id=cid, message_id=mid, parse_mode="HTML")
+        bot.register_next_step_handler(x, get_amount, 'votes_sarab')
     if data == 'buy':
         # إعدادات الشحن من DB
         stars_rate   = int(db.get("charge_stars_rate"))   if db.exists("charge_stars_rate")   else 600
@@ -7806,7 +7929,7 @@ def _c_rs_worker(call):
         skeys.add(btn('رجوع', callback_data=f'svc_pick_{svc_key}', color='blue'))
         mx = svc_max(svc_key)
         x = bot.edit_message_text(
-            text=f'⬆️ تعديل الحد الأقصى لـ: {SERVICES[svc_key]["label"]}\nالحالي: {mx}\n\nأرسل الحد الأقصى الجديد (رقم فقط):',
+            text=f'⬆️ تعديل الحد الأقصى ل��: {SERVICES[svc_key]["label"]}\nالحالي: {mx}\n\nأرسل الحد الأقصى الجديد (رقم فقط):',
             chat_id=cid, message_id=mid, reply_markup=skeys
         )
         bot.clear_step_handler_by_chat_id(cid)
@@ -8380,7 +8503,7 @@ def _c_rs_worker(call):
                 'الـ <b>Custom Emoji ID</b> رقم طويل خاص بكل إيموجي بريميوم.\n\n'
                 '<b>طريقة الحصول عليه:</b>\n'
                 '1⃣ ابعت الإيموجي المميز لبوت زي <code>@idstickerbot</code>\n'
-                '2⃣ هتلاقي الرد فيه رقم طويل — ده الـ ID\n\n'
+                '2⃣ هتل��قي الرد فيه رقم طويل — ده الـ ID\n\n'
                 '<b>أو:</b>\n'
                 'أرسل الإيموجي المميز مباشرة والبوت يستخرج الـ ID تلقائياً\n\n'
                 '<b>ملاحظة:</b> يتطلب Telegram Premium أو قناة/بوت مدفوع'
@@ -8849,7 +8972,7 @@ def _c_rs_worker(call):
             emoji_display = emoji_char
 
         try:
-            _cb_alert(call, text='✅ تم اختيار الإيموجي')
+            _cb_alert(call, text='�� تم اختيار الإيموجي')
         except:
             pass
 
@@ -9362,7 +9485,7 @@ def _do_rename_btn(message, cb_target):
     keys.add(btn('🔙 رجوع للتخصيص', callback_data='adm_btn_panel', color='blue'))
     bot.reply_to(
         message,
-        f'✅ تم تغيير اسم الزر إلى: *{new_name}*',
+        f'✅ تم تغيير اسم ال��ر إلى: *{new_name}*',
         reply_markup=keys, parse_mode='Markdown'
     )
 
@@ -10208,6 +10331,47 @@ def get_amount(message, type_req):
             bot.register_next_step_handler(x, get_time_votes_fsub, amount)
             return
 
+    if type_req == 'votes_sarab':
+        if not db.get(f'votes_sarab_{cid}_proccess'):
+            return
+        if message.text:
+            try:
+                amount = int(message.text)
+            except:
+                r = bot.reply_to(message, f'• رجاء ارسل رقم فقط ، اعد المحاولة مره اخري')
+                bot.register_next_step_handler(r, get_amount, type_req)
+                return
+            _min, _max = svc_min('votes_sarab'), svc_max('votes_sarab')
+            if amount < _min:
+                r = bot.reply_to(message, f'• رجاء ارسل عدد لا يقل عن {_min}', reply_markup=bk_cancel, parse_mode="HTML")
+                bot.register_next_step_handler(r, get_amount, type_req)
+                return
+            if amount > _max:
+                r = bot.reply_to(message, f'• رجاء ارسل عدد لا يزيد عن {_max}', reply_markup=bk_cancel, parse_mode="HTML")
+                bot.register_next_step_handler(r, get_amount, type_req)
+                return
+            pr = svc_price('votes_sarab') * amount
+            acc = db.get(f'user_{message.from_user.id}')
+            if int(pr) > int(acc.get('coins', 0)):
+                bot.reply_to(message, f'نقاطك غير كافية لتنفيذ طلبك ، تحتاج الى {pr - amount} نقطة .')
+                return
+            load_ = db.get('accounts') or []
+            if len(load_) < amount:
+                bot.reply_to(message, f'• عدد حسابات البوت لا تكفي لتنفيذ طلبك', reply_markup=bk_cancel, parse_mode="HTML")
+                return
+            _req_txt = (
+                f'╔══════════════════════╗\n'
+                f'       🗳️ طلب تصويت بوت مسابقات سراب\n'
+                f'╚══════════════════════╝\n\n'
+                f'✅ الكمية المطلوبة : {amount} صوت\n\n'
+                f'⏱ أرسل الآن وقت الانتظار بين التصويت (بالثواني)\n'
+                f'• أرسل 0 لتنفيذ فوري | الحد الأقصى 500\n'
+                f'━━━━━━━━━━━━━━━━━━━━'
+            )
+            x = bot.reply_to(message, _req_txt, reply_markup=bk_cancel)
+            bot.register_next_step_handler(x, get_time_votes_sarab, amount)
+            return
+
     if type_req == 'spam':
         if not db.get(f'spam_{cid}_proccess'):
             return
@@ -10427,10 +10591,126 @@ def get_time_votes(message, amount):
         f'✅ الكمية المطلوبة : {amount} صوت\n'
         f'⏱ الوقت بين التصويت : {wait_time} ثانية\n\n'
         f'🔗 أرسل الآن رابط المنشور\n'
-        f'━━━━━━━━━━━━━━━━━━━━'
+        f'━━��━━━━━━━━━━━━━━━━━'
     )
     x = bot.reply_to(message, _req_txt, reply_markup=bk_cancel)
     bot.register_next_step_handler(x, get_url_votes, amount, wait_time)
+
+def get_time_votes_sarab(message, amount):
+    try:
+        wait_time = int(message.text)
+    except:
+        bot.reply_to(message, text=f'• رجاء ارسل الوقت بشكل صحيح')
+        return
+    if wait_time < 0 or wait_time > 500:
+        bot.reply_to(message, text=f'• رجاء ارسل وقت بين 0 و 500')
+        return
+    _req_txt = (
+        f'╔══════════════════════╗\n'
+        f'       🗳️ طلب تصويت بوت مسابقات سراب\n'
+        f'╚══════════════════════╝\n\n'
+        f'✅ الكمية المطلوبة : {amount} صوت\n'
+        f'⏱ الوقت بين التصويت : {wait_time} ثانية\n\n'
+        f'🔗 أرسل الآن رابط المتسابق (Deep link)\n'
+        f'• مثال: https://t.me/Bot?start=vote_xxxx\n'
+        f'━━━━━━━━━━━━━━━━━━━━'
+    )
+    x = bot.reply_to(message, _req_txt, reply_markup=bk_cancel)
+    bot.register_next_step_handler(x, get_url_votes_sarab, amount, wait_time)
+
+def get_url_votes_sarab(message, amount, wait_time):
+    url = (message.text or '').strip()
+    if not re.search(r't\.me/([A-Za-z0-9_]+)\?start=([A-Za-z0-9_\-=]+)', url):
+        bot.reply_to(message, text=f'• رجاء ارسل رابط المتسابق (Deep link) بشكل صحيح\n• مثال: https://t.me/Bot?start=vote_xxxx')
+        return
+    _req_txt = (
+        f'╔══════════════════════╗\n'
+        f'       🗳️ طلب تصويت بوت مسابقات سراب\n'
+        f'╚══════════════════════╝\n\n'
+        f'✅ الكمية : {amount} صوت\n'
+        f'⏱ الوقت بين التصويت : {wait_time} ثانية\n'
+        f'🔗 رابط التصويت : {url}\n\n'
+        f'📢 أرسل الآن معرف قناة الاشتراك الإجباري\n'
+        f'• لإضافة أكثر من قناة أرسل بهذا الشكل: @ch1 @ch2\n'
+        f'• أرسل (تخطي) لو مفيش اشتراك إجباري\n'
+        f'• ندعم حتى 10 قنوات\n'
+        f'━━━━━━━━━━━━━━━━━━━━'
+    )
+    x = bot.reply_to(message, _req_txt, reply_markup=bk_cancel)
+    bot.register_next_step_handler(x, votes_sarab_chforce, amount, wait_time, url)
+
+def votes_sarab_chforce(message, amount, wait_time, vote_url):
+    raw = (message.text or '').replace('\n', ' ').strip()
+    if raw in ('تخطي', 'تخطى', 'لا', 'بدون', 'skip', '-'):
+        channels_list = []
+    else:
+        channels_list = [
+            c.strip().replace('https://t.me/', '').replace('@', '')
+            for c in raw.split(' ')
+            if c.strip()
+        ]
+    if len(channels_list) > 10:
+        bot.reply_to(message, text='• الحد الأقصى للقنوات هو 10 قنوات فقط')
+        return
+    channels_display = ' | '.join([f'@{c}' for c in channels_list]) if channels_list else 'بدون'
+    load_ = db.get('accounts') or []
+    acc = db.get(f'user_{message.from_user.id}')
+    typerr = 'تصويت بوت مسابقات سراب'
+    bot.reply_to(message, text=(
+        f'• تم بدء طلبك بنجاح ✅\n\n'
+        f'• النوع : {typerr}\n'
+        f'• الرابط : {vote_url}\n'
+        f'• الكمية : {amount}\n'
+        f'• الوقت بين التصويت : {wait_time} ثانية\n'
+        f'• قنوات الاشتراك : {channels_display}'
+    ), disable_web_page_preview=True)
+    prog = bot.send_message(chat_id=int(message.from_user.id), text=f'• عزيزي تبقي {amount} علي اكتمال طلبك ....')
+    bot.send_message(chat_id=int(sudo), text=(
+        f'• قام شخص بطلب من البوت\n'
+        f'• النوع : {typerr}\n'
+        f'• العدد : {amount}\n'
+        f'• الرابط : {vote_url}\n'
+        f'• القنوات : {channels_display}\n'
+        f'• ايديه : {message.from_user.id}\n'
+        f'• يوزره : @{message.from_user.username}\n'
+        f'• الوقت : {wait_time} ثانية'
+    ))
+    send_order_to_channel(message.from_user, typerr, "خدمات البوت VIP", amount, 0)
+    true, false = 0, 0
+    nume = int(amount)
+    for y in load_:
+        if true >= amount or (true + false) >= amount * 2:
+            break
+        try:
+            x = _pyro_run(vote_one_sarab(y['s'], vote_url, wait_time, channels_list))
+            if x == 'o':
+                continue
+            if x is True:
+                true += 1
+                nume -= 1
+                bot.edit_message_text(chat_id=message.from_user.id, message_id=prog.message_id, text=f'• عزيزي تبقي {nume} علي اكتمال طلبك ....')
+            else:
+                false += 1
+        except Exception as e:
+            print(e)
+            continue
+    if true >= 1:
+        for ix in range(true):
+            acc['coins'] -= votes_sarab_price
+        db.set(f'user_{message.from_user.id}', acc)
+    addord()
+    user_id = message.from_user.id
+    buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
+    buys += 1
+    db.set(f"user_{user_id}_buys", int(buys))
+    bot.reply_to(message, text=(
+        f'• تم اكتمال طلبك بنجاح ✅\n'
+        f'• تم ارسال : {true}\n'
+        f'• لم يتم ارسال : {false}\n'
+        f'• تم خصم : {true * votes_sarab_price}'
+    ), reply_markup=bk_cancel, parse_mode="HTML")
+    send_order_complete_to_channel(message.from_user, typerr, 'خدمات البوت VIP', amount, true, false, true * votes_sarab_price)
+    return
 
 def get_time_votes_fsub(message, amount):
     try:
@@ -12322,14 +12602,14 @@ def get_amount_send(message, uid):
         bot.reply_to(message, '• الكمية يجب أن تكون عدد فقط', reply_markup=bk_cancel)
         return
     to_user   = db.get(f'user_{uid}')
-    from_user = db.get(f'user_{message.from_user.id}') or {}
+    from_user = db.get(f'user_{message.from_user.id}')
     if amount < 1:
         bot.reply_to(message, '• لا يمكن تحويل عدد أقل من 1', reply_markup=bk_cancel)
         return
-    if int(from_user.get('coins', 0)) < amount + 500:
+    if from_user['coins'] < amount + 500:
         bot.reply_to(message,
             f'• نقاطك غير كافية ❌\n'
-            f'• رصيدك: <b>{int(from_user.get("coins", 0)):,}</b> نقطة\n'
+            f'• رصيدك: <b>{from_user["coins"]:,}</b> نقطة\n'
             f'• المبلغ: <b>{amount:,}</b> نقطة\n'
             f'• العمولة: <b>500</b> نقطة\n'
             f'• الإجمالي المطلوب: <b>{amount + 500:,}</b> نقطة',
@@ -12360,7 +12640,7 @@ def get_amount_send(message, uid):
         f'💰 <b>المبلغ:</b> {amount:,} نقطة\n'
         f'⚠️ <b>العمولة:</b> 500 نقطة\n'
         f'💸 <b>إجمالي الخصم:</b> {amount + 500:,} نقطة\n'
-        f'💳 <b>رصيدك بعد التحويل:</b> {int(from_user.get("coins", 0)) - amount - 500:,} نقطة\n'
+        f'💳 <b>رصيدك بعد التحويل:</b> {from_user["coins"] - amount - 500:,} نقطة\n'
         f'━━━━━━━━━━━━━━━━━━━━\n'
         f'هل تريد تأكيد التحويل؟',
         reply_markup=keys, parse_mode='HTML'
@@ -12382,15 +12662,8 @@ def addpoints_final(message, uid):
         bot.reply_to(message, f'يجب ان تكون الكمية ارقام فقط')
         return
     b = db.get(f'user_{uid}')
-    if not b or not isinstance(b, dict):
-        bot.reply_to(message, '• هذا العضو غير موجود في البوت ❌')
-        return
-    with _get_user_lock(uid):
-        b = db.get(f'user_{uid}') or b
-        b['coins'] = int(b.get('coins', 0)) + amount
-        if b['coins'] < 0:
-            b['coins'] = 0
-        db.set(f'user_{uid}', b)
+    b['coins'] += amount
+    db.set(f'user_{uid}', b)
     bot.reply_to(message, f'تم بنجاح نقاطه الان : {b["coins"]} ')
     return
 
@@ -12557,7 +12830,7 @@ def on_my_chat_member(update):
             txt = (
                 "🚫 <b>تنبيه: حظر البوت</b>\n\n"
                 f"• الاسم: {name}\n"
-                f"• المعرف: {username_str}\n"
+                f"• ال��عرف: {username_str}\n"
                 f"• الآيدي: <code>{uid}</code>\n\n"
                 "❌ هذا المستخدم قام بحظر البوت"
             )
@@ -12615,7 +12888,7 @@ def _charge_proof_received(message, charge_type):
         f"🔗 المعرف: {uname}\n"
         f"🆔 الآيدي: <code>{uid}</code>\n"
         f"💰 طريقة الشحن: {label}\n"
-        f"━━━━━━━━━━━━━━━━━━━\n"
+        f"━━━━━━━━━━━━━━━━━━��\n"
         f"📝 اضغط ✅ قبول وأدخل عدد النقاط، أو ❌ رفض"
     )
 
@@ -12785,7 +13058,7 @@ def _rewards_text():
     return (
         "🎯 <b>إعدادات المكافآت</b>\n"
         "━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🎁 الهدية اليومية   : <b>{daily} نقطة</b>\n"
+        f"🎁 ال��دية اليومية   : <b>{daily} نقطة</b>\n"
         f"🔮 مكافأة الإحالة  : <b>{invite} نقطة</b>\n"
         f"📲 مكافأة تسجيل حساب: <b>{rent} نقطة</b>\n"
         f"🔔 تذكير الهدية    : <b>{remind_status}</b>\n\n"
@@ -13439,7 +13712,7 @@ def _gen_start_menu(uid, first_name):
         + (f'📊 <b>إجمالي الأرقام :</b> {len(db.get("accounts") or []):,} رقم\n' if uid == int(sudo) or uid in (db.get("admins") or []) else '')
         + f'\n━━━━━━━━━━━━━━━━━━━\n'
         f'📌 اضغط <b>تسجيل رقم جديد</b> للبدء\n'
-        f'📋 اقرأ <b>��لشروط</b> قبل التسجيل'
+        f'📋 اقرأ <b>الشروط</b> قبل التسجيل'
     )
     return text, kb
 
@@ -13919,7 +14192,7 @@ import asyncio as _pyro_asyncio
 #   RuntimeError: This event loop is already running
 # وبيخلي العمليات تتسلسل ورا بعض (بطء) أو تفشل، وكمان بيقطع جلسة pyrogram بين
 # خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في الخلفية،
-# ونبعتله الـ coroutines بشكل thread-safe عن طريق run_coroutine_threadsafe.
+# ونبعتله ��لـ coroutines بشكل thread-safe عن طريق run_coroutine_threadsafe.
 
 _pyro_loop = _pyro_asyncio.new_event_loop()
 _pyro_loop_lock = threading.Lock()
@@ -14111,7 +14384,7 @@ def on_channel_post(message):
     except Exception as _fve:
         print(f'[future_views listener] {_fve}')
 
-# ══════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════���════════════════════
 #  دوال مكتملة — ��انت مستدعاة بس مش معرّفة أو ناقصة
 # ══════════════════════════════════════════════════════════════
 
