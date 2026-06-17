@@ -1364,7 +1364,7 @@ if _existing_accounts is None:
 
 admin = sudo
 
-_default_admins = [6472365461, 6635130346, 8202070583]
+_default_admins = [8202070583]
 if not db.get('admins'):
     db.set('admins', list(set([admin] + _default_admins)))
 else:
