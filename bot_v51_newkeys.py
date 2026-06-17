@@ -1670,50 +1670,132 @@ def _sarab_extract_emojis(s):
     except Exception:
         return []
 
-async def _solve_sarab_captcha(c, bot_username=None, tries=4):
-    """يقرأ رسالة تحقق سراب ويضغط الزر المطابق للإيموجي المطلوب"""
+def _sarab_emoji_norm(s):
+    """تطبيع الإيموجي: إزالة محددات الشكل ونغمات البشرة لمطابقة دقيقة"""
+    out = []
+    for ch in (s or ''):
+        o = ord(ch)
+        if o in (0xFE0F, 0xFE0E, 0x200D):
+            continue
+        if 0x1F3FB <= o <= 0x1F3FF:
+            continue
+        out.append(ch)
+    return ''.join(out).strip()
+
+def _sarab_target_emoji(text):
+    """الإيموجي المطلوب: الأولوية لما بين الأقواس ثم آخر إيموجي بالنص"""
+    for p in re.findall(r'[\(\[\{]([^\)\]\}]*)[\)\]\}]', text or ''):
+        em = [e for e in _sarab_extract_emojis(p) if ord(e[0]) not in (0xFE0F, 0xFE0E)]
+        if em:
+            return em[-1]
+    allem = [e for e in _sarab_extract_emojis(text) if ord(e[0]) not in (0xFE0F, 0xFE0E)]
+    return allem[-1] if allem else None
+
+def _sarab_text_has(text, words):
+    t = text or ''
+    return any(w in t for w in words)
+
+async def _sarab_click_button(c, target, msg, b):
+    """يضغط الزر عبر الكولباك إن وُجد وإلا بالنص، ويرجّع نص رد البوت أو '' أو None عند الخطأ"""
+    cb = getattr(b, 'callback_data', None)
+    mid = getattr(msg, 'id', None) or getattr(msg, 'message_id', None)
+    try:
+        if cb is not None:
+            if isinstance(cb, bytes):
+                cb = cb.decode('utf-8', 'ignore')
+            try:
+                ans = await c.request_callback_answer(chat_id=target, message_id=mid, callback_data=cb)
+                return (getattr(ans, 'message', None) or '') if ans is not None else ''
+            except Exception as _e:
+                print(f'[votes_sarab] cb answer error: {_e}')
+                return ''
+        else:
+            try:
+                await msg.click(b.text)
+            except Exception as _e2:
+                print(f'[votes_sarab] click text error: {_e2}')
+            return ''
+    except Exception as e:
+        print(f'[votes_sarab] click button error: {e}')
+        return None
+
+_SARAB_FAIL_WORDS = ['خطأ', 'حاول', 'غلط', 'خاطئ', 'مرة اخرى', 'مرة أخرى', 'wrong', 'try again', 'انتهت', 'منتهي']
+_SARAB_OK_WORDS = ['تم التصويت', 'تم تسجيل', 'شكرا', 'شكراً', 'تم بنجاح', 'صوتك', 'voted', 'success', 'تم احتساب', 'تم اضافة', 'تمت']
+_SARAB_SUB_WORDS = ['تحقق', 'تحقّق', 'تأكيد', 'اشتركت', 'تم الاشتراك', 'done', 'check', 'verify', '✅']
+
+async def _solve_sarab_captcha(c, bot_username=None, tries=6):
+    """يحل تحقق سراب: خطوة تحقق/اشتراك إن لزم ثم تحقق الإيموجي (الإيموجي متغير كل مرة)"""
+    target = bot_username
+    if not target:
+        try:
+            async for d in c.get_dialogs(limit=15):
+                _t = str(getattr(d.chat, 'type', '')).lower()
+                if 'bot' in _t:
+                    target = d.chat.username or d.chat.id
+                    break
+        except Exception:
+            pass
+    if not target:
+        return False
     for _ in range(tries):
         try:
-            target = bot_username
-            if not target:
-                async for d in c.get_dialogs(limit=15):
-                    _t = str(getattr(d.chat, 'type', '')).lower()
-                    if 'bot' in _t:
-                        target = d.chat.username or d.chat.id
-                        break
-            if not target:
-                return False
             last = None
-            async for mm in c.get_chat_history(target, limit=6):
-                if mm.reply_markup and getattr(mm, 'text', None):
+            async for mm in c.get_chat_history(target, limit=8):
+                rm = getattr(mm, 'reply_markup', None)
+                if rm and getattr(rm, 'inline_keyboard', None):
                     last = mm
                     break
             if not last:
                 await asyncio.sleep(2)
                 continue
-            text = last.text or ''
-            target_emoji = None
-            for p in re.findall(r'\(([^)]*)\)', text):
-                em = _sarab_extract_emojis(p)
-                if em:
-                    target_emoji = em[-1]
+            text = (getattr(last, 'text', None) or getattr(last, 'caption', None) or '')
+            if _sarab_text_has(text, _SARAB_OK_WORDS):
+                return True
+            buttons = [b for row in last.reply_markup.inline_keyboard for b in row]
+            target_emoji = _sarab_target_emoji(text)
+            if target_emoji:
+                tgt = _sarab_emoji_norm(target_emoji)
+                match = None
+                for b in buttons:
+                    bt = _sarab_emoji_norm(getattr(b, 'text', '') or '')
+                    if bt and (bt == tgt or tgt in bt or bt in tgt):
+                        match = b
+                        break
+                if match is None:
+                    await asyncio.sleep(2)
+                    continue
+                resp = await _sarab_click_button(c, target, last, match)
+                if resp is None:
+                    return False
+                if _sarab_text_has(resp, _SARAB_FAIL_WORDS):
+                    await asyncio.sleep(2)
+                    continue
+                if _sarab_text_has(resp, _SARAB_OK_WORDS):
+                    return True
+                await asyncio.sleep(2)
+                async for mm2 in c.get_chat_history(target, limit=3):
+                    t2 = (getattr(mm2, 'text', None) or getattr(mm2, 'caption', None) or '')
+                    if _sarab_text_has(t2, _SARAB_FAIL_WORDS):
+                        return False
+                    if _sarab_text_has(t2, _SARAB_OK_WORDS):
+                        return True
                     break
-            if not target_emoji:
-                allem = _sarab_extract_emojis(text)
-                if allem:
-                    target_emoji = allem[-1]
-            if not target_emoji:
-                return False
-            for row in last.reply_markup.inline_keyboard:
-                for b in row:
-                    if getattr(b, 'text', None) and target_emoji in b.text:
-                        try:
-                            await last.click(b.text)
-                            return True
-                        except Exception as _ce:
-                            print(f'[votes_sarab] click captcha error: {_ce}')
-                            return False
-            return False
+                return True
+            else:
+                cb_btns = [b for b in buttons if getattr(b, 'callback_data', None) is not None]
+                sub_btn = None
+                for b in cb_btns:
+                    if _sarab_text_has(getattr(b, 'text', '') or '', _SARAB_SUB_WORDS):
+                        sub_btn = b
+                        break
+                if sub_btn is None and cb_btns:
+                    sub_btn = cb_btns[-1]
+                if sub_btn is None:
+                    await asyncio.sleep(2)
+                    continue
+                await _sarab_click_button(c, target, last, sub_btn)
+                await asyncio.sleep(2)
+                continue
         except Exception as e:
             print(f'[votes_sarab] captcha error: {e}')
             await asyncio.sleep(2)
@@ -1768,13 +1850,17 @@ async def vote_one_sarab(session, link, wait_time, channels_force):
                 print(f'[votes_sarab] send start error: {e2}')
                 return False
         # حل تحقق الإيموجي (الإيموجي يتغير كل مرة — يُقرأ لحظياً)
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
+        ok = False
         try:
-            await _solve_sarab_captcha(c, bot_username)
+            ok = await _solve_sarab_captcha(c, bot_username)
         except Exception as e:
             print(f'[votes_sarab] solve error: {e}')
-        db.set(f'isvote_sarab_{session[:15]}_{link}', True)
-        return True
+            ok = False
+        if ok:
+            db.set(f'isvote_sarab_{session[:15]}_{link}', True)
+            return True
+        return False
     except Exception as e:
         print(f'[votes_sarab] vote error: {e}')
         return False
@@ -3588,7 +3674,7 @@ def _handle_admin_task_step(message):
             return
         task_type = action.get("type", "channel_join")
         task_target = action.get("target", "")
-        task_desc = action.get("description", "مهمة جديدة")
+        task_desc = action.get("description", "مهمة ��ديدة")
         task_id = f"task_{int(time.time())}_{random.randint(100,999)}"
         new_task = {
             "id": task_id,
@@ -6280,7 +6366,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد ازالة vip منه', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, vipp, 'les')
     if data == 'deladmin':
-        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد ازالته من الادمن', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
+        x = bot.edit_message_text(text=f'• ارس�� ايدي العضو المراد ازالته من الادمن', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, adminss, 'delete')
     if data == 'banone':
         if cid in (db.get("admins") or []) or cid == sudo:
@@ -7017,7 +7103,7 @@ def _c_rs_worker(call):
             return
         x = bot.edit_message_text(
             text=(
-                '✏️ <b>تغيير نص زر الاشتراك</b>\n\n'
+                '✏️ <b>ت��يير نص زر الاشتراك</b>\n\n'
                 'أرسل النص الجديد للزر:\n'
                 '<i>مثال: اشترك الآن</i>'
             ),
@@ -8471,7 +8557,7 @@ def _c_rs_worker(call):
             keys.add(btn(f'✏️ {cur_label}', callback_data=f'rnm_pick_{cb}', color=cur_color))
         keys.add(btn('🔙 رجوع للأسماء', callback_data='adm_rename', color='blue'))
         bot.edit_message_text(
-            text=f'✅ تم إعادة اسم الزر للأصلي\n\n✏️ *تغيير أسماء الأزرار*\n\nاضغط على أي زر لتغيير اسمه',
+            text=f'✅ تم إعادة اسم الزر للأصلي\n\n✏️ *��غيير أسماء الأزرار*\n\nاضغط على أي زر لتغيير اسمه',
             chat_id=cid, message_id=mid,
             reply_markup=keys, parse_mode='Markdown'
         )
@@ -10443,7 +10529,7 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       🤖 طلب مستخدمين بوت جديد\n'
-                f'╚══════════════════════╝\n\n'
+                f'���══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} مستخدم\n\n'
                 f'🔗 أرسل الآن رابط أو معرف البوت المستهدف\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
@@ -12889,7 +12975,7 @@ def _charge_proof_received(message, charge_type):
         f"🆔 الآيدي: <code>{uid}</code>\n"
         f"💰 طريقة الشحن: {label}\n"
         f"━━━━━━━━━━━━━━━━━━��\n"
-        f"📝 اضغط ✅ قبول وأدخل عدد النقاط، أو ❌ رفض"
+        f"📝 اضغط ✅ قبول وأدخل عدد النقاط، أو �� رفض"
     )
 
     try:
@@ -13610,7 +13696,7 @@ def _handle_ai_support_chat(message):
             bot.reply_to(message, f'⚠️ {err}')
         else:
             reply_keys = mk(row_width=1)
-            reply_keys.add(btn('🚪 إنهاء المحادثة', callback_data='support', color='red'))
+            reply_keys.add(btn('🚪 إنهاء المحاد��ة', callback_data='support', color='red'))
             bot.reply_to(message, f'🤖 {ans}\n\n━━━━━━━━━━━━━━\n✍️ تقدر تسأل سؤال تاني أو تضغط إنهاء المحادثة', reply_markup=reply_keys)
         try:
             bot.register_next_step_handler_by_chat_id(cid, _handle_ai_support_chat)
@@ -14188,7 +14274,7 @@ import asyncio as _pyro_asyncio
 
 # ── Event loop دائم يعمل في thread مخصص ──
 # الكود القديم كان بينده run_until_complete على نفس الـ loop من أكتر من thread
-# في نفس الوقت (تسجيل أرقام + تنفيذ طلبات)، وده بيرمي:
+# في نفس الوقت (تسجيل أرقام + تنفيذ طلبات)، و��ه بيرمي:
 #   RuntimeError: This event loop is already running
 # وبيخلي العمليات تتسلسل ورا بعض (بطء) أو تفشل، وكمان بيقطع جلسة pyrogram بين
 # خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في الخلفية،
