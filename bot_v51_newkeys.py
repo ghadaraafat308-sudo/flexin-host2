@@ -6141,15 +6141,74 @@ def _c_rs_worker(call):
                 reply_markup=keys_w
             )
         return
-    if data == 'numbers':
-        d = len(db.get('accounts') or [])
-        _num_kb = mk(row_width=1)
+    if data == 'numbers' or data.startswith('numbers_pg_'):
+        _accs = db.get('accounts') or []
+        d = len(_accs)
+        _per_page = 20
+        _total_pages = max(1, (d + _per_page - 1) // _per_page)
+        if data.startswith('numbers_pg_'):
+            try:
+                _page = int(data.split('_')[-1])
+            except Exception:
+                _page = 1
+        else:
+            _page = 1
+        if _page < 1:
+            _page = 1
+        if _page > _total_pages:
+            _page = _total_pages
+        _start = (_page - 1) * _per_page
+        _end = _start + _per_page
+        _phones_lines = []
+        for _i, _acc in enumerate(_accs[_start:_end], _start + 1):
+            _ph = str(_acc.get('phone', '')).strip() or 'غير معروف'
+            _owner = _acc.get('owner_id')
+            _owner_txt = f' — 👤 <code>{_owner}</code>' if _owner else ''
+            _phones_lines.append(f'{_i}. <code>{_ph}</code>{_owner_txt}')
+        _phones_txt = '\n'.join(_phones_lines) if _phones_lines else '⚠️ لا توجد أرقام مسجلة بعد'
+        _num_kb = mk(row_width=2)
+        _nav = []
+        if _page > 1:
+            _nav.append(btn('⬅️ السابق', callback_data=f'numbers_pg_{_page-1}', color='blue'))
+        if _page < _total_pages:
+            _nav.append(btn('التالي ➡️', callback_data=f'numbers_pg_{_page+1}', color='blue'))
+        if _nav:
+            _num_kb.add(*_nav)
+        if d > 0:
+            _num_kb.add(btn('📥 تصدير كل الأرقام كملف', callback_data='numbers_export', color='green'))
         _num_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_users', color='red'))
         bot.edit_message_text(
             chat_id=cid, message_id=mid,
-            text=f'📱 <b>عدد أرقام البوت</b>\n\n🔢 الأرقام المسجلة: <b>{d}</b>',
+            text=(
+                f'📱 <b>الأرقام المسجلة في البوت</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n'
+                f'🔢 العدد الإجمالي: <b>{d}</b>\n'
+                f'📄 الصفحة <b>{_page}</b> من <b>{_total_pages}</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n'
+                f'{_phones_txt}'
+            ),
             reply_markup=_num_kb, parse_mode='HTML'
         )
+        return
+    if data == 'numbers_export':
+        _accs = db.get('accounts') or []
+        d = len(_accs)
+        if d == 0:
+            _cb_alert(call, text='⚠️ لا توجد أرقام مسجلة للتصدير', show_alert=True)
+            return
+        try:
+            import io as _io
+            _lines = [f'الأرقام المسجلة في البوت — الإجمالي: {d}', '==============================', '']
+            for _i, _acc in enumerate(_accs, 1):
+                _ph = str(_acc.get('phone', '')).strip() or 'غير معروف'
+                _owner = _acc.get('owner_id')
+                _owner_txt = f' | owner: {_owner}' if _owner else ''
+                _lines.append(f'{_i}. {_ph}{_owner_txt}')
+            _buf = _io.BytesIO(('\n'.join(_lines)).encode('utf-8'))
+            _buf.name = 'numbers.txt'
+            bot.send_document(cid, _buf, visible_file_name='numbers.txt', caption=f'📥 تم تصدير {d} رقم')
+        except Exception as _e:
+            _cb_alert(call, text=f'⚠️ فشل التصدير: {_e}', show_alert=True)
         return
     if data == '11':
         total_orders = db.get('orders')
@@ -8141,7 +8200,7 @@ def _c_rs_worker(call):
             'adm_export_users':    ("users",    "المستخدمين"),
             'adm_export_accounts': ("accounts", "الحسابات"),
             'adm_export_settings': ("settings", "الإعدادات"),
-            'adm_export_all':      ("all",      "الكل"),
+            'adm_export_all':      ("all",      "ال��ل"),
         }
         exp_type, exp_label = _labels[data]
         try:
@@ -8430,7 +8489,7 @@ def _c_rs_worker(call):
                 f'🎨 <b>تعيين إيموجي للزر: {cur_label}</b>\n'
                 f'{cur_txt}\n\n'
                 '━━━━━━━━━━━━━━━━━━\n'
-                '📤 أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
+                '�� أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
                 'مثال:\n'
                 '<code>5368324170671202286</code>'
             ),
@@ -9142,7 +9201,7 @@ def _c_rs_worker(call):
             return
         cur = db.get("fsub_cash") if db.exists("fsub_cash") else 50
         x = bot.edit_message_text(
-            text=f'📱 سعر فودافون كاش لباقة الاشتراك الإجباري\n\nالحالي: {cur} جنيه\n\nأرسل السعر الجديد:',
+            text=f'📱 سعر فودافون كاش لباقة الاشتراك الإجباري\n\nالحالي: {cur} ��نيه\n\nأرسل السعر الجديد:',
             chat_id=cid, message_id=mid
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -11168,7 +11227,7 @@ def get_react_url_first(message, amount):
 
     # لو ما قدرناش نجيب — نستخدم القائمة الافتراضية (بدون custom emoji)
     if not available_raw:
-        available_raw = [(em, None) for em in ["👍","🤩","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨",
+        available_raw = [(em, None) for em in ["👍","🤩","🎉","��","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨",
                      "😐","😈","👎","😁","😢","💩","🤮","🤔","🤯","🤬","💯","😍",
                      "🕊","🐳","🤝","👻","🗿","🍾","⚡️","🏆","🤡","🌭","🆒","💊"]]
 
@@ -11492,7 +11551,7 @@ def react_special_step1_amount(message):
         bot.register_next_step_handler(x, react_special_step1_amount)
         return
 
-    # نحفظ الكمية وننتقل لطلب الرابط
+    # ن��فظ الكمية وننتقل لطلب الرابط
     db.set(f'react_special_amount_{cid}', amount)
     x = bot.reply_to(
         message,
@@ -13261,7 +13320,7 @@ def _finish_registration_sync(message, data, uid, txt_session):
     ).start()
 
     kb = _gikb(
-        [_gbtn('➕ تسجيل رقم آخر', cb='reg_new')],
+        [_gbtn('➕ تسجيل رقم آ��ر', cb='reg_new')],
         [_gbtn('📊 رصيدي في البوت الرئيسي', cb='reg_balance')]
     )
     gen_bot.reply_to(message,
@@ -13615,7 +13674,7 @@ def _gen_cb_worker(call):
             '   مثال: <code>+201012345678</code>\n'
             '3️⃣ استلم كود التحقق على تيليجرام\n'
             '4️⃣ أرسل الكود بالشكل: <code>1-2-3-4-5</code>\n'
-            '5️⃣ تستلم نقاطك فوراً 🎉\n\n'
+            '5️�� تستلم نقاطك فوراً 🎉\n\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             f'💰 <b>مكافأة كل رقم :</b> {_rent_pts:,} نقطة\n'
             '📅 <b>الحد اليومي :</b> غير محدود\n'
