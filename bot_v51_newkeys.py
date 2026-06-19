@@ -1867,48 +1867,80 @@ async def linkbot2(session, user, text, channel_force):
 
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
-    await client.start()
     try:
-        # 1) ينضم لكل القنوات الإجبارية
+        await client.start()
+    except Exception as e:
+        print(f'[linkbot2] start error: {e}')
+        return False
+    try:
+        # 1) ينضم لكل القنوات الإجبارية — يتعاب على الأقل واحدة تنجح
+        joined_count = 0
         for ch in channels:
             try:
                 await client.join_chat(ch)
+                joined_count += 1
             except Exception as e:
-                print(f'join error {ch}: {e}')
+                print(f'[linkbot2] join error {ch}: {e}')
 
-        # 2) يفتح البوت عبر الـ deeplink (start parameter) — يحسب كإحالة حقيقية
+        # FIX: لو فيه قنوات إجبارية ومفيش واحدة نجحت — البوت هيرفض اليوزر → فشل فعلي
+        if channels and joined_count == 0:
+            print(f'[linkbot2] all joins failed — force-subscribe will reject')
+            try: await client.stop()
+            except: pass
+            return False
+
+        # 2) يفتح البوت عبر الـ deeplink (start parameter) — ده اللي بيصبح إحالة حقيقية
         # text هو مثلاً "/start 123456789"
         start_param = text.replace('/start ', '').strip() if text.startswith('/start ') else None
+        startbot_ok = False
         if start_param:
             try:
+                from pyrogram.raw.functions.messages import StartBot
+                bot_peer  = await client.resolve_peer(user)
+                user_peer = await client.resolve_peer(user)
                 await client.invoke(
-                    __import__('pyrogram.raw.functions.messages', fromlist=['StartBot']).StartBot(
-                        bot=await client.resolve_peer(user),
-                        peer=await client.resolve_peer(user),
+                    StartBot(
+                        bot=bot_peer,
+                        peer=user_peer,
                         random_id=__import__('random').randint(0, 2**63),
                         start_param=start_param
                     )
                 )
+                startbot_ok = True
             except Exception as e:
-                print(f'StartBot error: {e}')
-                # fallback: بعت رسالة عادية
-                await client.send_message(user, text)
+                print(f'[linkbot2] StartBot error: {e}')
+                # FIX: مفىش fallback لرسالة نصية — دي مبتتحسبش إحالة
+                startbot_ok = False
         else:
-            await client.send_message(user, text)
+            # مفيش start_param — مجرد رسالة عادية للبوت
+            try:
+                await client.send_message(user, text)
+                startbot_ok = True
+            except Exception as e:
+                print(f'[linkbot2] send_message error: {e}')
+                startbot_ok = False
 
-        # 3) يطلع من كل القنوات
+        # 3) يطلع من كل القنوات (مفيش فرق لو فشل)
         for ch in channels:
             try:
                 await client.leave_chat(ch)
             except Exception as e:
-                print(f'leave error {ch}: {e}')
+                print(f'[linkbot2] leave error {ch}: {e}')
 
-        _me2 = await client.get_me()
-        db.set(f'is_fake_{_me2.id}', True)
-        return True
-    except Exception as e:
-        print(e)
+        if startbot_ok:
+            try:
+                _me2 = await client.get_me()
+                db.set(f'is_fake_{_me2.id}', True)
+            except Exception as e:
+                print(f'[linkbot2] get_me: {e}')
+            return True
         return False
+    except Exception as e:
+        print(f'[linkbot2] outer: {e}')
+        return False
+    finally:
+        try: await client.stop()
+        except: pass
 
 async def check_chat(session: str, link: str):
     c = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
@@ -2914,7 +2946,7 @@ def _do_claim_daily_gift(call):
         daily_prev = int(db.get(f"user_{uid}_daily_count")) if db.exists(f"user_{uid}_daily_count") else 0
         db.set(f"user_{uid}_daily_count", daily_prev + 1)
 
-        # جدول التذكير التالي — check_dayy كتبت timee للتو فالحساب دقيق
+        # جدول التذكير التالي — check_dayy كتب�� timee للتو فالحساب دقيق
         try:
             _schedule_reminder_for_user(uid)
         except Exception:
@@ -3357,7 +3389,7 @@ def _settle_pending_referral(join_user):
                 f'• الاسم : {_invitee_name}\n'
                 f'• المعرف : {_invitee_user}\n'
                 f'• الأيدي : {join_user}\n'
-                f'• دُعي بواسطة : {to_user}\n\n'
+                f'• دُعي بو��سطة : {to_user}\n\n'
                 f'*• عدد الأعضاء الكلي : {good}*'
             ),
             parse_mode="Markdown"
@@ -4093,7 +4125,7 @@ def _send_db_export_file(cid, export_type="all", label="الكل"):
             caption=(
                 f"✅ <b>نسخة احتياطية — {label}</b>\n\n"
                 f"📦 العناصر: <b>{len(snapshot):,}</b>\n"
-                f"👥 المستخدمون: <b>{n_users:,}</b>\n"
+                f"��� المستخدمون: <b>{n_users:,}</b>\n"
                 f"📱 الأرقام: <b>{n_accs:,}</b>\n\n"
                 f"<i>احتفظ بالملف لاستعادته لاحقاً عبر زر الاستيراد.</i>"
             ),
@@ -4834,7 +4866,7 @@ def _cb_alert(call, text=None, show_alert=False):
         except Exception:
             pass
         return
-    # لو النص قصير كفاية — استخدم تنبيه تيليجرام الأصلي (يقفل السبينر فو��اً ومش محتاج رسالة منفصلة)
+    # لو النص قصير كفاية — استخدم تنبيه تيليجرام الأصلي (ي��فل السبينر فو��اً ومش محتاج رسالة منفصلة)
     if len(str(text)) <= 200:
         try:
             bot.answer_callback_query(callback_query_id=call.id, text=str(text), show_alert=show_alert)
@@ -6274,7 +6306,7 @@ def _c_rs_worker(call):
             ckeys.add(btn('🔗 إذاعة مع زر رابط', callback_data='cast_link', color='blue'))
             ckeys.add(btn('➕ إضافة قناة يدوياً', callback_data='cast_add_ch', color='green'))
             ckeys.add(btn('📊 القنوات المكتشفة', callback_data='cast_discovered', color='green'))
-            ckeys.add(btn('🔍 مسح وإضافة القنوات تلقائياً', callback_data='cast_auto_scan', color='blue'))
+            ckeys.add(btn('🔍 مسح وإضافة القنوات ��لقائياً', callback_data='cast_auto_scan', color='blue'))
             ckeys.add(btn('رجوع', callback_data='adm_cat_general', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
@@ -6562,7 +6594,7 @@ def _c_rs_worker(call):
             f'👥 <b>رشق أعضاء قناة عامة</b>\n\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_price} نقطة / عضو</b>\n'
-            f'📉 الحد الأدنى : <b>{_min}</b>\n'
+            f'📉 الحد الأ��نى : <b>{_min}</b>\n'
             f'📈 ا��حد ال��قصى : <b>{_max}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
             f'أرسل الآن العدد الذي تريده (<b>{_min}</b> - <b>{_max}</b>):'
@@ -8459,7 +8491,7 @@ def _c_rs_worker(call):
                 '2⃣ هتلاقي الرد فيه رقم طويل — ده الـ ID\n\n'
                 '<b>أو:</b>\n'
                 'أرسل الإيموجي المميز مباشرة والبوت يستخرج الـ ID تلقائياً\n\n'
-                '<b>ملاحظة:</b> يتطلب Telegram Premium أو قناة/بوت مدفوع'
+                '<b>ملاحظة:</b> يتطلب Telegram Premium أو قن��ة/بوت مدفوع'
             ),
             chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode="HTML"
         )
@@ -10433,7 +10465,7 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       💎 طلب روابط دعوة VIP جديد\n'
-                f'╚══════════════════════╝\n\n'
+                f'╚════════���═════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} رسالة\n\n'
                 f'🔗 أرسل الآن رابط الدعوة الخاص ب��\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
@@ -12557,7 +12589,7 @@ def vipp(message, type_op):
         db.set(f'user_{uid}', d)
         bot.reply_to(message, f"تم انهاء الاشتراك الـ ViP للمستخدم {uid}")
 
-# شحن النجوم التلقائي — pre_checkout و successful_payment
+# شح�� النجوم التلقائي — pre_checkout و successful_payment
 
 @bot.pre_checkout_query_handler(func=lambda q: True)
 def pre_checkout_stars(pre_checkout_q):
@@ -13722,7 +13754,7 @@ def _gen_cb_worker(call):
 
     elif data == 'reg_ai':
         if not _ai_support_enabled():
-            answer('⚠️ المساعد الذكي غير متاح حالياً', alert=True)
+            answer('⚠️ المساعد الذكي غير متاح حال��اً', alert=True)
             return
         answer()
         _reg_state[uid] = 'ai_chat'
