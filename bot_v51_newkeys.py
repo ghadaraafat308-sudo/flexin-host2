@@ -1,4 +1,4 @@
-import os
+Btmn$9K#xQ7!vR@2zPimport os
 import sys
 
 
@@ -3282,7 +3282,7 @@ def _settle_pending_referral(join_user):
             try:
                 bot.send_message(
                     to_user,
-                    f'🎊 *مبروك! تم ترقيتك إلى VIP تلقائياً!*\n\n'
+                    f'🎊 *مبروك! تم ت��قيتك إلى VIP تلقائياً!*\n\n'
                     f'👑 لقد دعوت {invite_count} شخصاً وحصلت على عضوية VIP مجاناً!\n\n'
                     f'💎 يمكنك الآن استخدام جميع خدمات قسم VIP',
                     parse_mode='Markdown'
@@ -3912,7 +3912,7 @@ def start_asinvite(message):
                     f'📛 اليوزر : {_g_uname}\n'
                     f'🆔 الأيدي : <code>{join_user}</code>\n'
                     f'💰 النقاط المستلمة : {pts:,} نقطة\n'
-                    f'🎫 كود الهدية : <code>{code}</code>'
+                    f'🎫 كو�� الهدية : <code>{code}</code>'
                 ),
                 parse_mode='HTML'
             )
@@ -4293,6 +4293,116 @@ _ADMIN_CATEGORIES = {
 }
 
 
+# ============================================================
+# 🔐 نظام صلاحيات الأدمن المحدودة (Role-based admin access)
+# - المالك (sudo) عنده كل الصلاحيات دائماً.
+# - أي أدمن قديم بدون إعداد = صلاحيات كاملة (توافق مع النسخة القديمة).
+# - أي أدمن له سجل في admin_perms = "أدمن محدود" ويرى الأقسام المسموح بها فقط.
+# ============================================================
+
+def _admin_allowed_cats(uid):
+    """يرجّع قائمة مفاتيح الأقسام المسموح بها للأدمن."""
+    try:
+        if int(uid) == int(sudo):
+            return list(_ADMIN_CATEGORIES.keys())
+    except Exception:
+        pass
+    perms = db.get('admin_perms') or {}
+    if str(uid) not in perms:
+        return list(_ADMIN_CATEGORIES.keys())  # أدمن كامل (توافقي)
+    return [c for c in _ADMIN_CATEGORIES.keys() if c in (perms.get(str(uid)) or [])]
+
+def _admin_is_limited(uid):
+    """True لو الأدمن عنده قيود (مسجّل في admin_perms وليس المالك)."""
+    try:
+        if int(uid) == int(sudo):
+            return False
+    except Exception:
+        pass
+    perms = db.get('admin_perms') or {}
+    return str(uid) in perms
+
+def _admin_can_cat(uid, cat_key):
+    return cat_key in _admin_allowed_cats(uid)
+
+# خريطة: أي زر/إجراء في اللوحة بينتمي لأي قسم (للحماية المركزية)
+_ADMIN_CB_EXACT = {
+    'addadmin': 'adm_cat_users', 'deladmin': 'adm_cat_users', 'admins': 'adm_cat_users',
+    'banone': 'adm_cat_users', 'unbanone': 'adm_cat_users', 'getinfo': 'adm_cat_users',
+    'lespoints': 'adm_cat_users',
+    'addvip': 'adm_cat_points', 'lesvip': 'adm_cat_points',
+    'adm_vip_thresh': 'adm_cat_points', 'adm_reset_coins': 'adm_cat_points',
+    'setforce': 'adm_cat_subscription', 'adm_fsub_stats': 'adm_cat_subscription',
+    'adm_set_support': 'adm_cat_subscription',
+    'chset_orders_channel': 'adm_cat_subscription', 'chset_logs_channel': 'adm_cat_subscription',
+    'adm_svc_panel': 'adm_cat_settings', 'adm_charge_panel': 'adm_cat_settings',
+    'adm_market_settings': 'adm_cat_settings', 'adm_games_settings': 'adm_cat_settings',
+    'adm_btn_panel': 'adm_cat_settings', 'adm_visibility': 'adm_cat_settings',
+    'adm_msgs_panel': 'adm_cat_settings', 'adm_rename': 'adm_cat_settings',
+    'adm_colors': 'adm_cat_settings', 'adm_set_emojis': 'adm_cat_settings',
+    'react_special': 'adm_cat_settings',
+    'adm_tasks_panel': 'adm_cat_tasks', 'adm_rewards_panel': 'adm_cat_tasks',
+    'adm_gift_link': 'adm_cat_tasks',
+    'adm_export_db': 'adm_cat_database', 'adm_import_db': 'adm_cat_database',
+    'stats': 'adm_cat_general', 'cast': 'adm_cat_general', 'adm_ai_panel': 'adm_cat_general',
+    'dump_votes': 'adm_cat_general', 'spams': 'adm_cat_general', 'leave': 'adm_cat_general',
+    'lvall': 'adm_cat_general', 'lvallc': 'adm_cat_general',
+}
+
+_ADMIN_CB_PREFIX = [
+    ('adm_usermgmt', 'adm_cat_users'), ('umg_', 'adm_cat_users'), ('numbers', 'adm_cat_users'),
+    ('adm_fsub_limit_', 'adm_cat_subscription'), ('fsub_', 'adm_cat_subscription'),
+    ('svc_pick_', 'adm_cat_settings'), ('svc_edit_', 'adm_cat_settings'), ('svc_toggle_', 'adm_cat_settings'),
+    ('rnm_pick_', 'adm_cat_settings'), ('rnm_reset_', 'adm_cat_settings'),
+    ('adm_emoji', 'adm_cat_settings'), ('pick_react_', 'adm_cat_settings'), ('pick_special_', 'adm_cat_settings'),
+    ('admsg_', 'adm_cat_settings'),
+    ('rwd_', 'adm_cat_tasks'),
+    ('adm_export_', 'adm_cat_database'), ('adm_import_', 'adm_cat_database'),
+    ('cast_', 'adm_cat_general'), ('adm_ai_', 'adm_cat_general'),
+    ('adm_cat_users', 'adm_cat_users'), ('adm_cat_points', 'adm_cat_points'),
+    ('adm_cat_subscription', 'adm_cat_subscription'), ('adm_cat_settings', 'adm_cat_settings'),
+    ('adm_cat_tasks', 'adm_cat_tasks'), ('adm_cat_database', 'adm_cat_database'),
+    ('adm_cat_general', 'adm_cat_general'),
+]
+
+def _cat_for_callback(data):
+    """يرجّع مفتاح القسم الخاص بزر اللوحة، أو None."""
+    if data in _ADMIN_CB_EXACT:
+        return _ADMIN_CB_EXACT[data]
+    for pref, cat in _ADMIN_CB_PREFIX:
+        if data.startswith(pref):
+            return cat
+    return None
+
+def _show_perms_panel(cid, mid, tuid):
+    """لوحة تبديل صلاحيات أدمن معيّن (للمالك)."""
+    _allowed = set(_admin_allowed_cats(tuid))
+    try:
+        _inf = bot.get_chat(tuid)
+        _nm = ('@' + _inf.username) if getattr(_inf, 'username', None) else str(tuid)
+    except Exception:
+        _nm = str(tuid)
+    _kb = mk(row_width=1)
+    for _ck, _cat in _ADMIN_CATEGORIES.items():
+        _on = _ck in _allowed
+        _kb.add(btn(('✅ ' if _on else '🔒 ') + _cat['title'],
+                    callback_data=f'adm_perms_t_{tuid}_{_ck}',
+                    color='green' if _on else 'red'))
+    _kb.add(btn('✅ السماح بالكل', callback_data=f'adm_perms_all_{tuid}', color='green'))
+    _kb.add(btn('🚫 منع الكل', callback_data=f'adm_perms_none_{tuid}', color='red'))
+    _kb.add(btn('🔙 رجوع', callback_data='adm_perms', color='blue'))
+    _txt = (
+        f'⚙️ <b>صلاحيات الأدمن:</b> {_nm}\n'
+        f'<code>{tuid}</code>\n\n'
+        '✅ = مسموح   |   🔒 = ممنوع\n'
+        'اضغط على القسم للتبديل 👇'
+    )
+    try:
+        bot.edit_message_text(chat_id=cid, message_id=mid, text=_txt, reply_markup=_kb, parse_mode='HTML')
+    except Exception:
+        bot.send_message(cid, _txt, reply_markup=_kb, parse_mode='HTML')
+
+
 def _show_admin_panel(target, is_edit=False, mid=None):
     """تعرض لوحة الأدمن الرئيسية - target = chat_id أو message"""
     if isinstance(target, int):
@@ -4302,27 +4412,100 @@ def _show_admin_panel(target, is_edit=False, mid=None):
         cid = target.chat.id
         send_func = bot.edit_message_text if is_edit else lambda text, **kw: bot.reply_to(target, text, **kw)
 
+    _allowed_cats = set(_admin_allowed_cats(cid))
     keys_ = mk(row_width=1)
     for cat_key, cat in _ADMIN_CATEGORIES.items():
+        if cat_key not in _allowed_cats:
+            continue
         keys_.add(btn(cat['title'], callback_data=cat_key, color='blue'))
 
-    _maint_on = db.get('maintenance_mode')
-    btn_maintenance = btn(
-        '🔴 وضع الصيانة: مفعّل' if _maint_on else '🟢 وضع الصيانة: معطّل',
-        callback_data='adm_toggle_maintenance',
-        color='red' if _maint_on else 'green'
-    )
-    keys_.add(btn_maintenance)
+    # 🔐 زر إدارة صلاحيات الأدمنية — للمالك فقط
+    if cid == sudo:
+        keys_.add(btn('🔐 صلاحيات الأدمنية', callback_data='adm_perms', color='green'))
 
-    _txt = (
-        '**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n'
-        '- اختر القسم اللي عايز تتحكم فيه من تحت 👇\n\n==================='
-    )
+    # وضع الصيانة — للمالك والأدمن الكامل فقط (مش للأدمن المحدود)
+    if not _admin_is_limited(cid):
+        _maint_on = db.get('maintenance_mode')
+        btn_maintenance = btn(
+            '🔴 وضع الصيانة: مفعّل' if _maint_on else '🟢 وضع الصيانة: معطّل',
+            callback_data='adm_toggle_maintenance',
+            color='red' if _maint_on else 'green'
+        )
+        keys_.add(btn_maintenance)
+
+    if _admin_is_limited(cid) and not _allowed_cats:
+        _txt = (
+            '**• اهلا بك في لوحه الأدمن 🤖**\n\n'
+            '🔒 لسه مفيش أقسام متاحة ليك.\n'
+            'تواصل مع المالك عشان يفعّلك الصلاحيات.'
+        )
+    else:
+        _txt = (
+            '**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n'
+            '- اختر القسم اللي عايز تتحكم فيه من تحت 👇\n\n==================='
+        )
     if is_edit and mid:
         send_func(text=_txt, chat_id=cid, message_id=mid, reply_markup=keys_, parse_mode='Markdown')
     else:
         send_func(_txt, reply_markup=keys_, parse_mode='Markdown')
 
+
+# 🔒 حماية قسم قاعدة البيانات بكلمة مرور
+def _get_db_section_pwd():
+    return str(db.get('db_section_password') or 'Btmn$9K#xQ7!vR@2zP')
+
+def _db_section_unlocked(cid):
+    try:
+        exp = db.get(f'db_sec_unlock_{cid}')
+        return bool(exp) and float(exp) > time.time()
+    except Exception:
+        return False
+
+def _prompt_db_password(cid, mid, call=None):
+    if call is not None:
+        _cb_alert(call)
+    _pkb = mk(row_width=1)
+    _pkb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+    _ptxt = '🔒 **قسم قاعدة البيانات محمي بكلمة مرور**\n\n- ابعت كلمة المرور عشان تدخل 👇'
+    try:
+        bot.edit_message_text(text=_ptxt, chat_id=cid, message_id=mid, reply_markup=_pkb, parse_mode='Markdown')
+    except Exception:
+        try:
+            bot.send_message(cid, _ptxt, reply_markup=_pkb, parse_mode='Markdown')
+        except Exception:
+            pass
+    try:
+        bot.register_next_step_handler_by_chat_id(cid, _handle_db_password, mid)
+    except Exception:
+        pass
+
+def _handle_db_password(message, mid=None):
+    try:
+        cid = message.from_user.id
+    except Exception:
+        return
+    try:
+        txt = (message.text or '').strip()
+    except Exception:
+        txt = ''
+    try:
+        bot.delete_message(cid, message.message_id)
+    except Exception:
+        pass
+    if txt == _get_db_section_pwd():
+        db.set(f'db_sec_unlock_{cid}', time.time() + 300)
+        try:
+            _show_admin_category(cid, mid, 'adm_cat_database')
+        except Exception:
+            _show_admin_panel(cid, is_edit=False)
+    else:
+        _wrong_kb = mk(row_width=1)
+        _wrong_kb.add(btn('🔄 حاول تاني', callback_data='adm_cat_database', color='blue'))
+        _wrong_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+        try:
+            bot.send_message(cid, '❌ كلمة المرور غلط، حاول تاني.', reply_markup=_wrong_kb)
+        except Exception:
+            pass
 
 def _show_admin_category(cid, mid, cat_key):
     """تعرض أزرار فئة معينة من لوحة الأدمن"""
@@ -4616,7 +4799,7 @@ def _do_football_guess(call, guess):
     try:
         bot.edit_message_text(
             chat_id=cid, message_id=mid,
-            text='⚽ <b>التصويبة جاية...</b>\n\n🧤 جاهز يا حارس؟',
+            text='⚽ <b>التصويبة جاية...</b>\n\n�� جاهز يا حارس؟',
             parse_mode='HTML'
         )
     except Exception:
@@ -4670,7 +4853,7 @@ def cmd_play(message):
     keys.add(btn('رجوع', callback_data='back', color='blue'))
     bot.reply_to(
         message,
-        '╔══════════════════╗\n'
+        '╔═══��══════════════╗\n'
         '       🎮 قائمة الألعاب\n'
         '╚══════════════════╝\n\n'
         '🆓 جميع الألعاب مجانية!\n'
@@ -4907,6 +5090,23 @@ def _c_rs_worker(call):
         a = ['leave', 'member', 'vote', 'spam']
         for temp in a:
             db.delete(f'{temp}_{cid}_proccess')
+
+    # 🔐 حارس صلاحيات الأدمن المحدودة — يمنع الأدمن المحدود من الأقسام غير المسموح بها
+    try:
+        if cid != sudo and cid in (admins or []):
+            if data.startswith('adm_perms'):
+                _cb_alert(call, text='🔒 إدارة الصلاحيات للمالك فقط', show_alert=True)
+                return
+            if data == 'adm_toggle_maintenance' and _admin_is_limited(cid):
+                _cb_alert(call, text='🔒 وضع الصيانة للمالك فقط', show_alert=True)
+                return
+            _gate_cat = _cat_for_callback(data)
+            if _gate_cat is not None and not _admin_can_cat(cid, _gate_cat):
+                # تجاهل بهدوء من غير أي رسالة عشان الأدمن ميزعلش
+                _cb_alert(call)
+                return
+    except Exception:
+        pass
 
 
     if data.startswith('setlang_'):
@@ -5479,7 +5679,7 @@ def _c_rs_worker(call):
             elif result == "O":
                 txt = '😵 <b>خسرت!</b>\n\n🤖 البوت فاز عليك!'
             else:
-                txt = '🤝 <b>تعادل!</b>'
+                txt = '🤝 <b>ت��ادل!</b>'
             bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=bk, parse_mode='HTML')
             return
         game["turn"] = "X"
@@ -6092,7 +6292,7 @@ def _c_rs_worker(call):
         else:
             # أنيميشن الدوران
             frames = [
-                "🎡 ━━━━━━━━━━━━━━\n┃ 🌟 💫 ⚡ 🔥 💎 👑 🏆 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
+                "🎡 ━━━━━━━━━━━��━━\n┃ 🌟 💫 ⚡ 🔥 💎 👑 🏆 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ 💫 ⚡ 🔥 💎 👑 🏆 🌟 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ ⚡ 🔥 💎 👑 🏆 🌟 💫 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ 🔥 💎 👑 🏆 🌟 💫 ⚡ ┃\n━━━━━━━━━━━━━━\n\n🎲 <b>على وشك التوقف...</b>",
@@ -6221,6 +6421,85 @@ def _c_rs_worker(call):
     if data == 'send':
         x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد تحويل النقاط له.', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
         bot.register_next_step_handler(x, send)
+    if data == 'adm_perms':
+        if cid != sudo:
+            _cb_alert(call, text='🔒 إدارة الصلاحيات للمالك فقط', show_alert=True)
+            return
+        _adm_list = [a for a in (db.get('admins') or []) if int(a) != int(sudo)]
+        _kb = mk(row_width=1)
+        if not _adm_list:
+            _kb.add(btn('🔙 رجوع', callback_data='adm_cat_users', color='red'))
+            bot.edit_message_text(chat_id=cid, message_id=mid, text='لا يوجد أدمنية (غير المالك) لضبط صلاحياتهم.\nأضف أدمن أولاً من «اضافة ادمن».', reply_markup=_kb)
+            return
+        for _aid in _adm_list:
+            try:
+                _inf = bot.get_chat(_aid)
+                _nm = ('@' + _inf.username) if getattr(_inf, 'username', None) else str(_aid)
+            except Exception:
+                _nm = str(_aid)
+            _na = len(_admin_allowed_cats(_aid))
+            _kb.add(btn(f'🔐 {_nm} ({_na}/{len(_ADMIN_CATEGORIES)})', callback_data=f'adm_perms_u_{_aid}', color='blue'))
+        _kb.add(btn('🔙 رجوع', callback_data='adm_cat_users', color='red'))
+        bot.edit_message_text(chat_id=cid, message_id=mid, text='👮‍♂️ اختر الأدمن لضبط الأقسام المسموح له بالوصول إليها:', reply_markup=_kb)
+        return
+    if data.startswith('adm_perms_u_'):
+        if cid != sudo:
+            _cb_alert(call, text='🔒 للمالك فقط', show_alert=True)
+            return
+        try:
+            _tuid = int(data.replace('adm_perms_u_', ''))
+        except Exception:
+            return
+        _show_perms_panel(cid, mid, _tuid)
+        return
+    if data.startswith('adm_perms_all_'):
+        if cid != sudo:
+            _cb_alert(call, text='🔒 للمالك فقط', show_alert=True)
+            return
+        try:
+            _tuid = int(data.replace('adm_perms_all_', ''))
+        except Exception:
+            return
+        _perms = db.get('admin_perms') or {}
+        _perms[str(_tuid)] = list(_ADMIN_CATEGORIES.keys())
+        db.set('admin_perms', _perms)
+        _show_perms_panel(cid, mid, _tuid)
+        return
+    if data.startswith('adm_perms_none_'):
+        if cid != sudo:
+            _cb_alert(call, text='🔒 للمالك فقط', show_alert=True)
+            return
+        try:
+            _tuid = int(data.replace('adm_perms_none_', ''))
+        except Exception:
+            return
+        _perms = db.get('admin_perms') or {}
+        _perms[str(_tuid)] = []
+        db.set('admin_perms', _perms)
+        _show_perms_panel(cid, mid, _tuid)
+        return
+    if data.startswith('adm_perms_t_'):
+        if cid != sudo:
+            _cb_alert(call, text='🔒 للمالك فقط', show_alert=True)
+            return
+        _rest = data.replace('adm_perms_t_', '')
+        try:
+            _tuid_s, _ck = _rest.split('_', 1)
+            _tuid = int(_tuid_s)
+        except Exception:
+            return
+        if _ck not in _ADMIN_CATEGORIES:
+            return
+        _cur = set(_admin_allowed_cats(_tuid))
+        if _ck in _cur:
+            _cur.discard(_ck)
+        else:
+            _cur.add(_ck)
+        _perms = db.get('admin_perms') or {}
+        _perms[str(_tuid)] = [c for c in _ADMIN_CATEGORIES.keys() if c in _cur]
+        db.set('admin_perms', _perms)
+        _show_perms_panel(cid, mid, _tuid)
+        return
     if data == 'addadmin':
         x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد اضافته ادمن بالبوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, adminss, 'add')
@@ -6647,7 +6926,7 @@ def _c_rs_worker(call):
         txt = (
             "📱 <b>تسجيل الحسابات مقابل نقاط</b>\n\n"
             "ملاحظه : الحساب مش بيخرج من عندك ولا بيتحظر ولا بيحصل اي حاجه\n\n"
-            "━━━━━━━━━━━━━━━━━━━\n"
+            "━━━━━━━━━━━━━━��━━━━\n"
             f"💰 مكافأة تسليم حساب واحد : <b>{_rent_reward_val:,} نقطة</b>\n"
             f"⚠️ خصم لو طلعت الجلسة    : <b>500 نقطة</b>\n"
             "━━━━━━━━━━━━━━━━━━━\n\n"
@@ -7144,7 +7423,7 @@ def _c_rs_worker(call):
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
             f'📈 الحد الأقصى : <b>{_mx}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
-            f'أرسل الآن العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
+            f'أرسل الآن الع��د الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
         )
         db.set(f'vote_{cid}_proccess', True)
         x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('normal'), chat_id=cid, message_id=mid, parse_mode="HTML")
@@ -7170,7 +7449,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('vips'), chat_id=cid, message_id=mid, parse_mode="HTML")
         bot.register_next_step_handler(x, get_amount, 'votes_fsub')
     if data == 'buy':
-        # إعدادات الشحن من DB
+        # إعدادات ��لشحن من DB
         stars_rate   = int(db.get("charge_stars_rate"))   if db.exists("charge_stars_rate")   else 600
         cash_rate    = int(db.get("charge_cash_rate"))    if db.exists("charge_cash_rate")     else 150000
         usdt_rate    = int(db.get("charge_usdt_rate"))    if db.exists("charge_usdt_rate")     else 150000
@@ -7403,7 +7682,7 @@ def _c_rs_worker(call):
         keys.add(btn('رجوع', callback_data='collect'))
         _user_data = get(cid)
         _users_count = len(_user_data["users"]) if _user_data and _user_data.get("users") else 0
-        xyz = f'''\n \nانسخ الرابط ثم قم بمشاركته مع اصدقائك !!\n \n~  كل شخص يقوم بالدخول ستحصل على  {int(db.get("link_price")) if db.exists("link_price") else link_price}  نقطه\n\n~ بإمكانك عمل اعلان خاص برابط الدعوة الخاص بك \n\n🌀 رابط الدعوة : \n {link}  .\n\n~ مشاركتك للرابط :  {_users_count}  .\n\n{y}\n        '''
+        xyz = f'''\n \nانسخ الرابط ثم قم بمشاركته مع اصدقائك !!\n \n~  كل شخص يقوم بالدخول ستحصل على  {int(db.get("link_price")) if db.exists("link_price") else link_price}  نقطه\n\n~ بإمكانك عمل اعلان خاص بر��بط الدعوة الخاص بك \n\n🌀 رابط الدعوة : \n {link}  .\n\n~ مشاركتك للرابط :  {_users_count}  .\n\n{y}\n        '''
         try:
             bot.edit_message_text(text=xyz, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
         except Exception as e:
@@ -7642,7 +7921,7 @@ def _c_rs_worker(call):
         _pr = svc_price('linkbot'); _mn = svc_min('linkbot'); _mx = svc_max('linkbot')
         _svc_txt = (
             f'⚡️ <b>رشق بلص | إحالات حقيقية اشتراك إجباري</b>\n\n'
-            f'🔑 <b>الباقة المجانية</b>\n'
+            f'🔑 <b>الباقة الم��انية</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
             f'📉 الحد الأدنى : <b>{_mn}</b> إحالة\n'
@@ -7703,7 +7982,7 @@ def _c_rs_worker(call):
         bot.send_message(chat_id=call.from_user.id, text=f'✅ تم بنجاح الخروج من كل القنوات والمجموعات\n• تم الخروج من <code>{true}</code> حساب بنجاح', parse_mode='HTML')
     if data == 'cancel':
         _cancel_kb = mk(row_width=1)
-        _cancel_kb.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_cat_general', color='red'))
+        _cancel_kb.add(btn('���� رجوع للوحة الأدمن', callback_data='adm_cat_general', color='red'))
         bot.edit_message_text(text='❌ تم إلغاء عملية المغادرة', chat_id=cid, message_id=mid, reply_markup=_cancel_kb)
     if data == 'linkbot2':
         _vip_info = db.get(f'user_{cid}')
@@ -8167,6 +8446,9 @@ def _c_rs_worker(call):
             bot.clear_step_handler_by_chat_id(cid)
         except Exception:
             pass
+        if data == 'adm_cat_database' and not _db_section_unlocked(cid):
+            _prompt_db_password(cid, mid, call)
+            return
         _show_admin_category(cid, mid, data)
 
     elif data == 'adm_toggle_maintenance':
@@ -8222,7 +8504,7 @@ def _c_rs_worker(call):
         # تأكيد قبل التنفيذ
         confirm_kb = mk(row_width=2)
         confirm_kb.add(
-            btn('✅ نعم، صفّر الجميع', callback_data='adm_reset_coins_confirm', color='red'),
+            btn('✅ ��عم، صفّر الجميع', callback_data='adm_reset_coins_confirm', color='red'),
             btn('إلغاء', callback_data='admin', color='green')
         )
         bot.edit_message_text(
@@ -8802,7 +9084,7 @@ def _c_rs_worker(call):
             chat_id=cid,
             text=(
                 f"🔄 <b>إعادة تسجيل جلسة الرقم</b> <code>{phon}</code>\n\n"
-                "لاسترداد نقاطك أرسل الآن رابط تسجيل الدخول بالبوت الثاني:\n\n"
+                "لاسترداد نقاطك أرسل ال��ن رابط تسجيل الدخول بالبوت الثاني:\n\n"
                 f"👉 ابعت /start في @{_get_bot_me().username} من حساب التأجير لتوليد الجلسة\n\n"
                 "أو أرسل session string مباشرة إذا لديك:"
             ),
@@ -11137,7 +11419,7 @@ def get_url_free_mem(message, amount):
         # فحص أخير للنقاط قبل التنفيذ
         if _total_price > 0 and int(acc.get('coins', 0)) < _total_price:
             bot.reply_to(message,
-                f'• نقاطك غير كافية ❌\n'
+                f'• نقاطك غير كا��ية ❌\n'
                 f'• تحتاج إلى <b>{_total_price}</b> نقطة\n'
                 f'• رصيدك الحالي: <b>{acc["coins"]}</b> نقطة',
                 reply_markup=bk_cancel, parse_mode="HTML")
@@ -12153,7 +12435,11 @@ def adminss(message, type_op):
         else:
             d.append(uid)
             db.set('admins', d)
-            bot.reply_to(message, f'• تم اضافته بنجاح ✅')
+            _perms = db.get('admin_perms') or {}
+            if str(uid) not in _perms:
+                _perms[str(uid)] = []  # افتراضيًا: بدون أي صلاحية — المالك يحددها
+                db.set('admin_perms', _perms)
+            bot.reply_to(message, '• تم اضافته بنجاح ✅\n\n🔐 لسه مالوش صلاحية لأي قسم.\nروح /admin ← 🔐 صلاحيات الأدمنية وحدد الأقسام المسموح له بيها.')
             return
     if type_op == 'delete':
         try:
@@ -12171,6 +12457,10 @@ def adminss(message, type_op):
         else:
             d.remove(uid)
             db.set('admins', d)
+            _perms = db.get('admin_perms') or {}
+            if str(uid) in _perms:
+                _perms.pop(str(uid), None)
+                db.set('admin_perms', _perms)
             bot.reply_to(message, f'• تم ازالة العضو من الادمنية بنجاح ✅')
             return
 
@@ -12594,7 +12884,7 @@ def handle_successful_payment(message):
             except:
                 pass
         else:
-            bot.send_message(uid, "❌ حسابك غير موجود في البوت، تواصل مع الأدمن.")
+            bot.send_message(uid, "��� حسابك غير موجود في البوت، تواصل مع الأدمن.")
     except Exception as e:
         print(f"[successful_payment] خطأ: {e}")
 
@@ -12943,7 +13233,7 @@ def _do_rwd_rent_reward(message):
         if val < 0:
             raise ValueError
         db.set('rent_reward', val)
-        bot.reply_to(message, f"✅ تم تعيين مكافأة تسجيل الحساب إلى <b>{val} نقطة</b>", parse_mode='HTML')
+        bot.reply_to(message, f"✅ تم تعيين مكافأة تسجيل الحساب إلى <b>{val} ن��طة</b>", parse_mode='HTML')
         bot.send_message(cid, _rewards_text(), reply_markup=_rewards_keys(), parse_mode='HTML')
     except Exception:
         bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
@@ -12988,7 +13278,7 @@ def _do_rwd_wheel(message):
 
 # بوت بايروجرام (لتسجيل الأرقام وتنظيف الحسابات)
 
-# نظام فحص الجلسات تلقائياً وخصم النقاط عند انتهاء الجلسة
+# نظام فح�� الجلسات تلقائياً وخصم النقاط عند انتهاء الجلسة
 
 async def _check_sessions_task():
     """\n    فحص جلسات التأجير.\n    - الحلقة تشتغل كل دقيقة\n    - كل جلسة تُفحص مرة كل 10 دقائق فقط (لتجنب إغراق تيليجرام بالاتصالات)\n    - Grace Period: 10 دقائق للحسابات الجديدة\n    - Retry: 3 فشل متتالي قبل الخصم\n    """
@@ -13977,7 +14267,7 @@ import asyncio as _pyro_asyncio
 # في نفس الوقت (تسجيل أرقام + تنفيذ طلبات)، وده بيرمي:
 #   RuntimeError: This event loop is already running
 # وبيخلي العمليات تتسلسل ورا بعض (بطء) أو تفشل، وكمان بيقطع جلسة pyrogram بين
-# خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في الخلفية،
+# خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في ��لخلفية،
 # ونبعتله الـ coroutines بشكل thread-safe عن طريق run_coroutine_threadsafe.
 
 _pyro_loop = _pyro_asyncio.new_event_loop()
