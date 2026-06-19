@@ -1,4 +1,5 @@
-Btmn$9K#xQ7!vR@2zPimport os
+Btmn$9K#xQ7!vR@2zP
+import os
 import sys
 
 if sys.platform == "win32":
