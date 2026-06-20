@@ -1111,6 +1111,199 @@ try:
 except Exception as _mig_e:
     print(f"[⚠️] تحذير migration: {_mig_e}")
 
+# ══════════════════════════════════════════════════════════════════
+#   نظام مواقع SMM المتعددة (مُخزَّن في Firebase تحت مفتاح "smm_sites")
+#   كل عنصر: {"id": int, "name": str, "api_url": str, "api_key": str,
+#              "is_active": bool, "is_default": bool}
+# ══════════════════════════════════════════════════════════════════
+class smm:
+    STATUS_MAP = {
+        "Pending": "قيد الانتظار",
+        "In progress": "قيد التنفيذ",
+        "Completed": "مكتمل",
+        "Partial": "مكتمل جزئياً",
+        "Canceled": "ملغي",
+        "Processing": "جاري المعالجة",
+        "pending": "قيد الانتظار",
+        "inprogress": "قيد التنفيذ",
+        "completed": "مكتمل",
+        "partial": "مكتمل جزئياً",
+        "canceled": "ملغي",
+    }
+
+    # ─── تخزين/قراءة المواقع من Firebase ──────────────────────────
+    @classmethod
+    def _all_sites(cls):
+        """كل المواقع كما هي مخزّنة (بدون فلترة) — list of dict"""
+        try:
+            sites = db.get("smm_sites")
+            return list(sites) if sites else []
+        except:
+            return []
+
+    @classmethod
+    def _save_sites(cls, sites):
+        db.set("smm_sites", list(sites))
+
+    @classmethod
+    def _next_id(cls, sites):
+        if not sites:
+            return 1
+        return max(int(s.get("id", 0)) for s in sites) + 1
+
+    @classmethod
+    def get_sites(cls, only_active=False):
+        """واجهة عامة لإدارة المواقع من لوحة الأدمن"""
+        sites = cls._all_sites()
+        if only_active:
+            sites = [s for s in sites if s.get("is_active", True)]
+        return sorted(sites, key=lambda s: s.get("id", 0))
+
+    @classmethod
+    def get_site(cls, site_id):
+        for s in cls._all_sites():
+            if int(s.get("id", -1)) == int(site_id):
+                return s
+        return None
+
+    @classmethod
+    def add_site(cls, name, api_url, api_key):
+        sites = cls._all_sites()
+        new_id = cls._next_id(sites)
+        is_default = (len(sites) == 0)  # أول موقع يبقى افتراضي تلقائياً
+        sites.append({
+            "id": new_id, "name": name, "api_url": api_url, "api_key": api_key,
+            "is_active": True, "is_default": is_default,
+        })
+        cls._save_sites(sites)
+        return new_id
+
+    @classmethod
+    def delete_site(cls, site_id):
+        sites = [s for s in cls._all_sites() if int(s.get("id", -1)) != int(site_id)]
+        cls._save_sites(sites)
+
+    @classmethod
+    def toggle_site(cls, site_id):
+        sites = cls._all_sites()
+        for s in sites:
+            if int(s.get("id", -1)) == int(site_id):
+                s["is_active"] = not s.get("is_active", True)
+        cls._save_sites(sites)
+
+    # ─── منطق الـ API نفسه (مستقل عن نوع التخزين) ─────────────────
+    @classmethod
+    def _get_sites(cls):
+        """المواقع النشطة فقط — مرتبة بالـ id"""
+        return cls.get_sites(only_active=True)
+
+    @classmethod
+    def _get_default_site(cls):
+        sites = cls._all_sites()
+        for s in sites:
+            if s.get("is_default") and s.get("is_active", True):
+                return s
+        active = cls._get_sites()
+        return active[0] if active else None
+
+    @classmethod
+    def _post(cls, url, api_key, action, **params):
+        data = {"key": api_key, "action": action, **params}
+        for attempt in range(2):
+            try:
+                session = _requests_mod.Session()
+                adapter = _requests_mod.adapters.HTTPAdapter(
+                    pool_connections=20,
+                    pool_maxsize=50,
+                    max_retries=0
+                )
+                session.mount("http://", adapter)
+                session.mount("https://", adapter)
+                r = session.post(url, data=data, timeout=(5, 15))  # connect=5s, read=15s
+                r.raise_for_status()
+                return r.json()
+            except _requests_mod.exceptions.Timeout:
+                if attempt == 0:
+                    continue
+                return {"error": "انتهت مهلة الاتصال بالموقع"}
+            except _requests_mod.exceptions.ConnectionError:
+                return {"error": "تعذّر الاتصال بالموقع، تحقق من الـ URL"}
+            except Exception as e:
+                return {"error": str(e)}
+        return {"error": "فشل الاتصال"}
+
+    @classmethod
+    def get_balance(cls, site_id=None):
+        """رصيد موقع معين أو الافتراضي"""
+        try:
+            site = cls.get_site(site_id) if site_id else cls._get_default_site()
+            if not site:
+                return 0.0
+            r = cls._post(site["api_url"], site["api_key"], "balance")
+            return float(r.get("balance", 0))
+        except:
+            return 0.0
+
+    @classmethod
+    def create_order(cls, svc_api_id, link, qty, site_id=None):
+        """إنشاء طلب"""
+        try:
+            site = None
+            if site_id:
+                s = cls.get_site(site_id)
+                if s and s.get("is_active", True):
+                    site = s
+            if not site:
+                site = cls._get_default_site()
+            if not site:
+                # محاولة أخيرة — أي موقع حتى لو مش نشط
+                all_sites = cls.get_sites(only_active=False)
+                site = all_sites[0] if all_sites else None
+            if not site:
+                return {"error": "لا يوجد موقع API مضاف، أضف موقع من لوحة الأدمن"}
+            return cls._post(site["api_url"], site["api_key"], "add",
+                             service=svc_api_id, link=link, quantity=qty)
+        except Exception as e:
+            return {"error": str(e)}
+
+    @classmethod
+    def get_status(cls, order_id, site_id=None):
+        """حالة الطلب"""
+        try:
+            site = cls.get_site(site_id) if site_id else cls._get_default_site()
+            if not site:
+                return {}
+            return cls._post(site["api_url"], site["api_key"], "status", order=order_id)
+        except:
+            return {}
+
+    @classmethod
+    def get_services_list(cls, site_id=None):
+        """قائمة خدمات الموقع"""
+        try:
+            site = cls.get_site(site_id) if site_id else cls._get_default_site()
+            if not site:
+                return []
+            r = cls._post(site["api_url"], site["api_key"], "services")
+            return r if isinstance(r, list) else []
+        except:
+            return []
+
+    @classmethod
+    def get_service_info(cls, svc_id, site_id=None):
+        """معلومات خدمة معينة"""
+        services = cls.get_services_list(site_id)
+        sid = str(svc_id).strip()
+        for s in services:
+            if str(s.get("service", "")).strip() == sid:
+                return s
+        return None
+
+    @classmethod
+    def arabic_status(cls, s):
+        return cls.STATUS_MAP.get(s, s)
+
+
 # إعدادات الخدمات (السعر والحد الأدنى والأقصى) — تُقرأ من DB
 
 SERVICES = {
@@ -4327,6 +4520,12 @@ _ADMIN_CATEGORIES = {
             ('adm_import_db', 'adm_import_db', 'green'),
         ],
     },
+    'adm_cat_smm': {
+        'title': '🌐 مواقع SMM',
+        'buttons': [
+            (' إدارة مواقع SMM', 'adm_smm_panel', 'green'),
+        ],
+    },
     'adm_cat_general': {
         'title': '📊 عام وإذاعة',
         'buttons': [
@@ -4950,6 +5149,7 @@ def _c_rs_worker(call):
         'adm_ai_panel', 'adm_ai_toggle', 'adm_ai_setkey', 'adm_ai_test',
         'setforce', 'fsub_', 'adm_fsub_stats', 'adm_fsub_limit_',
         'adm_usermgmt', 'umg_',
+        'adm_smm_panel', 'adm_smm_add', 'adm_smm_view_', 'adm_smm_toggle_', 'adm_smm_del_',
     )
     _is_admin_cb = any(data == cb or data.startswith(cb) for cb in _admin_callbacks)
     if not _is_admin_cb:
@@ -7794,6 +7994,120 @@ def _c_rs_worker(call):
     if data == 'dump_votes':
         x = bot.edit_message_text(text='• ارسل الان رابط المنشور الذي تريد سحب اصواته', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, dump_votes)
+
+    # 🌐 لوحة إدارة مواقع SMM (متعددة المواقع — مخزّنة في Firebase)
+
+    if data == 'adm_smm_panel':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        sites = smm.get_sites(only_active=False)
+        skeys = mk(row_width=1)
+        for s in sites:
+            on = s.get('is_active', True)
+            dflt = ' ⭐' if s.get('is_default') else ''
+            status_icon = '🟢' if on else '🔴'
+            skeys.add(btn(f"{status_icon} {s['name']}{dflt}", callback_data=f"adm_smm_view_{s['id']}", color='green' if on else 'red'))
+        skeys.add(btn('➕ إضافة موقع SMM', callback_data='adm_smm_add', color='green'))
+        skeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_smm', color='blue'))
+        bot.edit_message_text(
+            text='🌐 مواقع SMM\n\nهنا تقدر تضيف/تدير مواقع API الخدمات (SMMParty وأي موقع متوافق مع SMM Panel API).\n\n🟢 = نشط  |  🔴 = معطّل  |  ⭐ = الموقع الافتراضي\n\nاضغط على أي موقع لعرض تفاصيله أو حذفه:',
+            chat_id=cid, message_id=mid, reply_markup=skeys
+        )
+
+    if data == 'adm_smm_add':
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        x = bot.edit_message_text(
+            text='➕ إضافة موقع SMM جديد\n\nأرسل البيانات بالشكل:\n<code>الاسم|رابط الـ API|مفتاح الـ API</code>\n\nمثال:\n<code>SMMParty|https://smmparty.com/api/v2|d7ab98d24cdd1c95804bc75b26edc456</code>',
+            chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm, parse_mode='HTML'
+        )
+        bot.register_next_step_handler(x, adm_smm_add_save)
+
+    if data.startswith('adm_smm_view_'):
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        try:
+            site_id = int(data.replace('adm_smm_view_', ''))
+        except:
+            return
+        site = smm.get_site(site_id)
+        if not site:
+            _cb_alert(call, text='الموقع غير موجود', show_alert=True)
+            return
+        on = site.get('is_active', True)
+        toggle_lbl = '🔴 تعطيل الموقع' if on else '🟢 تفعيل الموقع'
+        toggle_col = 'red' if on else 'green'
+        status_txt = '🟢 نشط' if on else '🔴 معطّل'
+        dflt_txt = '⭐ نعم (افتراضي)' if site.get('is_default') else 'لا'
+        skeys = mk(row_width=1)
+        skeys.add(btn(toggle_lbl, callback_data=f"adm_smm_toggle_{site_id}", color=toggle_col))
+        skeys.add(btn('🗑️ حذف الموقع', callback_data=f"adm_smm_del_{site_id}", color='red'))
+        skeys.add(btn('🔙 رجوع لمواقع SMM', callback_data='adm_smm_panel', color='blue'))
+        masked_key = (site.get('api_key', '')[:6] + '****') if site.get('api_key') else '—'
+        bot.edit_message_text(
+            text=(f"🌐 الموقع: {site['name']}\n\n"
+                  f"📌 الحالة: {status_txt}\n"
+                  f"⭐ افتراضي: {dflt_txt}\n"
+                  f"🔗 API URL: <code>{site.get('api_url','')}</code>\n"
+                  f"🔑 API Key: <code>{masked_key}</code>\n\n"
+                  f"اختر إجراء:"),
+            chat_id=cid, message_id=mid, reply_markup=skeys, parse_mode='HTML'
+        )
+
+    if data.startswith('adm_smm_toggle_'):
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        try:
+            site_id = int(data.replace('adm_smm_toggle_', ''))
+        except:
+            return
+        smm.toggle_site(site_id)
+        call.data = f'adm_smm_view_{site_id}'
+        data = call.data
+        site = smm.get_site(site_id)
+        if not site:
+            return
+        on = site.get('is_active', True)
+        toggle_lbl = '🔴 تعطيل الموقع' if on else '🟢 تفعيل الموقع'
+        toggle_col = 'red' if on else 'green'
+        status_txt = '🟢 نشط' if on else '🔴 معطّل'
+        dflt_txt = '⭐ نعم (افتراضي)' if site.get('is_default') else 'لا'
+        skeys = mk(row_width=1)
+        skeys.add(btn(toggle_lbl, callback_data=f"adm_smm_toggle_{site_id}", color=toggle_col))
+        skeys.add(btn('🗑️ حذف الموقع', callback_data=f"adm_smm_del_{site_id}", color='red'))
+        skeys.add(btn('🔙 رجوع لمواقع SMM', callback_data='adm_smm_panel', color='blue'))
+        masked_key = (site.get('api_key', '')[:6] + '****') if site.get('api_key') else '—'
+        bot.edit_message_text(
+            text=(f"🌐 الموقع: {site['name']}\n\n"
+                  f"📌 الحالة: {status_txt}\n"
+                  f"⭐ افتراضي: {dflt_txt}\n"
+                  f"🔗 API URL: <code>{site.get('api_url','')}</code>\n"
+                  f"🔑 API Key: <code>{masked_key}</code>\n\n"
+                  f"اختر إجراء:"),
+            chat_id=cid, message_id=mid, reply_markup=skeys, parse_mode='HTML'
+        )
+
+    if data.startswith('adm_smm_del_'):
+        if cid not in (db.get("admins") or []) and cid != sudo:
+            return
+        try:
+            site_id = int(data.replace('adm_smm_del_', ''))
+        except:
+            return
+        smm.delete_site(site_id)
+        sites = smm.get_sites(only_active=False)
+        skeys = mk(row_width=1)
+        for s in sites:
+            on = s.get('is_active', True)
+            dflt = ' ⭐' if s.get('is_default') else ''
+            status_icon = '🟢' if on else '🔴'
+            skeys.add(btn(f"{status_icon} {s['name']}{dflt}", callback_data=f"adm_smm_view_{s['id']}", color='green' if on else 'red'))
+        skeys.add(btn('➕ إضافة موقع SMM', callback_data='adm_smm_add', color='green'))
+        skeys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_smm', color='blue'))
+        bot.edit_message_text(
+            text='✅ تم حذف الموقع.\n\n🌐 مواقع SMM:',
+            chat_id=cid, message_id=mid, reply_markup=skeys
+        )
 
     # ⚙️ لوحة إعدادات الخدمات (السعر / الحد الأدنى / الأقصى)
 
@@ -10705,6 +11019,36 @@ def dump_votes(message):
         _final_txt = f'• تم اكتمال طلبك بنجاح ✅:\n\n• تم سحب : {true} تصويت\n• لم يتم سحب : {false}'
     bot.reply_to(message, text=_final_txt, reply_markup=bk_cancel, parse_mode="HTML")
     send_order_complete_to_channel(message.from_user, typerr, 'خدمات البوت', total_accounts, true, false, 0)
+
+
+def adm_smm_add_save(message):
+    """يحفظ موقع SMM جديد بعد استلام: الاسم|رابط الـ API|مفتاح الـ API"""
+    cid = message.from_user.id
+    if cid not in (db.get("admins") or []) and cid != sudo:
+        return
+    try:
+        parts = [p.strip() for p in (message.text or "").split("|")]
+        if len(parts) < 3 or not all(parts[:3]):
+            raise ValueError("بيانات ناقصة")
+        name, api_url, api_key = parts[0], parts[1], parts[2]
+        if not (api_url.startswith("http://") or api_url.startswith("https://")):
+            raise ValueError("رابط الـ API لازم يبدأ بـ http:// أو https://")
+        site_id = smm.add_site(name, api_url, api_key)
+        skeys = mk(row_width=1)
+        skeys.add(btn('🔙 رجوع لمواقع SMM', callback_data='adm_smm_panel', color='blue'))
+        bot.reply_to(
+            message,
+            text=f"✅ تم إضافة الموقع بنجاح!\n\n🌐 الاسم: {name}\n🔗 API URL: {api_url}\n\nرقم الموقع: #{site_id}",
+            reply_markup=skeys
+        )
+    except Exception as e:
+        x = bot.reply_to(
+            message,
+            text=f"❌ خطأ: {e}\n\nأرسل البيانات تاني بالشكل:\n<code>الاسم|رابط الـ API|مفتاح الـ API</code>",
+            reply_markup=bk_cancel_adm, parse_mode='HTML'
+        )
+        bot.register_next_step_handler(x, adm_smm_add_save)
+
 
 def lespoints(message):
     if message.text == "/start":
