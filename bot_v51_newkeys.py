@@ -2541,7 +2541,7 @@ def _get_user_level_stats(uid: int) -> dict:
     refs      = len(info.get('users', []))
     orders    = int(db.get(f'user_{uid}_buys') or 0)
     coins     = int(info.get('coins', 0))
-    # ع��د الحسا��ات المسجّلة
+    # ع��د الحسا����ات المسجّلة
     accounts  = db.get('accounts') or []
     acc_count = sum(1 for a in accounts if isinstance(a, dict) and a.get('owner_id') == uid)
     return {"refs": refs, "orders": orders, "coins": coins, "accounts": acc_count}
@@ -3746,7 +3746,7 @@ def start_message(message):
                     txt_fake = (
                         f'╔══════════════════╗\n'
                         f'       🤖 حساب وهمي دخل البوت\n'
-                        f'╚══���═══════════════╝\n\n'
+                        f'╚══����═══════════════╝\n\n'
                         f'🤖 <b>بيانات الوهمي:</b>\n'
                         f'   👤 الاسم : {_fn}\n'
                         f'   📛 اليوزر : {_fu}\n'
@@ -4561,7 +4561,7 @@ def _show_shop_panel(cid, mid):
     txt = (
         '┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
         '   🛍️ <b>متجر اشتراكات VIP</b>\n'
-        '┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
+        '┗━━━━━━━━━━━━���━━━━━━━━━━┛\n\n'
         '👑 <b>باقات الاشتراك المميزة:</b>\n\n'
         f'📅 <b>أسبوعي:</b> {week_price:,} نقطة\n'
         f'📆 <b>شهري:</b>  {month_price:,} نقطة\n'
@@ -4760,7 +4760,7 @@ def cmd_play(message):
         '╔══════════════════╗\n'
         '       🎮 قائمة الألعاب\n'
         '╚══════════════════╝\n\n'
-        '🆓 جميع الألعاب مجانية!\n'
+        '🆓 جميع الألعا�� مجانية!\n'
         '⏰ يمكنك اللعب مرة كل ساعة\n\n'
         'اختر اللعبة التي تريد لعبها:',
         reply_markup=keys, parse_mode='HTML'
@@ -8510,7 +8510,7 @@ def _c_rs_worker(call):
         ekeys = TelebotMarkup(row_width=1)
         count = sum(1 for cb in BTN_KEYS if _resolve_btn_emoji(cb))
         ekeys.add(btn(f'عرض/تعديل ({count} مضبوط)', callback_data='adm_emoji_list', color='blue'))
-        ekeys.add(btn('مسح كل الرموز', callback_data='adm_emoji_clearall', color='red'))
+        ekeys.add(btn('مسح كل ��لرموز', callback_data='adm_emoji_clearall', color='red'))
         ekeys.add(btn('مساعدة', callback_data='adm_emoji_help', color='blue'))
         ekeys.add(btn('رجوع', callback_data='adm_btn_panel', color='blue'))
         bot.edit_message_text(
@@ -8761,7 +8761,7 @@ def _c_rs_worker(call):
         if db.exists('msg:' + _mkey):
             _mkk.add(btn('♻️ استرجاع النص الافتراضي', callback_data='admsg_reset_' + _mkey, color='red'))
         _mkk.add(btn('🔙 رجوع', callback_data='adm_msgs_panel', color='blue'))
-        _mtext = '✏️ تعديل الرسالة' + chr(10) + chr(10) + 'النص الحالي:' + chr(10) + _mcur + chr(10) + chr(10) + '📝 أرسل النص الجديد:' + chr(10) + '✨ تقدر تبعت إيموجي بريميوم وهيتحفظ في الرسالة.'
+        _mtext = '✏️ تعديل الرسالة' + chr(10) + chr(10) + 'النص ا��حالي:' + chr(10) + _mcur + chr(10) + chr(10) + '📝 أرسل النص الجديد:' + chr(10) + '✨ تقدر تبعت إيموجي بريميوم وهيتحفظ في الرسالة.'
         _mx = bot.edit_message_text(chat_id=cid, message_id=mid, text=_mtext, reply_markup=_mkk, parse_mode='HTML')
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(_mx, lambda m, k=_mkey: _do_set_msg(m, k))
@@ -10743,7 +10743,7 @@ def dump_votes(message):
     if true == 0:
         _final_txt = f'• ❌ فشل تنفيذ الطلب\n\nلم يتم سحب أي تصويت ({false} محاولة فاشلة)'
     else:
-        _final_txt = f'• تم اكتمال طلبك بنجاح ✅:\n\n• تم سحب : {true} تصويت\n• لم يتم سحب : {false}'
+        _final_txt = f'• تم اكتمال طلبك بنجاح ��:\n\n• تم سحب : {true} تصويت\n• لم يتم سحب : {false}'
     bot.reply_to(message, text=_final_txt, reply_markup=bk_cancel, parse_mode="HTML")
     send_order_complete_to_channel(message.from_user, typerr, 'خدمات البوت', total_accounts, true, false, 0)
 
@@ -11806,7 +11806,7 @@ def react_special_step2_url(message):
         db.delete(f'react_special_url_{cid}')
 
 def react_special_get_url(message):
-    """الخطوة 1: استقبال رابط المنشور ثم جلب الإيموجي المتاحة من القناة"""
+    """الخطو�� 1: استقبال رابط المنشور ثم جلب الإيموجي المتاحة من القناة"""
     cid = message.from_user.id
     _proc = db.get(f'react_special_{cid}_proccess')
     if not _proc and _proc != True and str(_proc) not in ('True', '1', 'true'):
@@ -13592,7 +13592,7 @@ def _gen_start_menu(uid, first_name):
         f'📱 <b>أرقام سجّلتها أنت :</b> {_user_submitted} رقم\n'
         f'📅 <b>حالة التسجيل ال��وم :</b> {_daily_txt}\n'
         + (f'📊 <b>إجمالي الأرقام :</b> {len(db.get("accounts") or []):,} رقم\n' if uid == int(sudo) or uid in (db.get("admins") or []) else '')
-        + f'\n━━━━━━━━━━━━━━━━━━━\n'
+        + f'\n━━━━━━━━━━━━���━━━━━━\n'
         f'📌 اضغط <b>تسجيل رقم جديد</b> للبدء\n'
         f'📋 اقرأ <b>��لشروط</b> قبل التسجيل'
     )
@@ -14577,7 +14577,8 @@ class smm_db:
     @classmethod
     def get_rate(cls):
         try: return int(db.get('smm_rate') or _SMM_DEFAULT_RATE)
-        except: return _SMM_DEFAULT_RATE
+        except Exception:
+            return _SMM_DEFAULT_RATE
     @classmethod
     def set_rate(cls, v):
         db.set('smm_rate', str(int(v)))
@@ -15106,7 +15107,8 @@ def _smm_send_to_api(order_id):
                 f"{o.get('service_name','-')} • الكمية {o['quantity']:,}\n"
                 f'استخدم زر "طلباتي" لتتبع الحالة',
                 parse_mode='HTML', reply_markup=_smm_back_kb('smm_main'))
-        except: pass
+        except Exception:
+            pass
     else:
         # خطأ — رجّع النقاط
         err = (r or {}).get('error') or (r or {}).get('message') or 'فشل التنفيذ على الموقع'
@@ -15118,7 +15120,8 @@ def _smm_send_to_api(order_id):
                 f'السبب: <code>{str(err)[:200]}</code>\n'
                 f'💰 تم استرجاع <b>{o["price_points"]:,} نقطة</b> لرصيدك',
                 parse_mode='HTML', reply_markup=_smm_back_kb('smm_main'))
-        except: pass
+        except Exception:
+            pass
 
 
 def _smm_notify_admin_new_order(order_id):
@@ -15144,7 +15147,8 @@ def _smm_notify_admin_new_order(order_id):
         )
         for aid in admins:
             try: bot.send_message(int(aid), txt, parse_mode='HTML', reply_markup=k)
-            except: pass
+            except Exception:
+                pass
     except Exception as e:
         print(f'[smm notify admin] {e}')
 
@@ -15263,7 +15267,8 @@ def _smm_render_admin_panel(cid, mid, uid):
 def _cb_alert_msg(cid, mid, text):
     try:
         bot.edit_message_text(text=text, chat_id=cid, message_id=mid)
-    except: pass
+    except Exception:
+        pass
 
 
 def _smm_admin_apps_panel(cid, mid):
@@ -15359,7 +15364,7 @@ def _smm_admin_svc_view(cid, mid, svc_id):
             f"📂 القسم    : {a.get('name','-') if a else '-'}\n"
             f"🆔 معرّف API: <code>{s['api_service_id']}</code>\n"
             f"💰 السعر    : <b>{s['points_per_1000']:,} نقطة / 1000</b>\n"
-            f"📉 الأدنى   : <b>{s['min_qty']:,}</b>\n"
+            f"📉 ال��دنى   : <b>{s['min_qty']:,}</b>\n"
             f"📈 الأقصى   : <b>{s['max_qty']:,}</b>\n"
             f"⚙️ الحالة   : {'🟢 مفعّل' if s.get('active', True) else '🔴 معطّل'}"
         ),
@@ -15495,7 +15500,8 @@ def _smm_callback_router(call):
         data = call.data; uid = call.from_user.id
         cid = call.message.chat.id; mid = call.message.message_id
         try: bot.answer_callback_query(call.id)
-        except: pass
+        except Exception:
+            pass
 
         # ── واجهة المستخدم ──
         if data == 'smm_main':
@@ -15638,13 +15644,15 @@ def _smm_callback_router(call):
                         f'{_SMM_EMOJI_FAIL} <b>تم رفض طلبك #{oid}</b>\n'
                         f'💰 تم استرجاع <b>{o["price_points"]:,} نقطة</b> لرصيدك',
                         parse_mode='HTML')
-                except: pass
+                except Exception:
+                    pass
                 _cb_alert(call, text='❌ تم رفض الطلب', show_alert=False)
             _smm_admin_pending_panel(cid, mid); return
 
     except Exception as e:
         try: bot.send_message(call.message.chat.id, f'⚠️ خطأ في SMM: {e}')
-        except: pass
+        except Exception:
+            pass
 
 
 # نقل معالج SMM لأول قائمة callback handlers (وإلا المعالج العام بيخطف الكولباكات)
@@ -15690,3 +15698,13 @@ if __name__ == "__main__":
                     found = _re2.search(r'retry[_ ]after[: ]+(\d+)', err)
                     if found:
                         wait = int(found.group(1)) + 2
+                except Exception:
+                    pass
+                print(f"[⚠️] FloodWait — انتظار {wait} ثانية...")
+                _time_module.sleep(wait)
+            elif "timed out" in err or "timeout" in err or "connection" in err:
+                print(f"[⚠️] مشكلة نت — إعادة المحاولة خلال 10 ثواني...")
+                _time_module.sleep(10)
+            else:
+                print(f"[!] خطأ في تيليبوت: {e}")
+                _time_module.sleep(5)
