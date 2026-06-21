@@ -2541,7 +2541,7 @@ def _get_user_level_stats(uid: int) -> dict:
     refs      = len(info.get('users', []))
     orders    = int(db.get(f'user_{uid}_buys') or 0)
     coins     = int(info.get('coins', 0))
-    # ع��د الحسابات المسجّلة
+    # ع��د الحسا��ات المسجّلة
     accounts  = db.get('accounts') or []
     acc_count = sum(1 for a in accounts if isinstance(a, dict) and a.get('owner_id') == uid)
     return {"refs": refs, "orders": orders, "coins": coins, "accounts": acc_count}
@@ -3746,7 +3746,7 @@ def start_message(message):
                     txt_fake = (
                         f'╔══════════════════╗\n'
                         f'       🤖 حساب وهمي دخل البوت\n'
-                        f'╚══════════════════╝\n\n'
+                        f'╚══���═══════════════╝\n\n'
                         f'🤖 <b>بيانات الوهمي:</b>\n'
                         f'   👤 الاسم : {_fn}\n'
                         f'   📛 اليوزر : {_fu}\n'
@@ -4332,7 +4332,6 @@ _ADMIN_CATEGORIES = {
     'adm_cat_smm': {
         'title': '🚀 خدمات Xfollowr 💎',
         'buttons': [
-            ('🛠️ لوحة إدارة SMM',  'adm_cat_smm',     'green'),
             ('📂 إدارة الأقسام',          'smm_adm_apps',    'blue'),
             ('✨ إدارة الخدمات',          'smm_adm_svcs',    'blue'),
             ('📦 الطلبات المعلقة',       'smm_adm_pending', 'red'),
@@ -5317,7 +5316,7 @@ def _c_rs_worker(call):
         keys.add(btn('🔙 إلغاء', callback_data='user_store', color='red'))
         bot.edit_message_text(
             text='💰 <b>إضافة إعلان في المتجر</b>\n\n'
-                 '🏷️ أرسل اسم السلعة التي تريد بيعها:',
+                 '🏷️ أرسل اسم السلعة ال��ي تريد بيعها:',
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode='HTML'
         )
         bot.register_next_step_handler_by_chat_id(cid, _handle_mkt_add_step)
@@ -6178,9 +6177,9 @@ def _c_rs_worker(call):
                 reply_markup=keys_w
             )
         else:
-            # أنيميشن الدوران
+            # أ��يميشن الدوران
             frames = [
-                "🎡 ━━━━━━━━━━━━━━\n┃ 🌟 💫 ⚡ 🔥 💎 👑 🏆 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
+                "🎡 ━━━━━━━━━━━━━━\n┃ 🌟 💫 ⚡ 🔥 💎 👑 🏆 ┃\n━━━━━━━━━���━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ 💫 ⚡ 🔥 💎 👑 🏆 🌟 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ ⚡ 🔥 💎 👑 🏆 🌟 💫 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ 🔥 💎 👑 🏆 🌟 💫 ⚡ ┃\n━━━━━━━━━━━━━━\n\n🎲 <b>على وشك التوقف...</b>",
@@ -7150,7 +7149,7 @@ def _c_rs_worker(call):
             _emp_kb.add(btn('➕ إضافة قناة جديدة', callback_data='fsub_add', color='green'))
             _emp_kb.add(btn('🔙 رجوع', callback_data='adm_cat_subscription', color='red'))
             _safe_edit_msg(
-                text='📊 إحصائيات الاشتراك الإجباري\n\n⚠️ لا توجد قنوات اشتراك إجباري مضافة بعد',
+                text='📊 إحصائيات الاشتراك الإ��باري\n\n⚠️ لا توجد قنوات اشتراك إجباري مضافة بعد',
                 chat_id=cid, message_id=mid, reply_markup=_emp_kb
             )
             return
@@ -7321,7 +7320,7 @@ def _c_rs_worker(call):
         keys.add(btn('رجوع', callback_data='buy_force_sub', color='red'))
         txt = f"⭐ دفع بالنجوم\n\nالمبلغ المطلوب: {fsub_stars} نجمة\n\n"
         if stars_post:
-            txt += "اضغط الزر أدناه لإرسال النجوم\n\nبعد الدفع تواصل مع الأدمن لتأكيد الطلب وإضافة قناتك ✅"
+            txt += "اضغط ��لزر أدناه لإرسال النجوم\n\nبعد الدفع تواصل مع الأدمن لتأكيد الطلب وإضافة قناتك ✅"
         else:
             txt += "تواصل مع الأدمن لإتمام الدفع وإضافة قناتك."
         bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
@@ -7416,7 +7415,7 @@ def _c_rs_worker(call):
         cash_contact = db.get("charge_cash_contact")      if db.exists("charge_cash_contact") else None
         keys = mk(row_width=1)
         keys.add(btn('رجوع', callback_data='charge_points', color='red'))
-        contact_line = f"طريقة الدفع: تواصل مع @{cash_contact}" if cash_contact else "تواصل مع الأدمن لإتمام الدفع"
+        contact_line = f"طري��ة الدفع: تواصل مع @{cash_contact}" if cash_contact else "تواصل مع الأدمن لإتمام الدفع"
         txt = (
             "شحن بالكاش\n\n"
             f"سعر الشحن: $1 = {cash_rate} نقطة\n"
@@ -9116,7 +9115,7 @@ def _c_rs_worker(call):
         buys = int(db.get(f"user_{cid}_buys")) if db.exists(f"user_{cid}_buys") else 0
         db.set(f"user_{cid}_buys", buys + 1)
 
-        # تنظيف
+        # ت��ظيف
         db.delete(f'react_special_{cid}_proccess')
         db.delete(f'react_special_chosen_{cid}')
         db.delete(f'react_special_url_{cid}')
@@ -12639,7 +12638,7 @@ def pre_checkout_stars(pre_checkout_q):
     try:
         bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
     except Exception as e:
-        print(f"[pre_checkout] خطأ: {e}")
+        print(f"[pre_checkout] ��طأ: {e}")
         try:
             bot.answer_pre_checkout_query(pre_checkout_q.id, ok=False,
                                            error_message="حدث خطأ، حاول مجدداً")
@@ -12919,7 +12918,7 @@ def _do_charge_approve(message, uid):
         except:
             pass
     except ValueError:
-        bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من 0')
+        bot.reply_to(message, '❌ أرسل رقماً صحي��اً أكبر من 0')
     except Exception as e:
         bot.reply_to(message, f'❌ خطأ: {e}')
 
@@ -14287,7 +14286,7 @@ def get_url_linkbot(message, amount):
         return
     bot_user_clean = url.replace('https://t.me/', '').replace('t.me/', '').replace('@', '').strip()
     x = bot.reply_to(message,
-        f'📝 <b>أرسل الآن نص الرسالة</b> التي ستُرسل للبوت\n\n'
+        f'�� <b>أرسل الآن نص الرسالة</b> التي ستُرسل للبوت\n\n'
         f'✅ الكمية: {amount}\n'
         f'🤖 البوت: @{bot_user_clean}\n\n'
         f'• مثال: /start\n• أو أي رسالة تريدها',
@@ -15489,7 +15488,8 @@ def _smm_handle_admin_input(message):
 # ══════════════════════════════════════════════════════════════════
 #   6) Callback handler — نتعامل مع كل الـ smm_* في handler مستقل
 # ══════════════════════════════════════════════════════════════════
-@bot.callback_query_handler(func=lambda c: c.data and c.data.startswith('smm_') or c.data == 'adm_cat_smm')
+# تسجيل المعالج في أول القائمة علشان يسبق المعالج العام (lambda c: True)
+@bot.callback_query_handler(func=lambda c: c.data and (c.data.startswith('smm_') or c.data == 'adm_cat_smm'))
 def _smm_callback_router(call):
     try:
         data = call.data; uid = call.from_user.id
@@ -15647,6 +15647,15 @@ def _smm_callback_router(call):
         except: pass
 
 
+# نقل معالج SMM لأول قائمة callback handlers (وإلا المعالج العام بيخطف الكولباكات)
+try:
+    if bot.callback_query_handlers:
+        _smm_handler = bot.callback_query_handlers.pop()
+        bot.callback_query_handlers.insert(0, _smm_handler)
+        print('[✅] Xfollowr handler تم رفعه لأول قائمة المعالجات')
+except Exception as _e:
+    print(f'[⚠️] تعذر نقل المعالج: {_e}')
+
 print('[✅] Xfollowr module جاهز')
 
 
@@ -15681,12 +15690,3 @@ if __name__ == "__main__":
                     found = _re2.search(r'retry[_ ]after[: ]+(\d+)', err)
                     if found:
                         wait = int(found.group(1)) + 2
-                except: pass
-                print(f"[⚠️] FloodWait — انتظار {wait} ثانية...")
-                _time_module.sleep(wait)
-            elif "timed out" in err or "timeout" in err or "connection" in err:
-                print(f"[⚠️] مشكلة نت — إعادة المحاولة خلال 10 ثواني...")
-                _time_module.sleep(10)
-            else:
-                print(f"[!] خطأ في تيليبوت: {e}")
-                _time_module.sleep(5)
