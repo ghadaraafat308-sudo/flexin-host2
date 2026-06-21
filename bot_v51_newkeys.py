@@ -506,6 +506,20 @@ BTN_KEYS = {
     "free_reactions": "الخدمات المجانية",
     "free_react_go": "تفاعلات مجانية على منشور",
     "free_react_plus": "⚡ تفاعلات + مشاهدات مستقبلية",
+    # ── Xfollowr SMM ──
+    "smm_main":           "🚀 خدمات Xfollowr",
+    "smm_my_orders":      "📦 طلباتي (SMM)",
+    "adm_cat_smm":        "🚀 لوحة إدارة Xfollowr",
+    "smm_adm_apps":       "📂 إدارة أقسام SMM",
+    "smm_adm_svcs":       "✨ إدارة خدمات SMM",
+    "smm_adm_pending":    "📦 طلبات SMM المعلقة",
+    "smm_adm_balance":    "💠 رصيد Xfollowr",
+    "smm_adm_fetch":      "📥 جلب خدمات Xfollowr",
+    "smm_adm_toggle":     "🔄 تفعيل/تعطيل SMM",
+    "smm_adm_toggle_auto": "⚡ تنفيذ تلقائي SMM",
+    "smm_adm_set_key":    "🔑 تعديل مفتاح API",
+    "smm_adm_set_url":    "🌐 تعديل API URL",
+    "smm_adm_set_rate":   "💱 سعر النقطة (SMM)",
 }
 
 def _get_btn_color(callback_data, default="blue"):
@@ -707,6 +721,21 @@ def pe(emoji_char: str, custom_emoji_id: str = "") -> str:
 
 
 STATIC_BUTTON_REGISTRY = [
+    ("🚀 Xfollowr SMM", [
+        ("smm_main",           "🚀 خدمات Xfollowr"),
+        ("smm_my_orders",      "📦 طلباتي (SMM)"),
+        ("adm_cat_smm",        "🚀 لوحة إدارة Xfollowr"),
+        ("smm_adm_apps",       "📂 إدارة أقسام SMM"),
+        ("smm_adm_svcs",       "✨ إدارة خدمات SMM"),
+        ("smm_adm_pending",    "📦 طلبات SMM المعلقة"),
+        ("smm_adm_balance",    "💠 رصيد Xfollowr"),
+        ("smm_adm_fetch",      "📥 جلب خدمات Xfollowr"),
+        ("smm_adm_toggle",     "🔄 تفعيل/تعطيل SMM"),
+        ("smm_adm_toggle_auto", "⚡ تنفيذ تلقائي SMM"),
+        ("smm_adm_set_key",    "🔑 تعديل مفتاح API"),
+        ("smm_adm_set_url",    "🌐 تعديل API URL"),
+        ("smm_adm_set_rate",   "💱 سعر النقطة (SMM)"),
+    ]),
     ("الأزرار الرئيسية", [
         ("ps",            "🛒 الخدمات"),
         ("collect",       "💠 تجميع النقاط"),
@@ -1398,7 +1427,7 @@ if _existing_accounts is None:
         # كان موجود لكن الـ cache لم يحمّله — نحدث الـ cache
         with db._lock:
             db._cache['accounts'] = _existing_accounts
-        print(f"[📥] ����م استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
+        print(f"[📥] ��������������م استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
 
 # db.delete("force")  # تم التعطيل — كان يمسح القنوات الإجبارية عند كل تشغيل
 
@@ -1709,7 +1738,7 @@ async def reactions(session, link, like):
 async def reaction(session, link):
     rs = ["👍","🤩","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨","😐","🖕","😈","👎",
           "😁","😢","💩","🤮","🤔","🤯","🤬","💯","😍","🕊","🐳","🤝","👨","🦄","🎃","🤓",
-          "👀","👻","🗿","🍾","🍓","⚡️","🏆","🤡","🌭","🆒","🙈","🎅","🎄","☃️","💊"]
+          "👀","👻","🗿","🍾","🍓","⚡️","🏆","🤡","🌭","🆒","🙈","🎅","🎄","☃���","💊"]
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
     await client.start()
@@ -2832,7 +2861,7 @@ def send_order_complete_to_channel(user, service_label, section_label, amount, d
         f"👤 المستخدم: {user_link}\n"
         f"🔖 اليوزر: {username_str}\n"
         f"🪪 الأيدي: <code>{user.id}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━\n"
+        "���━━━���━���━━━━━━━━━━━━\n"
         f"📂 القسم: {section_label}\n"
         f"🛠 الخدمة: {service_label}\n"
         f"📦 الكمية المطلوبة: {amount}\n"
@@ -2914,7 +2943,7 @@ def _do_claim_daily_gift(call):
         user_lock = _claim_locks[uid]
 
     if not user_lock.acquire(blocking=False):
-        # طلب تاني وصل قبل ما الأول يخلص → تجاهل
+        # طلب تاني وصل قبل ما الأول يخلص ��� تجاهل
         _cb_alert(call, text='⏳ جاري المعالجة...', show_alert=False)
         return
 
@@ -3119,7 +3148,7 @@ def adds_session(session: str, phone: str, owner_id: int = None) -> bool:
     # ✅ تحقق فعلي: اكتب مباشرة لـ Firebase وتأكد من الحفظ
     _saved_direct = db._http_put('accounts', d)
     if not _saved_direct:
-        print(f"[adds_session] ⚠️ فشل الحفظ المباشر في Firebase للرقم {phone_clean} — محاولة ثانية...")
+        print(f"[adds_session] ⚠️ فشل الحفظ المباشر في Firebase لل��قم {phone_clean} — محاولة ثانية...")
         time.sleep(1)
         _saved_direct = db._http_put('accounts', d)
 
@@ -3388,7 +3417,7 @@ def _settle_pending_referral(join_user):
                 f'٭ *دخول جديد عبر إحالة 🔗*\n\n'
                 f'• الاسم : {_invitee_name}\n'
                 f'• المعرف : {_invitee_user}\n'
-                f'• الأيدي : {join_user}\n'
+                f'• ال��يدي : {join_user}\n'
                 f'• دُعي بو��سطة : {to_user}\n\n'
                 f'*• عدد الأعضاء الكلي : {good}*'
             ),
@@ -3922,7 +3951,7 @@ def start_asinvite(message):
                 start_message(message)
                 return
             if join_user in used_by:
-                bot.reply_to(message, '❌ لقد استخدمت هذا الرابط من قبل، لا يمكن استخدامه مرة أخرى')
+                bot.reply_to(message, '❌ لقد استخدمت ه��ا الرابط من قبل، لا يمكن استخدامه مرة أخرى')
                 start_message(message)
                 return
             # تسجيل المستخدم إن لم يكن موجوداً
@@ -4069,7 +4098,7 @@ def start_asinvite(message):
     threading.Thread(target=_finish_invite, daemon=True).start()
 
 # ════════ تصدير/استيراد قاعدة البيانات (JSON) ════════
-# الدوال دي كانت بتتنده في معالجات أزرار (تصدير/استيراد/نسخة احتياطية)
+# الدوال دي كانت بتتنده في معالج��ت أزرار (تصدير/استيراد/نسخة احتياطية)
 # بس ماكانتش معرّفة إطلاقاً في الكود، فالأزرار دي كانت بترمي NameError
 # وما بتعملش حاجة. دي تعريفاتها الكاملة.
 import io as _io_db
@@ -4139,7 +4168,7 @@ def _send_db_export_file(cid, export_type="all", label="الكل"):
         print(f"[export_db] خطأ: {_e}")
 
 def _handle_import_db_panel(call):
-    """يعرض لوحة اختيار نوع الاستيراد."""
+    """يعرض لوحة اختي��ر نوع الاستيراد."""
     cid = call.from_user.id
     mid = call.message.id
     keys = mk(row_width=1)
@@ -4272,9 +4301,9 @@ def _import_db_from_json(jdata, import_type="all"):
 # تعريف فئات لوحة الأدمن — كل فئة بتجمع الأزرار المرتبطة ببعضها
 _ADMIN_CATEGORIES = {
     'adm_cat_users': {
-        'title': '👥 المستخدمين والصلاحيات',
+        'title': '👥 المستخ��مين والصلاحيات',
         'buttons': [
-            ('🛠 إدارة المستخدمين', 'adm_usermgmt', 'green'),
+            ('🛠 ��دارة المستخدمين', 'adm_usermgmt', 'green'),
             ('اضافة ادمن',      'addadmin', 'green'),
             ('مسح ادمن',        'deladmin', 'red'),
             ('الادمنية',        'admins',   'blue'),
@@ -4298,6 +4327,16 @@ _ADMIN_CATEGORIES = {
             ('تعيين نص الدعم الفني',          'adm_set_support',     'blue'),
             ('قناة الطلبات',                  'chset_orders_channel','green'),
             ('📋 قناة سجل الأزرار',            'chset_logs_channel',  'blue'),
+        ],
+    },
+    'adm_cat_smm': {
+        'title': '🚀 خدمات Xfollowr 💎',
+        'buttons': [
+            ('🛠️ لوحة إدارة SMM',  'adm_cat_smm',     'green'),
+            ('📂 إدارة الأقسام',          'smm_adm_apps',    'blue'),
+            ('✨ إدارة الخدمات',          'smm_adm_svcs',    'blue'),
+            ('📦 الطلبات المعلقة',       'smm_adm_pending', 'red'),
+            ('💠 رصيد Xfollowr',           'smm_adm_balance', 'green'),
         ],
     },
     'adm_cat_settings': {
@@ -5669,7 +5708,7 @@ def _c_rs_worker(call):
             back_keys = mk(row_width=1)
             back_keys.add(btn('🔄 حاول مرة أخرى', callback_data=f'task_do_{task_id}', color='green'))
             back_keys.add(btn('🔙 رجوع', callback_data='tasks', color='blue'))
-            _cb_alert(call, '❌ لم يتم التحقق — تأكد من تنفيذ المطلوب أولاً', show_alert=True)
+            _cb_alert(call, '�� لم يتم التحقق — ��أكد من تنف��ذ المطلوب أو��اً', show_alert=True)
             bot.edit_message_text(
                 text=(
                     f'❌ <b>لم يتم التحقق بعد</b>\n\n'
@@ -6271,7 +6310,7 @@ def _c_rs_worker(call):
         x = bot.edit_message_text(text='• ارسل ايدي الشخص المراد تحويل النقاط له.', chat_id=cid, message_id=mid, reply_markup=bk_cancel)
         bot.register_next_step_handler(x, send)
     if data == 'addadmin':
-        x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد اضافته ادمن بالبوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
+        x = bot.edit_message_text(text=f'• ارسل ايدي العضو الم��اد اضافته ادمن بالبوت ', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
         bot.register_next_step_handler(x, adminss, 'add')
     if data == 'addvip':
         x = bot.edit_message_text(text=f'• ارسل ايدي العضو المراد تفعيل vip له', chat_id=cid, message_id=mid, reply_markup=bk_cancel_adm)
@@ -6480,16 +6519,19 @@ def _c_rs_worker(call):
         btn_normal = btn('🛍️ الخدمات العادية',    callback_data='normal',         color='blue')
         btn_vip    = btn('👑 الخدمات الـ ViP',     callback_data='vips',           color='red')
         btn_free_r = btn('الخدمات المجانية FREE',    callback_data='free_reactions',  color='green')
+        btn_smm    = btn('🚀 خدمات Xfollowr 💎',  callback_data='smm_main',       color='purple')
         keys.add(btn_normal)
         keys.add(btn_vip)
         keys.add(btn_free_r)
+        keys.add(btn_smm)
         keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(
             text=(
                 '🛒 <b>قسم الخدمات</b>\n\n'
                 '• 🛍️ <b>الخدمات العادية</b> — خدمات مدفوعة بالنقاط للجميع\n'
                 '• 👑 <b>الخدمات الـ ViP</b> — خدمات حصرية للمشتركين\n'
-                '• <b>الخدمات المجانية FREE</b> — تفاعلات ومشاهدات مجاناً بدون نقاط\n\n'
+                '• <b>الخدمات المجانية FREE</b> — تفاعلات ومشاهدات مجاناً بدون نقاط\n'
+                '• 🚀 <b>خدمات Xfollowr 💎</b> — متابعين/مشاهدات/لايكات لكل المنصات بالنقاط\n\n'
                 'اختر القسم الذي تريده 👇'
             ),
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML"
@@ -6648,7 +6690,7 @@ def _c_rs_worker(call):
         keys.add(btn('إلغاء و رجوع', callback_data='free_reactions', color='red'))
         x = bot.edit_message_text(
             text=(
-                '🚀 <b>50 تفاعل + مشاهدات 10 منشورات مستقبلية</b>\n\n'
+                '🚀 <b>50 ��فاعل + مشاهدات 10 منشورات مستقبلية</b>\n\n'
                 '━━━━━━━━━━━━━━━━━━━\n'
                 '📎 أرسل الآن رابط المنشور\n'
                 '━━━━━━━━━━━━━━━━━━━\n\n'
@@ -7043,7 +7085,7 @@ def _c_rs_worker(call):
         _ce = (db.get('fsub_check_emoji') or '✅').strip()
         _ct = (db.get('fsub_check_text')  or 'تحققت من الاشتراك').strip()
         _ck = mk(row_width=2)
-        for _em in ['✅','☑️','✔️','💯','🎯','🏆','🥇','⭐','🔓','🎉','👍','💪']:
+        for _em in ['✅','��️','✔️','💯','🎯','🏆','🥇','⭐','🔓','🎉','👍','💪']:
             _ck.add(btn(_em, callback_data=f'fsub_chk_emo_{_em}', color='blue'))
         _ck.add(btn('✏️ تغيير النص', callback_data='fsub_check_text_edit', color='green'))
         _ck.add(btn('رجوع', callback_data='setforce', color='blue'))
@@ -7192,7 +7234,7 @@ def _c_rs_worker(call):
             f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
             f'📈 الحد الأقصى : <b>{_mx}</b>\n'
-            f'━━━━━━━━━━━━━━━━━━━\n\n'
+            f'━━━━━━━━━━━━━━━━��━━\n\n'
             f'أرسل الآن الع��د الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
         )
         db.set(f'vote_{cid}_proccess', True)
@@ -7858,7 +7900,7 @@ def _c_rs_worker(call):
         p = svc_price(svc_key)
         if svc_key == 'free_member':
             x = bot.edit_message_text(
-                text=f'💰 تعديل سعر خدمة: {SERVICES[svc_key]["label"]}\nالسعر الحالي: {p} نقطة / عضو\n\nأرسل السعر الجديد لكل عضو (رقم فقط):',
+                text=f'💰 تعديل سعر خدمة: {SERVICES[svc_key]["label"]}\nالسعر الحالي: {p} نقطة / ع��و\n\nأرسل السعر الجديد لكل عضو (رقم فقط):',
                 chat_id=cid, message_id=mid, reply_markup=skeys
             )
             bot.clear_step_handler_by_chat_id(cid)
@@ -7914,7 +7956,7 @@ def _c_rs_worker(call):
         skeys.add(btn('رجوع', callback_data=f'svc_pick_{svc_key}', color='blue'))
         mx = svc_max(svc_key)
         x = bot.edit_message_text(
-            text=f'⬆️ تعديل الحد الأقصى لـ: {SERVICES[svc_key]["label"]}\nالحالي: {mx}\n\nأرسل الحد الأقصى الجديد (رقم فقط):',
+            text=f'⬆️ تعديل الحد الأقصى لـ: {SERVICES[svc_key]["label"]}\nالحالي: {mx}\n\nأرسل ��لحد الأقصى الجديد (رق�� فقط):',
             chat_id=cid, message_id=mid, reply_markup=skeys
         )
         bot.clear_step_handler_by_chat_id(cid)
@@ -8123,7 +8165,7 @@ def _c_rs_worker(call):
         keys.add(btn('🔙 رجوع للأدمن', callback_data='adm_cat_settings', color='blue'))
         # عرض كل الأزرار مع لونها واسمها الحالي
         txt = '🎛️ *لوحة تخصيص الأزرار*\n\n'
-        txt += '📋 *الأزرار الحالية:*\n'
+        txt += '📋 *الأزر��ر الحالية:*\n'
         for cb, default_label in BTN_KEYS.items():
             cur_label = _get_btn_label(cb, default=default_label)
             cur_color = _get_btn_color(cb, "blue")
@@ -8435,7 +8477,7 @@ def _c_rs_worker(call):
         keys.add(btn('رجوع', callback_data='adm_rename', color='blue'))
         bot.clear_step_handler_by_chat_id(cid)
         x = bot.edit_message_text(
-            text=f'✏️ *تغيير اسم الزر*\n\nالزر: {color_icon} *{cur_label}*\n\nأرسل الاسم الجديد للزر الآن:',
+            text=f'✏️ *تغيير اسم الزر*\n\nا��زر: {color_icon} *{cur_label}*\n\nأرسل الاسم الجديد للزر الآن:',
             chat_id=cid, message_id=mid,
             reply_markup=keys, parse_mode='Markdown'
         )
@@ -8456,7 +8498,7 @@ def _c_rs_worker(call):
             keys.add(btn(f'✏️ {cur_label}', callback_data=f'rnm_pick_{cb}', color=cur_color))
         keys.add(btn('🔙 رجوع للأسماء', callback_data='adm_rename', color='blue'))
         bot.edit_message_text(
-            text=f'✅ تم إعادة اسم الزر للأصلي\n\n✏️ *تغيير أسماء الأزرار*\n\nاضغط على أي زر لتغيير اسمه',
+            text=f'✅ تم إعادة اسم الزر للأصلي\n\n��️ *تغيير أسماء الأزرار*\n\nاض��ط على أي زر لت��يير اسمه',
             chat_id=cid, message_id=mid,
             reply_markup=keys, parse_mode='Markdown'
         )
@@ -9085,7 +9127,7 @@ def _c_rs_worker(call):
             f'✅ <b>تم اكتمال الطلب</b>\n\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'✨ الإيموجي : {emoji_text}\n'
-            f'🔢 الكمية المطلوبة : {amount}\n'
+            f'�� الكمية المطلوبة : {amount}\n'
             f'✅ تم تنفيذ : {true}\n'
             f'❌ لم يتم : {false}\n'
             f'💰 تم خصم : {true * _svc_price:,} نقطة\n'
@@ -9111,7 +9153,7 @@ def _c_rs_worker(call):
         if not url:
             _cb_alert(call, text='❌ انتهت صلاحية الطلب، ابدأ من جديد', show_alert=True)
             return
-        # إخفاء الأزرار وتأكيد الاختيار
+        # إخفاء الأزرار وتأكيد ا��اختيار
         try:
             bot.edit_message_reply_markup(chat_id=cid, message_id=mid, reply_markup=None)
         except:
@@ -9260,7 +9302,7 @@ def _c_rs_worker(call):
             return
         cur = db.get("fsub_usdt") if db.exists("fsub_usdt") else "1.0"
         x = bot.edit_message_text(
-            text=f'💎 سعر USDT لباقة الاشتراك الإجباري\n\nالحالي: {cur} دولار\n\nأرسل السعر الجديد (مثال: 1.5):',
+            text=f'💎 سعر USDT لباقة الاشتراك الإجباري\n\nالحالي: {cur} دولار\n\nأرسل السع�� الجديد (مثال: 1.5):',
             chat_id=cid, message_id=mid
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -9855,7 +9897,7 @@ def handle_free_react_plus(message):
         else:
             result_txt = (
                 '⚠️ <b>التفاعلات غير متاحة حالياً</b>\n\n'
-                '👁 تم تسجيل <b>مشاهدات تلقائية</b> على أول 10 منشورات قادمة بنجاح ✅\n\n'
+                '👁 تم تس��يل <b>مشاهدات تلقائية</b> ��لى أول 10 منشورات قادمة بنجاح ✅\n\n'
                 f'📢 القناة المسجلة: @{channel}'
             )
 
@@ -9871,7 +9913,7 @@ def handle_free_react_plus(message):
         _start_future_views(cid, channel, 10)
         try:
             bot.edit_message_text(
-                '👁 تم تسجيل <b>مشاهدات تلقائية</b> على أول 10 منشورات قادمة بنجاح ✅\n\n'
+                '👁 تم تسجيل <b>مشاهدات تلقائية</b> على أول 10 منشو��ات قادمة ب��جاح ✅\n\n'
                 f'📢 القناة: @{channel}',
                 chat_id=cid, message_id=waiting.message_id,
                 reply_markup=keys, parse_mode='HTML')
@@ -10426,7 +10468,7 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       🔑 طلب روابط دعوة جديد\n'
-                f'╚══════════════════════╝\n\n'
+                f'╚══════════════��═══════��\n\n'
                 f'✅ الكمية المطلوبة : {amount} رسالة\n\n'
                 f'🔗 أرسل الآن رابط الدعوة الخاص بالبوت\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
@@ -12535,7 +12577,7 @@ def setfo_add(message):
         if url_ in ('0', ''):
             url_ = f'https://t.me/{raw_id}'
     else:
-        bot.reply_to(message, '❌ صيغة غير صحيحة — أرسل: @id | الاسم | رابط | حد')
+        bot.reply_to(message, '�� صيغة غير صحيحة — أرسل: @id | الاسم | رابط | حد')
         return
 
     if not raw_id:
@@ -12638,11 +12680,11 @@ def handle_successful_payment(message):
                 bot.send_message(
                     chat_id=sudo,
                     text=(
-                        f"⭐ <b>شحن نجوم ناجح</b>\n\n"
+                        f"⭐ <b>��حن نجوم ناجح</b>\n\n"
                         f"• المستخدم: {uname}\n"
                         f"• الآيدي: <code>{uid}</code>\n"
                         f"• النجوم: {amt}\n"
-                        f"• النقاط المضافة: {pts:,}"
+                        f"• ��لنقاط المضافة: {pts:,}"
                     ),
                     parse_mode="HTML"
                 )
@@ -13549,7 +13591,7 @@ def _gen_start_menu(uid, first_name):
         f'👋 أهلاً {first_name}!\n\n'
         f'💎 <b>مكافأة كل رقم :</b> {_rent_pts:,} نقطة\n'
         f'📱 <b>أرقام سجّلتها أنت :</b> {_user_submitted} رقم\n'
-        f'📅 <b>حالة التسجيل اليوم :</b> {_daily_txt}\n'
+        f'📅 <b>حالة التسجيل ال��وم :</b> {_daily_txt}\n'
         + (f'📊 <b>إجمالي الأرقام :</b> {len(db.get("accounts") or []):,} رقم\n' if uid == int(sudo) or uid in (db.get("admins") or []) else '')
         + f'\n━━━━━━━━━━━━━━━━━━━\n'
         f'📌 اضغط <b>تسجيل رقم جديد</b> للبدء\n'
@@ -14469,6 +14511,1143 @@ def _start_daily_reminder_thread():
     lt.start()
 
     print('[✅] daily reminder thread: شغال')
+
+
+# ══════════════════════════════════════════════════════════════════
+#   🚀 SMM SERVICES MODULE — Xfollowr Integration
+#   ─ كل البيانات تتخزن في Firebase عبر db.get/set/delete
+#   ─ النقاط = العملة الوحيدة
+#   ─ كل شيء يتحكم فيه الأدمن من اللوحة
+# ══════════════════════════════════════════════════════════════════
+import json as _smm_json
+import time as _smm_time
+import requests as _smm_req
+
+# ── الإيموجي المميز لكل أزرار SMM ──
+_SMM_EMOJI_MAIN   = '🚀'   # القسم الرئيسي
+_SMM_EMOJI_APP    = '💎'   # الأقسام (انستجرام/تيك توك..)
+_SMM_EMOJI_SVC    = '✨'   # الخدمات داخل القسم
+_SMM_EMOJI_BAL    = '💠'   # الرصيد
+_SMM_EMOJI_ORDER  = '📦'   # الطلبات
+_SMM_EMOJI_NEW    = '🆕'   # طلب جديد
+_SMM_EMOJI_OK     = '✅'
+_SMM_EMOJI_WAIT   = '⏳'
+_SMM_EMOJI_FAIL   = '❌'
+_SMM_EMOJI_ADMIN  = '🛠️'
+
+# ── إعدادات افتراضية ──
+_SMM_DEFAULT_API_URL = 'https://xfollowr.com/api/v2'
+_SMM_DEFAULT_RATE    = 1000   # نقطة لكل 1$
+
+# ══════════════════════════════════════════════════════════════════
+#   1) Storage helpers (Firebase key-value JSON)
+# ══════════════════════════════════════════════════════════════════
+class smm_db:
+    @staticmethod
+    def _gj(key, default):
+        v = db.get(key)
+        if not v:
+            return default
+        try:
+            return _smm_json.loads(v) if isinstance(v, str) else v
+        except Exception:
+            return default
+
+    @staticmethod
+    def _sj(key, val):
+        try:
+            db.set(key, _smm_json.dumps(val, ensure_ascii=False))
+        except Exception as e:
+            print(f'[smm_db] save {key}: {e}')
+
+    # ── config ──
+    @classmethod
+    def get_api_url(cls):
+        return db.get('smm_api_url') or _SMM_DEFAULT_API_URL
+    @classmethod
+    def set_api_url(cls, v):
+        db.set('smm_api_url', v.strip())
+
+    @classmethod
+    def get_api_key(cls):
+        return db.get('smm_api_key') or ''
+    @classmethod
+    def set_api_key(cls, v):
+        db.set('smm_api_key', v.strip())
+
+    @classmethod
+    def get_rate(cls):
+        try: return int(db.get('smm_rate') or _SMM_DEFAULT_RATE)
+        except: return _SMM_DEFAULT_RATE
+    @classmethod
+    def set_rate(cls, v):
+        db.set('smm_rate', str(int(v)))
+
+    @classmethod
+    def get_auto_approve(cls):
+        return (db.get('smm_auto_approve') or '1') == '1'
+    @classmethod
+    def set_auto_approve(cls, on: bool):
+        db.set('smm_auto_approve', '1' if on else '0')
+
+    @classmethod
+    def get_enabled(cls):
+        return (db.get('smm_enabled') or '1') == '1'
+    @classmethod
+    def set_enabled(cls, on: bool):
+        db.set('smm_enabled', '1' if on else '0')
+
+    # ── apps (الأقسام) ──
+    @classmethod
+    def list_apps(cls, only_active=False):
+        apps = cls._gj('smm_apps_list', [])
+        if only_active:
+            apps = [a for a in apps if a.get('active', True)]
+        apps.sort(key=lambda a: a.get('sort', 0))
+        return apps
+
+    @classmethod
+    def save_apps(cls, apps):
+        cls._sj('smm_apps_list', apps)
+
+    @classmethod
+    def add_app(cls, name, emoji='💎'):
+        apps = cls.list_apps()
+        new_id = (max([a['id'] for a in apps], default=0) + 1) if apps else 1
+        apps.append({'id': new_id, 'name': name, 'emoji': emoji or '💎', 'active': True, 'sort': new_id})
+        cls.save_apps(apps)
+        return new_id
+
+    @classmethod
+    def get_app(cls, app_id):
+        for a in cls.list_apps():
+            if a['id'] == int(app_id):
+                return a
+        return None
+
+    @classmethod
+    def update_app(cls, app_id, **fields):
+        apps = cls.list_apps()
+        for a in apps:
+            if a['id'] == int(app_id):
+                a.update(fields)
+                break
+        cls.save_apps(apps)
+
+    @classmethod
+    def delete_app(cls, app_id):
+        apps = [a for a in cls.list_apps() if a['id'] != int(app_id)]
+        cls.save_apps(apps)
+        # احذف خدماته
+        svcs = [s for s in cls.list_services() if int(s.get('app_id', 0)) != int(app_id)]
+        cls.save_services(svcs)
+
+    # ── services (الخدمات داخل كل قسم) ──
+    @classmethod
+    def list_services(cls, app_id=None, only_active=False):
+        svcs = cls._gj('smm_services_list', [])
+        if app_id is not None:
+            svcs = [s for s in svcs if int(s.get('app_id', 0)) == int(app_id)]
+        if only_active:
+            svcs = [s for s in svcs if s.get('active', True)]
+        svcs.sort(key=lambda s: s.get('sort', 0))
+        return svcs
+
+    @classmethod
+    def save_services(cls, svcs):
+        cls._sj('smm_services_list', svcs)
+
+    @classmethod
+    def add_service(cls, app_id, name, api_service_id, points_per_1000, min_qty, max_qty, emoji='✨'):
+        svcs = cls._gj('smm_services_list', [])
+        new_id = (max([s['id'] for s in svcs], default=0) + 1) if svcs else 1
+        svcs.append({
+            'id': new_id, 'app_id': int(app_id), 'name': name,
+            'emoji': emoji or '✨',
+            'api_service_id': str(api_service_id),
+            'points_per_1000': int(points_per_1000),
+            'min_qty': int(min_qty), 'max_qty': int(max_qty),
+            'active': True, 'sort': new_id,
+        })
+        cls.save_services(svcs)
+        return new_id
+
+    @classmethod
+    def get_service(cls, svc_id):
+        for s in cls.list_services():
+            if s['id'] == int(svc_id):
+                return s
+        return None
+
+    @classmethod
+    def update_service(cls, svc_id, **fields):
+        svcs = cls.list_services()
+        for s in svcs:
+            if s['id'] == int(svc_id):
+                s.update(fields)
+                break
+        cls.save_services(svcs)
+
+    @classmethod
+    def delete_service(cls, svc_id):
+        svcs = [s for s in cls.list_services() if s['id'] != int(svc_id)]
+        cls.save_services(svcs)
+
+    # ── orders ──
+    @classmethod
+    def next_order_id(cls):
+        cur = db.get('smm_order_seq')
+        try: cur = int(cur) if cur else 0
+        except: cur = 0
+        cur += 1
+        db.set('smm_order_seq', str(cur))
+        return cur
+
+    @classmethod
+    def save_order(cls, order):
+        cls._sj(f'smm_order_{order["id"]}', order)
+        # index by user
+        user_orders = cls._gj(f'smm_uorders_{order["user_id"]}', [])
+        if order['id'] not in user_orders:
+            user_orders.insert(0, order['id'])
+            user_orders = user_orders[:50]   # احتفظ بآخر 50
+            cls._sj(f'smm_uorders_{order["user_id"]}', user_orders)
+
+    @classmethod
+    def get_order(cls, order_id):
+        return cls._gj(f'smm_order_{order_id}', None)
+
+    @classmethod
+    def update_order(cls, order_id, **fields):
+        o = cls.get_order(order_id)
+        if not o:
+            return None
+        o.update(fields)
+        cls._sj(f'smm_order_{order_id}', o)
+        return o
+
+    @classmethod
+    def list_user_orders(cls, user_id, limit=10):
+        ids = cls._gj(f'smm_uorders_{user_id}', [])[:limit]
+        return [cls.get_order(i) for i in ids if cls.get_order(i)]
+
+    @classmethod
+    def list_pending_orders(cls):
+        """الطلبات المعلقة (تنتظر موافقة الأدمن)"""
+        # نمشي على آخر 200 ID
+        try:
+            cur = int(db.get('smm_order_seq') or 0)
+        except:
+            cur = 0
+        result = []
+        for oid in range(max(1, cur - 200), cur + 1):
+            o = cls.get_order(oid)
+            if o and o.get('status') == 'pending_approval':
+                result.append(o)
+        return result
+
+
+# ══════════════════════════════════════════════════════════════════
+#   2) Xfollowr API wrapper
+# ══════════════════════════════════════════════════════════════════
+class smm_api:
+    STATUS_MAP = {
+        'Pending':     '⏳ قيد الانتظ��ر',
+        'In progress': '🔄 قيد التنفيذ',
+        'Processing':  '🔄 جاري المعالجة',
+        'Completed':   '✅ مكتمل',
+        'Partial':     '⚠️ مكتمل جزئياً',
+        'Canceled':    '❌ ملغي',
+        'pending':     '⏳ قيد الانتظار',
+        'inprogress':  '🔄 قيد التنفيذ',
+        'completed':   '✅ مكتمل',
+        'partial':     '⚠️ مكتمل جزئياً',
+        'canceled':    '❌ ملغي',
+    }
+
+    @classmethod
+    def arabic_status(cls, s):
+        return cls.STATUS_MAP.get(str(s or '').strip(), str(s or 'غير معروف'))
+
+    @classmethod
+    def _post(cls, action, **params):
+        api_url = smm_db.get_api_url()
+        api_key = smm_db.get_api_key()
+        if not api_key:
+            return {'error': 'مفتاح API غير مضبوط - من فضلك أضفه من لوحة الأدمن'}
+        data = {'key': api_key, 'action': action, **params}
+        for attempt in range(2):
+            try:
+                r = _smm_req.post(api_url, data=data, timeout=(7, 20))
+                r.raise_for_status()
+                return r.json()
+            except _smm_req.exceptions.Timeout:
+                if attempt == 0:
+                    continue
+                return {'error': 'انتهت مهلة الاتصال بالموقع'}
+            except _smm_req.exceptions.ConnectionError:
+                return {'error': 'تعذّر الاتصال بالموقع'}
+            except Exception as e:
+                return {'error': str(e)}
+        return {'error': 'فشل الاتصال'}
+
+    @classmethod
+    def get_balance(cls):
+        try:
+            r = cls._post('balance')
+            if 'error' in r:
+                return None, r['error']
+            return float(r.get('balance', 0)), r.get('currency', 'USD')
+        except Exception as e:
+            return None, str(e)
+
+    @classmethod
+    def get_services(cls):
+        try:
+            r = cls._post('services')
+            return r if isinstance(r, list) else []
+        except Exception:
+            return []
+
+    @classmethod
+    def create_order(cls, service_id, link, quantity):
+        return cls._post('add', service=service_id, link=link, quantity=quantity)
+
+    @classmethod
+    def get_status(cls, order_id):
+        return cls._post('status', order=order_id)
+
+
+# ══════════════════════════════════════════════════════════════════
+#   3) دوال مساعدة للحساب
+# ══════════════════════════════════════════════════════════════════
+def smm_calc_price(svc, qty):
+    """يحسب سعر الطلب بالنقاط = (points_per_1000 * qty) / 1000"""
+    try:
+        ppk = int(svc.get('points_per_1000', 0))
+        return max(1, int(round((ppk * int(qty)) / 1000.0)))
+    except Exception:
+        return 0
+
+
+def smm_user_points(user_id):
+    info = get(user_id) or {}
+    return int(info.get('coins', 0))
+
+
+def smm_deduct_points(user_id, points):
+    info = get(user_id) or {'coins': 0, 'id': user_id, 'premium': False, 'users': []}
+    info['coins'] = max(0, int(info.get('coins', 0)) - int(points))
+    set_user(user_id, info)
+    return info['coins']
+
+
+def smm_refund_points(user_id, points):
+    info = get(user_id) or {'coins': 0, 'id': user_id, 'premium': False, 'users': []}
+    info['coins'] = int(info.get('coins', 0)) + int(points)
+    set_user(user_id, info)
+    return info['coins']
+
+
+# ── حالة عملية الطلب لكل مستخدم ──
+_smm_pending = {}   # uid -> {step, svc_id, link, qty}
+
+
+# ══════════════════════════════════════════════════════════════════
+#   4) واجهة المستخدم (Inline keyboards)
+# ══════════════════════════════════════════════════════════════════
+def _smm_back_kb(target='smm_main'):
+    k = mk(row_width=1)
+    k.add(btn(f'🔙 رجوع', callback_data=target, color='red'))
+    return k
+
+
+def _smm_render_main(cid, mid):
+    if not smm_db.get_enabled():
+        bot.edit_message_text(
+            text=f'{_SMM_EMOJI_FAIL} <b>قسم خدمات SMM معطّل حالياً</b>\n\nتواصل مع الإدارة.',
+            chat_id=cid, message_id=mid, reply_markup=_smm_back_kb('ps'), parse_mode='HTML'
+        )
+        return
+    apps = smm_db.list_apps(only_active=True)
+    k = mk(row_width=2)
+    if not apps:
+        k.add(btn(f'{_SMM_EMOJI_FAIL} لا توجد أقسام بعد', callback_data='smm_main', color='red'))
+    else:
+        row = []
+        for a in apps:
+            row.append(btn(f"{a.get('emoji','💎')} {a['name']}", callback_data=f"smm_app_{a['id']}", color='blue'))
+            if len(row) == 2:
+                k.row(*row); row = []
+        if row:
+            k.row(*row)
+    k.add(btn(f"{_SMM_EMOJI_ORDER} طلباتي", callback_data='smm_my_orders', color='green'))
+    k.add(btn(f'🔙 رجوع', callback_data='ps', color='red'))
+    rate = smm_db.get_rate()
+    txt = (
+        f'{_SMM_EMOJI_MAIN} <b>خدمات Xfollowr</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'{_SMM_EMOJI_APP} زيادة متابعين / مشاهدات / لايكات\n'
+        f'{_SMM_EMOJI_SVC} تسليم سريع وآلي من Xfollowr\n'
+        f'{_SMM_EMOJI_BAL} الدفع بالنقاط ({rate:,} نقطة / دولار)\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'اختر القسم الذي تريده 👇'
+    )
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _smm_render_app(cid, mid, app_id):
+    app = smm_db.get_app(app_id)
+    if not app:
+        bot.answer_callback_query  # noop
+        _smm_render_main(cid, mid)
+        return
+    svcs = smm_db.list_services(app_id=app_id, only_active=True)
+    k = mk(row_width=1)
+    if not svcs:
+        k.add(btn(f'{_SMM_EMOJI_FAIL} لا توجد خدمات بعد', callback_data='smm_main', color='red'))
+    else:
+        for s in svcs:
+            label = f"{s.get('emoji','✨')} {s['name']} • {s['points_per_1000']:,} نقطة/1000"
+            k.add(btn(label, callback_data=f"smm_svc_{s['id']}", color='blue'))
+    k.add(btn('🔙 رجوع', callback_data='smm_main', color='red'))
+    txt = (
+        f"{app.get('emoji','💎')} <b>{app['name']}</b>\n"
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'{_SMM_EMOJI_SVC} اختر الخدمة 👇'
+    )
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _smm_render_service(cid, mid, svc_id):
+    s = smm_db.get_service(svc_id)
+    if not s:
+        _smm_render_main(cid, mid); return
+    app = smm_db.get_app(s.get('app_id'))
+    k = mk(row_width=2)
+    k.add(btn(f'{_SMM_EMOJI_NEW} طلب جديد', callback_data=f"smm_order_{svc_id}", color='green'))
+    k.add(btn('🔙 رجوع', callback_data=f"smm_app_{s['app_id']}", color='red'))
+    txt = (
+        f"{s.get('emoji','✨')} <b>{s['name']}</b>\n"
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f"📂 القسم    : {app.get('name','-') if app else '-'}\n"
+        f"💰 السعر    : <b>{s['points_per_1000']:,} نقطة / 1000</b>\n"
+        f"📉 الحد الأدنى : <b>{s['min_qty']:,}</b>\n"
+        f"📈 الحد الأقصى : <b>{s['max_qty']:,}</b>\n"
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'اضغط على {_SMM_EMOJI_NEW} لبدء الطلب'
+    )
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _smm_start_order(cid, mid, uid, svc_id):
+    s = smm_db.get_service(svc_id)
+    if not s:
+        _smm_render_main(cid, mid); return
+    _smm_pending[uid] = {'step': 'link', 'svc_id': svc_id}
+    k = mk(row_width=1)
+    k.add(btn('❌ إلغاء و رجوع', callback_data=f"smm_svc_{svc_id}", color='red'))
+    x = bot.edit_message_text(
+        text=(
+            f"{s.get('emoji','✨')} <b>{s['name']}</b>\n"
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f'🔗 <b>أرسل الرابط</b> (رابط القناة/المنشور/الحساب):'
+        ),
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+    bot.register_next_step_handler(x, _smm_handle_link, svc_id)
+
+
+def _smm_handle_link(message, svc_id):
+    uid = message.from_user.id
+    cid = message.chat.id
+    link = (message.text or '').strip()
+    s = smm_db.get_service(svc_id)
+    if not s:
+        bot.send_message(cid, f'{_SMM_EMOJI_FAIL} الخدمة لم تعد متوفرة'); return
+    if not link or not (link.startswith('http://') or link.startswith('https://') or link.startswith('@') or link.startswith('t.me')):
+        k = mk(row_width=1)
+        k.add(btn('❌ إلغاء و رجوع', callback_data=f"smm_svc_{svc_id}", color='red'))
+        msg = bot.send_message(cid, f'{_SMM_EMOJI_FAIL} رابط غير صالح. ابعت رابط يبدأ بـ http(s) أو t.me أو @ :', reply_markup=k)
+        bot.register_next_step_handler(msg, _smm_handle_link, svc_id)
+        return
+    _smm_pending[uid] = {'step': 'qty', 'svc_id': svc_id, 'link': link}
+    k = mk(row_width=1)
+    k.add(btn('❌ إلغاء و رجوع', callback_data=f"smm_svc_{svc_id}", color='red'))
+    msg = bot.send_message(
+        cid,
+        f'{_SMM_EMOJI_OK} الرابط: <code>{link}</code>\n\n'
+        f'🔢 <b>أرسل الكمية</b> (من <b>{s["min_qty"]:,}</b> إلى <b>{s["max_qty"]:,}</b>):',
+        parse_mode='HTML', reply_markup=k
+    )
+    bot.register_next_step_handler(msg, _smm_handle_qty, svc_id)
+
+
+def _smm_handle_qty(message, svc_id):
+    uid = message.from_user.id
+    cid = message.chat.id
+    s = smm_db.get_service(svc_id)
+    if not s:
+        bot.send_message(cid, f'{_SMM_EMOJI_FAIL} الخدمة لم تعد متوفرة'); return
+    pend = _smm_pending.get(uid, {})
+    if pend.get('step') != 'qty' or pend.get('svc_id') != svc_id:
+        return
+    txt = (message.text or '').strip()
+    try:
+        qty = int(txt)
+    except:
+        k = mk(); k.add(btn('❌ إلغاء و رجوع', callback_data=f"smm_svc_{svc_id}", color='red'))
+        msg = bot.send_message(cid, f'{_SMM_EMOJI_FAIL} رقم غير صالح. ابعت كمية رقمية:', reply_markup=k)
+        bot.register_next_step_handler(msg, _smm_handle_qty, svc_id)
+        return
+    if qty < s['min_qty'] or qty > s['max_qty']:
+        k = mk(); k.add(btn('❌ إلغاء و رجوع', callback_data=f"smm_svc_{svc_id}", color='red'))
+        msg = bot.send_message(cid,
+            f'{_SMM_EMOJI_FAIL} الكمية خارج النطاق. أرسل رقم بين <b>{s["min_qty"]:,}</b> و <b>{s["max_qty"]:,}</b>:',
+            parse_mode='HTML', reply_markup=k)
+        bot.register_next_step_handler(msg, _smm_handle_qty, svc_id)
+        return
+    price = smm_calc_price(s, qty)
+    bal = smm_user_points(uid)
+    pend['qty'] = qty
+    pend['price'] = price
+    pend['step'] = 'confirm'
+    _smm_pending[uid] = pend
+    if bal < price:
+        k = mk(row_width=1)
+        k.add(btn('💳 شحن النقاط', callback_data='charge_points', color='green'))
+        k.add(btn('🔙 رجوع', callback_data=f"smm_svc_{svc_id}", color='red'))
+        bot.send_message(cid,
+            f'{_SMM_EMOJI_FAIL} <b>رصيدك غير كافٍ</b>\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f'💰 رصيدك  : <b>{bal:,} نقطة</b>\n'
+            f'🧾 المطلوب : <b>{price:,} نقطة</b>\n'
+            f'⚠️ الفارق  : <b>{(price - bal):,} نقطة</b>',
+            parse_mode='HTML', reply_markup=k)
+        return
+    k = mk(row_width=2)
+    k.add(btn(f'{_SMM_EMOJI_OK} تأكيد الطلب', callback_data=f'smm_confirm_{svc_id}', color='green'))
+    k.add(btn('❌ إلغاء', callback_data=f"smm_svc_{svc_id}", color='red'))
+    bot.send_message(cid,
+        f'{_SMM_EMOJI_NEW} <b>تأكيد الطلب</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f"{s.get('emoji','✨')} الخدمة : <b>{s['name']}</b>\n"
+        f"🔗 الرابط : <code>{pend['link']}</code>\n"
+        f"🔢 الكمية : <b>{qty:,}</b>\n"
+        f'💰 السعر   : <b>{price:,} نقطة</b>\n'
+        f'💠 رصيدك   : <b>{bal:,} نقطة</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f'اضغط تأكيد لتنفيذ الطلب',
+        parse_mode='HTML', reply_markup=k)
+
+
+def _smm_do_confirm(call, svc_id):
+    uid = call.from_user.id
+    cid = call.message.chat.id
+    mid = call.message.message_id
+    pend = _smm_pending.get(uid)
+    s = smm_db.get_service(svc_id)
+    if not pend or pend.get('step') != 'confirm' or pend.get('svc_id') != svc_id or not s:
+        _cb_alert(call, text='⚠️ انتهت جلسة الطلب، ابدأ من جديد', show_alert=True)
+        _smm_render_main(cid, mid)
+        return
+    price = int(pend['price']); qty = int(pend['qty']); link = pend['link']
+    bal = smm_user_points(uid)
+    if bal < price:
+        _cb_alert(call, text='⛔ رصيدك غير كافٍ', show_alert=True)
+        return
+    smm_deduct_points(uid, price)
+    order_id = smm_db.next_order_id()
+    auto = smm_db.get_auto_approve()
+    order = {
+        'id': order_id, 'user_id': uid, 'service_id': svc_id,
+        'service_name': s['name'], 'api_service_id': s['api_service_id'],
+        'link': link, 'quantity': qty, 'price_points': price,
+        'status': 'sending' if auto else 'pending_approval',
+        'api_order_id': '', 'api_status': '',
+        'created_at': int(_smm_time.time()),
+    }
+    smm_db.save_order(order)
+    _smm_pending.pop(uid, None)
+    bot.edit_message_text(
+        text=(
+            f'{_SMM_EMOJI_WAIT} <b>جارٍ تنفيذ طلبك...</b>\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f'🆔 رقم الطلب : <b>#{order_id}</b>\n'
+            f'💰 المخصوم    : <b>{price:,} نقطة</b>\n'
+        ),
+        chat_id=cid, message_id=mid, parse_mode='HTML'
+    )
+    if auto:
+        # ابعت للـ API دلوقتي
+        _smm_send_to_api(order_id)
+    else:
+        smm_db.update_order(order_id, status='pending_approval')
+        bot.send_message(cid,
+            f'{_SMM_EMOJI_WAIT} <b>طلبك في انتظار موافقة الإدارة</b>\n'
+            f'🆔 رقم الطلب : <b>#{order_id}</b>\n'
+            f'سيتم تنفيذه بعد المراجعة',
+            parse_mode='HTML', reply_markup=_smm_back_kb('smm_main'))
+        _smm_notify_admin_new_order(order_id)
+
+
+def _smm_send_to_api(order_id):
+    """يبعت الطلب للموقع — يتنادى تلقائي أو من الأدمن"""
+    o = smm_db.get_order(order_id)
+    if not o: return
+    r = smm_api.create_order(o['api_service_id'], o['link'], o['quantity'])
+    if isinstance(r, dict) and r.get('order'):
+        smm_db.update_order(order_id, status='in_progress', api_order_id=str(r['order']), api_status='Pending')
+        try:
+            bot.send_message(o['user_id'],
+                f'{_SMM_EMOJI_OK} <b>تم إرسال طلبك بنجاح</b>\n'
+                f'━━━━━━━━━━━━━━━━━━━\n'
+                f"🆔 رقم الطلب     : <b>#{order_id}</b>\n"
+                f"🌐 رقم Xfollowr : <code>{r['order']}</code>\n"
+                f"{o.get('service_name','-')} • الكمية {o['quantity']:,}\n"
+                f'استخدم زر "طلباتي" لتتبع الحالة',
+                parse_mode='HTML', reply_markup=_smm_back_kb('smm_main'))
+        except: pass
+    else:
+        # خطأ — رجّع النقاط
+        err = (r or {}).get('error') or (r or {}).get('message') or 'فشل التنفيذ على الموقع'
+        smm_refund_points(o['user_id'], o['price_points'])
+        smm_db.update_order(order_id, status='failed', api_status=str(err)[:200])
+        try:
+            bot.send_message(o['user_id'],
+                f'{_SMM_EMOJI_FAIL} <b>فشل تنفيذ الطلب #{order_id}</b>\n'
+                f'السبب: <code>{str(err)[:200]}</code>\n'
+                f'💰 تم استرجاع <b>{o["price_points"]:,} نقطة</b> لرصيدك',
+                parse_mode='HTML', reply_markup=_smm_back_kb('smm_main'))
+        except: pass
+
+
+def _smm_notify_admin_new_order(order_id):
+    o = smm_db.get_order(order_id)
+    if not o: return
+    try:
+        admins = db.get('admins') or []
+        if isinstance(admins, str):
+            try: admins = _smm_json.loads(admins)
+            except: admins = []
+        if not isinstance(admins, list): admins = []
+        k = mk(row_width=2)
+        k.add(btn('✅ موافقة وتنفيذ', callback_data=f'smm_adm_approve_{order_id}', color='green'),
+              btn('❌ رفض واسترجاع', callback_data=f'smm_adm_reject_{order_id}', color='red'))
+        txt = (
+            f'{_SMM_EMOJI_NEW} <b>طلب SMM جديد #{order_id}</b>\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f"👤 المستخدم : <code>{o['user_id']}</code>\n"
+            f"📦 الخدمة   : {o.get('service_name','-')}\n"
+            f"🔗 الرابط   : <code>{o['link']}</code>\n"
+            f"🔢 الكمية   : <b>{o['quantity']:,}</b>\n"
+            f"💰 المخصوم  : <b>{o['price_points']:,} نقطة</b>"
+        )
+        for aid in admins:
+            try: bot.send_message(int(aid), txt, parse_mode='HTML', reply_markup=k)
+            except: pass
+    except Exception as e:
+        print(f'[smm notify admin] {e}')
+
+
+def _smm_render_my_orders(cid, mid, uid):
+    orders = smm_db.list_user_orders(uid, limit=10)
+    k = mk(row_width=1)
+    if not orders:
+        txt = f'{_SMM_EMOJI_ORDER} <b>طلباتي</b>\n━━━━━━━━━━━━━━━━━━━\nلا توجد طلبات سابقة'
+    else:
+        lines = [f'{_SMM_EMOJI_ORDER} <b>آخر طلباتي</b>', '━━━━━━━━━━━━━━━━━━━']
+        for o in orders:
+            st = smm_api.arabic_status(o.get('api_status') or o.get('status') or 'pending')
+            lines.append(
+                f"#{o['id']} • {o.get('service_name','-')[:30]}\n"
+                f"  🔢 {o['quantity']:,} • 💰 {o['price_points']:,} نقطة • {st}"
+            )
+            k.add(btn(f"🔍 تتبع #{o['id']}", callback_data=f"smm_track_{o['id']}", color='blue'))
+        txt = '\n'.join(lines)
+    k.add(btn('🔙 رجوع', callback_data='smm_main', color='red'))
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _smm_track_order(call, order_id):
+    cid = call.message.chat.id; mid = call.message.message_id
+    o = smm_db.get_order(order_id)
+    if not o:
+        _cb_alert(call, text='الطلب غير موجود', show_alert=True); return
+    if o['user_id'] != call.from_user.id and call.from_user.id not in _smm_get_admins():
+        _cb_alert(call, text='هذا الطلب ليس لك', show_alert=True); return
+    # حدّث الحالة من API لو كان موجود
+    if o.get('api_order_id'):
+        r = smm_api.get_status(o['api_order_id'])
+        if isinstance(r, dict) and r.get('status'):
+            new_status = r['status']
+            smm_db.update_order(order_id, api_status=new_status,
+                                status='completed' if new_status.lower() in ('completed','partial') else o.get('status'))
+            o = smm_db.get_order(order_id)
+    k = mk(row_width=1)
+    k.add(btn('🔄 تحديث الحالة', callback_data=f"smm_track_{order_id}", color='blue'))
+    k.add(btn('🔙 رجوع للطلبات', callback_data='smm_my_orders', color='red'))
+    st = smm_api.arabic_status(o.get('api_status') or o.get('status'))
+    bot.edit_message_text(
+        text=(
+            f'{_SMM_EMOJI_ORDER} <b>تفاصيل الطلب #{order_id}</b>\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f"📦 {o.get('service_name','-')}\n"
+            f"🔗 <code>{o['link']}</code>\n"
+            f"🔢 الكمية : <b>{o['quantity']:,}</b>\n"
+            f"💰 السعر  : <b>{o['price_points']:,} نقطة</b>\n"
+            f"🌐 رقم Xfollowr : <code>{o.get('api_order_id','-')}</code>\n"
+            f"📊 الحالة : {st}"
+        ),
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+def _smm_get_admins():
+    try:
+        admins = db.get('admins') or []
+        if isinstance(admins, str):
+            admins = _smm_json.loads(admins)
+        return [int(a) for a in admins] if isinstance(admins, list) else []
+    except:
+        return []
+
+
+# ══════════════════════════════════════════════════════════════════
+#   5) لوحة الأدمن لإدارة SMM
+# ══════════════════════════════════════════════════════════════════
+_smm_admin_pending = {}   # uid -> {action, step, ...}
+
+
+def _smm_is_admin(uid):
+    return int(uid) in _smm_get_admins()
+
+
+def _smm_render_admin_panel(cid, mid, uid):
+    if not _smm_is_admin(uid):
+        _cb_alert_msg(cid, mid, '⛔ صلاحية أدمن مطلوبة'); return
+    enabled = smm_db.get_enabled()
+    auto = smm_db.get_auto_approve()
+    rate = smm_db.get_rate()
+    api_url = smm_db.get_api_url()
+    api_key = smm_db.get_api_key()
+    api_key_show = (api_key[:6] + '…' + api_key[-4:]) if len(api_key) > 12 else (api_key or '— غير مضبوط —')
+    k = mk(row_width=2)
+    k.add(
+        btn(f"{'🟢' if enabled else '🔴'} {'مُفعّل' if enabled else 'معطّل'}", callback_data='smm_adm_toggle', color='green' if enabled else 'red'),
+        btn(f"{'⚡ تلقائي' if auto else '🛂 يدوي'}", callback_data='smm_adm_toggle_auto', color='green' if auto else 'blue'),
+    )
+    k.add(btn('🔑 تعديل مفتاح API', callback_data='smm_adm_set_key', color='blue'),
+          btn('🌐 تعديل API URL', callback_data='smm_adm_set_url', color='blue'))
+    k.add(btn(f'💱 سعر النقطة ({rate:,}/$)', callback_data='smm_adm_set_rate', color='green'))
+    k.add(btn('📂 إدارة الأقسام', callback_data='smm_adm_apps', color='blue'),
+          btn('✨ إدارة الخدمات', callback_data='smm_adm_svcs', color='blue'))
+    k.add(btn('📦 الطلبات المعلقة', callback_data='smm_adm_pending', color='red'))
+    k.add(btn('💠 رصيد Xfollowr', callback_data='smm_adm_balance', color='green'),
+          btn('📥 جلب الخدمات من API', callback_data='smm_adm_fetch', color='blue'))
+    k.add(btn('🔙 رجوع للوحة الأدمن', callback_data='adm_back_main', color='red'))
+    txt = (
+        f'{_SMM_EMOJI_ADMIN} <b>إدارة خدمات Xfollowr</b>\n'
+        f'━━━━━━━━━━━━━━━━━━━\n'
+        f"🌐 API URL : <code>{api_url}</code>\n"
+        f"🔑 API Key : <code>{api_key_show}</code>\n"
+        f"💱 المعدّل  : <b>{rate:,} نقطة / $</b>\n"
+        f"⚙️ الحالة  : {'🟢 مُفعّل' if enabled else '🔴 معطّل'}\n"
+        f"🚀 التنفيذ : {'⚡ تلقائي' if auto else '🛂 يدوي بموافقة'}\n"
+        f"━━━━━━━━━━━━━━━━━━━\n"
+        f"📂 الأقسام : <b>{len(smm_db.list_apps())}</b>\n"
+        f"✨ الخدمات : <b>{len(smm_db.list_services())}</b>"
+    )
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _cb_alert_msg(cid, mid, text):
+    try:
+        bot.edit_message_text(text=text, chat_id=cid, message_id=mid)
+    except: pass
+
+
+def _smm_admin_apps_panel(cid, mid):
+    apps = smm_db.list_apps()
+    k = mk(row_width=1)
+    for a in apps:
+        st = '🟢' if a.get('active', True) else '🔴'
+        k.add(btn(f"{st} {a.get('emoji','💎')} {a['name']} (#{a['id']})", callback_data=f"smm_adm_app_{a['id']}", color='blue'))
+    k.add(btn('➕ إضافة قسم جديد', callback_data='smm_adm_app_add', color='green'))
+    k.add(btn('🔙 رجوع', callback_data='adm_cat_smm', color='red'))
+    bot.edit_message_text(
+        text=f'📂 <b>إدارة الأقسام</b>\n━━━━━━━━━━━━━━━━━━━\nالعدد: <b>{len(apps)}</b>',
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+def _smm_admin_app_view(cid, mid, app_id):
+    a = smm_db.get_app(app_id)
+    if not a:
+        _smm_admin_apps_panel(cid, mid); return
+    svcs_count = len(smm_db.list_services(app_id=app_id))
+    k = mk(row_width=2)
+    k.add(btn(f"{'🔴 تعطيل' if a.get('active', True) else '🟢 تفعيل'}", callback_data=f'smm_adm_app_toggle_{app_id}', color='blue'))
+    k.add(btn('✏️ تعديل الاسم', callback_data=f'smm_adm_app_rename_{app_id}', color='blue'),
+          btn('🎨 تعديل الإيموجي', callback_data=f'smm_adm_app_emoji_{app_id}', color='blue'))
+    k.add(btn('🗑️ حذف القسم وكل خدماته', callback_data=f'smm_adm_app_del_{app_id}', color='red'))
+    k.add(btn('🔙 رجوع', callback_data='smm_adm_apps', color='red'))
+    bot.edit_message_text(
+        text=(
+            f"{a.get('emoji','💎')} <b>{a['name']}</b>\n"
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f"🆔 المعرّف : <b>{a['id']}</b>\n"
+            f"⚙️ الحالة  : {'🟢 مفعّل' if a.get('active', True) else '🔴 معطّل'}\n"
+            f"✨ خدماته  : <b>{svcs_count}</b>"
+        ),
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+def _smm_admin_svcs_panel(cid, mid):
+    apps = smm_db.list_apps()
+    k = mk(row_width=1)
+    if not apps:
+        k.add(btn('⚠️ أضف قسماً أولاً', callback_data='smm_adm_apps', color='red'))
+    else:
+        for a in apps:
+            cnt = len(smm_db.list_services(app_id=a['id']))
+            k.add(btn(f"{a.get('emoji','💎')} {a['name']} ({cnt})", callback_data=f"smm_adm_svcs_in_{a['id']}", color='blue'))
+    k.add(btn('🔙 رجوع', callback_data='adm_cat_smm', color='red'))
+    bot.edit_message_text(
+        text='✨ <b>إدارة الخدمات</b>\n━━━━━━━━━━━━━━━━━━━\nاختر القسم لإدارة خدماته:',
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+def _smm_admin_svcs_in_app(cid, mid, app_id):
+    a = smm_db.get_app(app_id)
+    if not a:
+        _smm_admin_svcs_panel(cid, mid); return
+    svcs = smm_db.list_services(app_id=app_id)
+    k = mk(row_width=1)
+    for s in svcs:
+        st = '🟢' if s.get('active', True) else '🔴'
+        k.add(btn(f"{st} {s.get('emoji','✨')} {s['name']} • {s['points_per_1000']:,}/1k",
+                  callback_data=f"smm_adm_svc_{s['id']}", color='blue'))
+    k.add(btn('➕ إضافة خدمة', callback_data=f'smm_adm_svc_add_{app_id}', color='green'))
+    k.add(btn('🔙 رجوع', callback_data='smm_adm_svcs', color='red'))
+    bot.edit_message_text(
+        text=f"{a.get('emoji','💎')} <b>{a['name']}</b> — خدمات\n━━━━━━━━━━━━━━━━━━━\nالعدد: <b>{len(svcs)}</b>",
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+def _smm_admin_svc_view(cid, mid, svc_id):
+    s = smm_db.get_service(svc_id)
+    if not s:
+        _smm_admin_svcs_panel(cid, mid); return
+    a = smm_db.get_app(s.get('app_id'))
+    k = mk(row_width=2)
+    k.add(btn(f"{'🔴 تعطيل' if s.get('active', True) else '🟢 تفعيل'}", callback_data=f'smm_adm_svc_toggle_{svc_id}', color='blue'))
+    k.add(btn('✏️ الاسم', callback_data=f'smm_adm_svc_e_name_{svc_id}', color='blue'),
+          btn('🎨 الإيموجي', callback_data=f'smm_adm_svc_e_emoji_{svc_id}', color='blue'))
+    k.add(btn('🆔 معرف API', callback_data=f'smm_adm_svc_e_api_{svc_id}', color='blue'),
+          btn('💰 السعر/1000', callback_data=f'smm_adm_svc_e_price_{svc_id}', color='green'))
+    k.add(btn('📉 الحد الأدنى', callback_data=f'smm_adm_svc_e_min_{svc_id}', color='blue'),
+          btn('📈 الحد الأقصى', callback_data=f'smm_adm_svc_e_max_{svc_id}', color='blue'))
+    k.add(btn('🗑️ حذف الخدمة', callback_data=f'smm_adm_svc_del_{svc_id}', color='red'))
+    k.add(btn('🔙 رجوع', callback_data=f"smm_adm_svcs_in_{s['app_id']}", color='red'))
+    bot.edit_message_text(
+        text=(
+            f"{s.get('emoji','✨')} <b>{s['name']}</b>\n"
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f"📂 القسم    : {a.get('name','-') if a else '-'}\n"
+            f"🆔 معرّف API: <code>{s['api_service_id']}</code>\n"
+            f"💰 السعر    : <b>{s['points_per_1000']:,} نقطة / 1000</b>\n"
+            f"📉 الأدنى   : <b>{s['min_qty']:,}</b>\n"
+            f"📈 الأقصى   : <b>{s['max_qty']:,}</b>\n"
+            f"⚙️ الحالة   : {'🟢 مفعّل' if s.get('active', True) else '🔴 معطّل'}"
+        ),
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+def _smm_admin_balance(cid, mid):
+    bal, info = smm_api.get_balance()
+    if bal is None:
+        txt = f'{_SMM_EMOJI_FAIL} <b>تعذّر جلب الرصيد</b>\n\n<code>{info}</code>'
+    else:
+        txt = (
+            f'{_SMM_EMOJI_BAL} <b>رصيد Xfollowr</b>\n'
+            f'━━━━━━━���━━━━━━━━━━━\n'
+            f'💵 الرصيد  : <b>{bal:.2f} {info}</b>\n'
+            f'💱 يساوي   : <b>{int(bal * smm_db.get_rate()):,} نقطة</b>'
+        )
+    k = mk(); k.add(btn('🔙 رجوع', callback_data='adm_cat_smm', color='red'))
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _smm_admin_pending_panel(cid, mid):
+    pending = smm_db.list_pending_orders()
+    k = mk(row_width=1)
+    if not pending:
+        txt = '📦 <b>الطلبات المعلقة</b>\n━━━━━━━━━━━━━━━━━━━\n✅ لا توجد طلبات معلقة'
+    else:
+        lines = ['📦 <b>الطلبات المعلقة</b>', '━━━━━━━━━━━━━━━━━━━']
+        for o in pending[:15]:
+            lines.append(f"#{o['id']} • 👤<code>{o['user_id']}</code> • {o.get('service_name','-')[:25]} • {o['quantity']:,}")
+            k.add(btn(f"⚙️ #{o['id']} - {o.get('service_name','')[:20]}", callback_data=f"smm_adm_order_{o['id']}", color='blue'))
+        txt = '\n'.join(lines)
+    k.add(btn('🔙 رجوع', callback_data='adm_cat_smm', color='red'))
+    bot.edit_message_text(text=txt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+
+
+def _smm_admin_order_view(cid, mid, order_id):
+    o = smm_db.get_order(order_id)
+    if not o:
+        _smm_admin_pending_panel(cid, mid); return
+    k = mk(row_width=2)
+    if o.get('status') == 'pending_approval':
+        k.add(btn('✅ موافقة وتنفيذ', callback_data=f'smm_adm_approve_{order_id}', color='green'),
+              btn('❌ رفض واسترجاع', callback_data=f'smm_adm_reject_{order_id}', color='red'))
+    k.add(btn('🔙 رجوع', callback_data='smm_adm_pending', color='red'))
+    st = smm_api.arabic_status(o.get('api_status') or o.get('status'))
+    bot.edit_message_text(
+        text=(
+            f'📦 <b>طلب #{order_id}</b>\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
+            f"👤 المستخدم : <code>{o['user_id']}</code>\n"
+            f"📦 الخدمة   : {o.get('service_name','-')}\n"
+            f"🔗 الرابط   : <code>{o['link']}</code>\n"
+            f"🔢 الكمية   : <b>{o['quantity']:,}</b>\n"
+            f"💰 المخصوم  : <b>{o['price_points']:,} نقطة</b>\n"
+            f"📊 الحالة   : {st}"
+        ),
+        chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+    )
+
+
+# ── prompt حوارات الأدمن (لإضافة/تعديل قسم/خدمة/إعداد) ──
+def _smm_prompt_text(call, prompt, key, **state):
+    cid = call.message.chat.id; mid = call.message.message_id; uid = call.from_user.id
+    _smm_admin_pending[uid] = {'key': key, **state}
+    k = mk(); k.add(btn('❌ إلغاء', callback_data='adm_cat_smm', color='red'))
+    x = bot.edit_message_text(text=prompt, chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML')
+    bot.register_next_step_handler(x, _smm_handle_admin_input)
+
+
+def _smm_handle_admin_input(message):
+    uid = message.from_user.id; cid = message.chat.id
+    state = _smm_admin_pending.pop(uid, None)
+    if not state: return
+    text = (message.text or '').strip()
+    key = state.get('key')
+    try:
+        if key == 'api_key':
+            smm_db.set_api_key(text)
+            bot.send_message(cid, '✅ تم حفظ مفتاح API')
+        elif key == 'api_url':
+            smm_db.set_api_url(text)
+            bot.send_message(cid, '✅ تم حفظ API URL')
+        elif key == 'rate':
+            smm_db.set_rate(int(text))
+            bot.send_message(cid, f'✅ تم تحديث المعدل إلى {int(text):,} نقطة/$')
+        elif key == 'app_add':
+            # text = "اسم|إيموجي"
+            parts = text.split('|', 1)
+            name = parts[0].strip()
+            emoji = (parts[1].strip() if len(parts) > 1 else '💎') or '💎'
+            aid = smm_db.add_app(name, emoji)
+            bot.send_message(cid, f'✅ تم إضافة القسم #{aid} : {emoji} {name}')
+        elif key == 'app_rename':
+            smm_db.update_app(state['app_id'], name=text)
+            bot.send_message(cid, '✅ تم تعديل الاسم')
+        elif key == 'app_emoji':
+            smm_db.update_app(state['app_id'], emoji=text or '💎')
+            bot.send_message(cid, '✅ تم تعديل الإيموجي')
+        elif key == 'svc_add':
+            # text = "اسم|api_id|points_per_1000|min|max|emoji"
+            parts = [p.strip() for p in text.split('|')]
+            if len(parts) < 5:
+                bot.send_message(cid, '❌ التنسيق غير صحيح. استخدم: الاسم|معرف_API|سعر_الـ1000|الحد_الأدنى|الحد_الأقصى|الإيموجي')
+                return
+            name, api_id, ppk, mn, mx = parts[0], parts[1], parts[2], parts[3], parts[4]
+            emoji = parts[5] if len(parts) > 5 else '✨'
+            sid = smm_db.add_service(state['app_id'], name, api_id, int(ppk), int(mn), int(mx), emoji)
+            bot.send_message(cid, f'✅ تم إضافة الخدمة #{sid}')
+        elif key == 'svc_edit':
+            field = state['field']; svc_id = state['svc_id']
+            if field in ('points_per_1000', 'min_qty', 'max_qty'):
+                smm_db.update_service(svc_id, **{field: int(text)})
+            elif field == 'api_service_id':
+                smm_db.update_service(svc_id, api_service_id=text)
+            else:
+                smm_db.update_service(svc_id, **{field: text})
+            bot.send_message(cid, '✅ تم تحديث الخدمة')
+        else:
+            bot.send_message(cid, '⚠️ إجراء غير معروف')
+    except Exception as e:
+        bot.send_message(cid, f'❌ خطأ: {e}')
+
+
+# ══════════════════════════════════════════════════════════════════
+#   6) Callback handler — نتعامل مع كل الـ smm_* في handler مستقل
+# ══════════════════════════════════════════════════════════════════
+@bot.callback_query_handler(func=lambda c: c.data and c.data.startswith('smm_') or c.data == 'adm_cat_smm')
+def _smm_callback_router(call):
+    try:
+        data = call.data; uid = call.from_user.id
+        cid = call.message.chat.id; mid = call.message.message_id
+        try: bot.answer_callback_query(call.id)
+        except: pass
+
+        # ── واجهة المستخدم ──
+        if data == 'smm_main':
+            _smm_render_main(cid, mid); return
+        if data.startswith('smm_app_') and not data.startswith('smm_adm_'):
+            _smm_render_app(cid, mid, int(data.split('_')[-1])); return
+        if data.startswith('smm_svc_') and not data.startswith('smm_adm_'):
+            _smm_render_service(cid, mid, int(data.split('_')[-1])); return
+        if data.startswith('smm_order_'):
+            _smm_start_order(cid, mid, uid, int(data.split('_')[-1])); return
+        if data.startswith('smm_confirm_'):
+            _smm_do_confirm(call, int(data.split('_')[-1])); return
+        if data == 'smm_my_orders':
+            _smm_render_my_orders(cid, mid, uid); return
+        if data.startswith('smm_track_'):
+            _smm_track_order(call, int(data.split('_')[-1])); return
+
+        # ── لوحة الأدمن ──
+        if not _smm_is_admin(uid):
+            _cb_alert(call, text='⛔ صلاحية أدمن مطلوبة', show_alert=True); return
+
+        if data == 'adm_cat_smm':
+            _smm_render_admin_panel(cid, mid, uid); return
+        if data == 'smm_adm_toggle':
+            smm_db.set_enabled(not smm_db.get_enabled())
+            _smm_render_admin_panel(cid, mid, uid); return
+        if data == 'smm_adm_toggle_auto':
+            smm_db.set_auto_approve(not smm_db.get_auto_approve())
+            _smm_render_admin_panel(cid, mid, uid); return
+        if data == 'smm_adm_set_key':
+            _smm_prompt_text(call, '🔑 أرسل مفتاح API الجديد:', 'api_key'); return
+        if data == 'smm_adm_set_url':
+            _smm_prompt_text(call, f'🌐 أرسل API URL الجديد:\n(الافتراضي: <code>{_SMM_DEFAULT_API_URL}</code>)', 'api_url'); return
+        if data == 'smm_adm_set_rate':
+            _smm_prompt_text(call, '💱 أرسل عدد النقاط مقابل 1$ (رقم فقط):', 'rate'); return
+        if data == 'smm_adm_balance':
+            _smm_admin_balance(cid, mid); return
+        if data == 'smm_adm_fetch':
+            services = smm_api.get_services()
+            cnt = len(services) if isinstance(services, list) else 0
+            k = mk(); k.add(btn('🔙 رجوع', callback_data='adm_cat_smm', color='red'))
+            sample = ''
+            if cnt:
+                sample = '\n\n🔎 <b>أول 10 خدمات (للمعرف):</b>\n' + '\n'.join(
+                    [f"<code>{s.get('service','?')}</code> • {str(s.get('name',''))[:50]} • {s.get('rate','?')}$" for s in services[:10]]
+                )
+            bot.edit_message_text(
+                text=f'📥 <b>جلب الخدمات من API</b>\n━━━━━━━━━━━━━━━━━━━\n✅ عدد الخدمات المتاحة: <b>{cnt}</b>{sample}',
+                chat_id=cid, message_id=mid, reply_markup=k, parse_mode='HTML'
+            ); return
+
+        if data == 'smm_adm_apps':
+            _smm_admin_apps_panel(cid, mid); return
+        if data == 'smm_adm_app_add':
+            _smm_prompt_text(call,
+                'إضافة قسم جديد:\nأرسل النص بهذا التنسيق:\n<code>اسم القسم|🎨</code>\n\nمثال: <code>انستجرام|📸</code>',
+                'app_add'); return
+        if data.startswith('smm_adm_app_toggle_'):
+            aid = int(data.split('_')[-1])
+            a = smm_db.get_app(aid)
+            if a: smm_db.update_app(aid, active=not a.get('active', True))
+            _smm_admin_app_view(cid, mid, aid); return
+        if data.startswith('smm_adm_app_rename_'):
+            aid = int(data.split('_')[-1])
+            _smm_prompt_text(call, '✏️ أرسل الاسم الجديد للقسم:', 'app_rename', app_id=aid); return
+        if data.startswith('smm_adm_app_emoji_'):
+            aid = int(data.split('_')[-1])
+            _smm_prompt_text(call, '🎨 أرسل الإيموجي الجديد:', 'app_emoji', app_id=aid); return
+        if data.startswith('smm_adm_app_del_'):
+            aid = int(data.split('_')[-1])
+            smm_db.delete_app(aid)
+            _smm_admin_apps_panel(cid, mid); return
+        if data.startswith('smm_adm_app_'):
+            _smm_admin_app_view(cid, mid, int(data.split('_')[-1])); return
+
+        if data == 'smm_adm_svcs':
+            _smm_admin_svcs_panel(cid, mid); return
+        if data.startswith('smm_adm_svcs_in_'):
+            _smm_admin_svcs_in_app(cid, mid, int(data.split('_')[-1])); return
+        if data.startswith('smm_adm_svc_add_'):
+            aid = int(data.split('_')[-1])
+            _smm_prompt_text(call,
+                '➕ <b>إضافة خدمة جديدة</b>\nأرسل البيانات بالتنسيق التالي:\n'
+                '<code>الاسم|معرف_API|سعر_الـ1000|الحد_الأدنى|الحد_الأقصى|الإيموجي</code>\n\n'
+                'مثال: <code>متابعين انستجرام|1234|500|100|10000|👥</code>\n\n'
+                '💡 معرّف API: اجلب الخدمات من زر «جلب الخدمات من API» لتعرف الـ ID',
+                'svc_add', app_id=aid); return
+        if data.startswith('smm_adm_svc_toggle_'):
+            sid = int(data.split('_')[-1])
+            s = smm_db.get_service(sid)
+            if s: smm_db.update_service(sid, active=not s.get('active', True))
+            _smm_admin_svc_view(cid, mid, sid); return
+        if data.startswith('smm_adm_svc_del_'):
+            sid = int(data.split('_')[-1])
+            s = smm_db.get_service(sid)
+            app_id = s.get('app_id') if s else None
+            smm_db.delete_service(sid)
+            if app_id: _smm_admin_svcs_in_app(cid, mid, app_id)
+            else: _smm_admin_svcs_panel(cid, mid)
+            return
+        if data.startswith('smm_adm_svc_e_'):
+            # smm_adm_svc_e_<field>_<id>
+            parts = data.split('_')
+            field_short = parts[4]; sid = int(parts[5])
+            field_map = {
+                'name':  ('name',            '✏️ أرسل الاسم الجديد:'),
+                'emoji': ('emoji',           '🎨 أرسل الإيموجي الجديد:'),
+                'api':   ('api_service_id',  '🆔 أرسل معرف API الجديد (رقم):'),
+                'price': ('points_per_1000', '💰 أرسل السعر الجديد (نقاط لكل 1000):'),
+                'min':   ('min_qty',         '📉 أرسل الحد الأدنى الجديد:'),
+                'max':   ('max_qty',         '📈 أرسل الحد الأقصى الجديد:'),
+            }
+            if field_short in field_map:
+                field, prompt = field_map[field_short]
+                _smm_prompt_text(call, prompt, 'svc_edit', svc_id=sid, field=field)
+            return
+        if data.startswith('smm_adm_svc_'):
+            _smm_admin_svc_view(cid, mid, int(data.split('_')[-1])); return
+
+        if data == 'smm_adm_pending':
+            _smm_admin_pending_panel(cid, mid); return
+        if data.startswith('smm_adm_order_'):
+            _smm_admin_order_view(cid, mid, int(data.split('_')[-1])); return
+        if data.startswith('smm_adm_approve_'):
+            oid = int(data.split('_')[-1])
+            o = smm_db.get_order(oid)
+            if o and o.get('status') == 'pending_approval':
+                smm_db.update_order(oid, status='sending')
+                _smm_send_to_api(oid)
+                _cb_alert(call, text='✅ تم تنفيذ الطلب', show_alert=False)
+            _smm_admin_pending_panel(cid, mid); return
+        if data.startswith('smm_adm_reject_'):
+            oid = int(data.split('_')[-1])
+            o = smm_db.get_order(oid)
+            if o and o.get('status') == 'pending_approval':
+                smm_refund_points(o['user_id'], o['price_points'])
+                smm_db.update_order(oid, status='rejected')
+                try:
+                    bot.send_message(o['user_id'],
+                        f'{_SMM_EMOJI_FAIL} <b>تم رفض طلبك #{oid}</b>\n'
+                        f'💰 تم استرجاع <b>{o["price_points"]:,} نقطة</b> لرصيدك',
+                        parse_mode='HTML')
+                except: pass
+                _cb_alert(call, text='❌ تم رفض الطلب', show_alert=False)
+            _smm_admin_pending_panel(cid, mid); return
+
+    except Exception as e:
+        try: bot.send_message(call.message.chat.id, f'⚠️ خطأ في SMM: {e}')
+        except: pass
+
+
+print('[✅] Xfollowr module جاهز')
 
 
 if __name__ == "__main__":
