@@ -817,8 +817,8 @@ CONFIG = {
         "comments": 100,
         "spam": 100
     },
-    "bot_token": "8853901231:AAEnrNPC_-FIBlYnAIRsVoph6cwi63CM4w8",
-    "give_bot_token": "8961757018:AAF8hUMXJA4r1WJYbUUCV20vx1sUIAVtXdI",
+    "bot_token": "8853901231:AAEPRhS-fgIuoT8ynove_AUvQzqbfPew1dA",
+    "give_bot_token": "8961757018:AAEBKF9bW38wp01HfAml5-wNk2Cq_lc4jW8",
     "sell_gmail":     "mmppp6231@gmail.com",
     "rent_reward":    100
 }
