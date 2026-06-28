@@ -1272,7 +1272,7 @@ def _edit_force_sub_msg(bot_obj, chat_id, message_id, not_subscribed):
     except Exception:
         bot_obj.send_message(chat_id=chat_id, text=txt, reply_markup=keys, parse_mode="HTML")
 
-# cache نتائج الاشتراك — مفتاح: user_id، قي��ة: (ok, not_sub, timestamp)
+# cache نتائج الاشتراك — مفتاح: user_id، قي����ة: (ok, not_sub, timestamp)
 _subs_cache: dict = {}
 _SUBS_CACHE_TTL = 600  # 10 دقائق — يقلل API calls بشكل كبير
 
@@ -1372,6 +1372,39 @@ import threading as _vip_th
 _VIP_LOG_PATH = _vip_os.path.join(_vip_os.path.dirname(_vip_os.path.abspath(__file__)), 'vip_errors.log')
 _vip_lock = _vip_th.Lock()
 _vip_last_notify = {'ts': 0}   # لتجنب غرق السودو بالرسائل
+
+# ============================================================
+# 🚫 Banned-Account Tracker — يتتبع الحسابات المحظورة من تيليجرام
+# ============================================================
+import time as _vip_time
+
+_BAN_TTL_SECONDS = 24 * 60 * 60  # 24 ساعة بعدها يجرب تاني (حظر السبام ممكن يترفع)
+
+def _ban_key(session):
+    return f'banned_session_{session[:20]}'
+
+def _is_session_banned(session):
+    """يرجّع True لو الحساب محفوظ كمحظور ولسه في فترة الحظر"""
+    try:
+        ban_ts = db.get(_ban_key(session))
+        if not ban_ts:
+            return False
+        if _vip_time.time() - float(ban_ts) > _BAN_TTL_SECONDS:
+            db.delete(_ban_key(session))
+            return False
+        return True
+    except Exception:
+        return False
+
+def _mark_session_banned(session, reason='UserBannedInChannel'):
+    """يعلّم الحساب كمحظور لـ 24 ساعة"""
+    try:
+        db.set(_ban_key(session), _vip_time.time())
+        # عداد الإجمالي (للإحصائيات)
+        total = db.get('banned_sessions_total') or 0
+        db.set('banned_sessions_total', int(total) + 1)
+    except Exception:
+        pass
 
 def _vip_log(stage, err, extra=None):
     """يسجّل خطأ + يبعته للسودو (mute لـ 30ث بين كل رسالة عشان ميصرخش)"""
@@ -2034,6 +2067,9 @@ async def check_chat(session: str, link: str):
 
 async def send_comment(session, url, text):
     """يبعت تعليق حقيقي في الـ discussion group المربوط بالقناة — مش في القناة نفسها"""
+    # تخطي الحسابات المحظورة فوراً بدون فتح الجلسة (سريع جداً)
+    if _is_session_banned(session):
+        return False
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
     try:
@@ -2082,6 +2118,10 @@ async def send_comment(session, url, text):
                 reply_to_message_id=disc_msg.id
             )
         except Exception as se:
+            # لو الحساب محظور من تيليجرام (spam restriction) — نعلّمه عشان منضيعش وقت تاني
+            _err_name = type(se).__name__
+            if _err_name in ('UserBannedInChannel', 'ChannelPrivate', 'ChatWriteForbidden', 'UserDeactivated', 'UserDeactivatedBan'):
+                _mark_session_banned(session, reason=_err_name)
             _vip_log('send_comment.send', se, extra=f"group={disc_msg.chat.id} reply_to={disc_msg.id}")
             return False
 
@@ -2108,6 +2148,72 @@ async def join_chatp(session, invite_link):
     except Exception as e:
         print('An error occurred:', str(e))
         return False
+
+# ============================================================
+# 📩 قارئ أكواد التحقق — يفتح جلسة ويقرأ رسائل @Telegram الرسمية
+# ============================================================
+async def _read_codes_from_session(session, mode='telegram'):
+    """يرجّع أكواد التحقق من حساب.
+    mode='telegram' → من شات @Telegram (777000) فقط — أكواد تسجيل الدخول
+    mode='all' → من آخر 15 شات (لو الكود جاي من بوت/خدمة تانية)
+    """
+    import re as _re_cd
+    result = {'status': 'unknown', 'codes': [], 'messages': [], 'name': '', 'phone': '', 'user_id': None, 'error': ''}
+    client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
+                    lang_code="ar", no_updates=True, session_string=session)
+    try:
+        try:
+            await client.start()
+        except Exception as e:
+            result['status'] = 'session_error'
+            result['error'] = f"{type(e).__name__}: {e}"
+            return result
+        try:
+            me = await client.get_me()
+            result['name'] = me.first_name or ''
+            result['phone'] = me.phone_number or ''
+            result['user_id'] = me.id
+        except Exception:
+            pass
+        try:
+            if mode == 'telegram':
+                async for msg in client.get_chat_history(777000, limit=10):
+                    text = msg.text or msg.caption or ''
+                    if not text:
+                        continue
+                    ts = msg.date.strftime('%H:%M:%S') if msg.date else '?'
+                    result['messages'].append({'time': ts, 'sender': 'Telegram', 'text': text[:600]})
+                    seen = set()
+                    for m in _re_cd.finditer(r'(?<!\d)(\d{4,7})(?!\d)', text):
+                        c = m.group(1)
+                        if c in seen: continue
+                        seen.add(c)
+                        result['codes'].append({'code': c, 'time': ts, 'sender': 'Telegram'})
+            else:  # mode == 'all'
+                async for dialog in client.get_dialogs(limit=15):
+                    chat = dialog.chat
+                    msg = dialog.top_message
+                    if not msg: continue
+                    text = msg.text or msg.caption or ''
+                    if not text: continue
+                    ts = msg.date.strftime('%H:%M:%S') if msg.date else '?'
+                    sender = chat.title or chat.first_name or chat.username or str(chat.id)
+                    result['messages'].append({'time': ts, 'sender': sender, 'text': text[:400]})
+                    seen = set()
+                    for m in _re_cd.finditer(r'(?<!\d)(\d{4,7})(?!\d)', text):
+                        c = m.group(1)
+                        if c in seen: continue
+                        seen.add(c)
+                        result['codes'].append({'code': c, 'time': ts, 'sender': sender})
+            result['status'] = 'ok'
+        except Exception as e:
+            result['status'] = 'read_error'
+            result['error'] = f"{type(e).__name__}: {e}"
+    finally:
+        try: await client.stop()
+        except: pass
+    return result
+
 
 async def dump_votess(session, link):
     c = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
@@ -4537,6 +4643,240 @@ def cmd_vipdebug(message):
     except Exception as e:
         bot.reply_to(message, f'❌ فشل قراءة الملف: {e}')
 
+@bot.message_handler(commands=['checkaccounts', 'banned'])
+def cmd_checkaccounts(message):
+    """يوري إحصائيات الحسابات المحظورة من تيليجرام"""
+    cid = message.from_user.id
+    if cid != sudo and cid not in (db.get("admins") or []):
+        return
+    try:
+        accounts = db.get('accounts') or []
+        total = len(accounts)
+        banned_now = 0
+        for acc in accounts:
+            s = acc.get('s', '') if isinstance(acc, dict) else ''
+            if s and _is_session_banned(s):
+                banned_now += 1
+        healthy = total - banned_now
+        ever_banned = int(db.get('banned_sessions_total') or 0)
+        pct = (banned_now / total * 100) if total else 0
+        msg = (
+            f"📊 حالة الحسابات:\n\n"
+            f"· إجمالي: <b>{total}</b>\n"
+            f"· محظورة حالياً: <b>{banned_now}</b> ({pct:.1f}%)\n"
+            f"· سليمة: <b>{healthy}</b>\n"
+            f"· إجمالي حالات حظر مسجّلة: <b>{ever_banned}</b>\n\n"
+        )
+        if pct > 50:
+            msg += "⚠️ أكتر من نص الحسابات محظورة — الخدمات هتفشل غالباً. لازم تجدد الـ pool."
+        elif pct > 20:
+            msg += "🟡 نسبة الحظر عالية — جدد بعض الحسابات قريباً."
+        else:
+            msg += "✅ الوضع تمام — أغلب الحسابات سليمة."
+        bot.reply_to(message, msg, parse_mode='HTML')
+    except Exception as e:
+        bot.reply_to(message, f'❌ {e}')
+
+@bot.message_handler(commands=['unbanall'])
+def cmd_unbanall(message):
+    """يمسح علامات الحظر من كل الحسابات (لإعادة المحاولة)"""
+    cid = message.from_user.id
+    if cid != sudo:
+        return
+    try:
+        cleared = 0
+        accounts = db.get('accounts') or []
+        for acc in accounts:
+            s = acc.get('s', '') if isinstance(acc, dict) else ''
+            if s and db.get(_ban_key(s)):
+                db.delete(_ban_key(s))
+                cleared += 1
+        db.set('banned_sessions_total', 0)
+        bot.reply_to(message, f'✅ اتمسح حظر {cleared} حساب — هيبدأوا يتجربوا تاني في الطلب الجاي')
+    except Exception as e:
+        bot.reply_to(message, f'❌ {e}')
+
+# ============================================================
+# 📩 /getcode — واجهة قراءة أكواد التحقق من الحسابات
+# ============================================================
+_GC_PER_PAGE = 8
+
+def _gc_account_label(idx, acc):
+    """يبني label للحساب من أي مفاتيح موجودة"""
+    if not isinstance(acc, dict):
+        return f"#{idx+1}"
+    parts = [f"#{idx+1}"]
+    phone = acc.get('p') or acc.get('phone') or acc.get('phone_number')
+    if phone:
+        ph_str = str(phone)
+        if not ph_str.startswith('+'):
+            ph_str = '+' + ph_str
+        parts.append(ph_str)
+    name = acc.get('n') or acc.get('name') or acc.get('first_name')
+    if name:
+        parts.append(str(name)[:18])
+    return " · ".join(parts)
+
+def _gc_render_list(page=0):
+    accounts = db.get('accounts') or []
+    total = len(accounts)
+    if total == 0:
+        kb = mk(1)
+        kb.add(TelebotButton(text="❌ إغلاق", callback_data="gc_close"))
+        return "📩 مفيش حسابات في الـ pool", kb
+    pages = (total + _GC_PER_PAGE - 1) // _GC_PER_PAGE
+    page = max(0, min(page, pages - 1))
+    start = page * _GC_PER_PAGE
+    end = min(start + _GC_PER_PAGE, total)
+    kb = mk(1)
+    for i in range(start, end):
+        label = _gc_account_label(i, accounts[i])
+        kb.add(TelebotButton(text=f"📱 {label}", callback_data=f"gc_a_{i}_t"))
+    nav = []
+    if page > 0:
+        nav.append(TelebotButton(text="◀️", callback_data=f"gc_p_{page-1}"))
+    nav.append(TelebotButton(text=f"📄 {page+1}/{pages}", callback_data="gc_noop"))
+    if page < pages - 1:
+        nav.append(TelebotButton(text="▶️", callback_data=f"gc_p_{page+1}"))
+    kb.row(*nav)
+    kb.add(TelebotButton(text="❌ إغلاق", callback_data="gc_close"))
+    text = (
+        f"📩 <b>قارئ أكواد التحقق</b>\n\n"
+        f"إجمالي الحسابات: <b>{total}</b>\n"
+        f"اختر حساب لقراءة آخر الأكواد من <code>@Telegram</code>:"
+    )
+    return text, kb
+
+@bot.message_handler(commands=['getcode', 'codes'])
+def cmd_getcode(message):
+    cid = message.from_user.id
+    if cid != sudo and cid not in (db.get("admins") or []):
+        bot.reply_to(message, '❌ أدمن فقط')
+        return
+    text, kb = _gc_render_list(page=0)
+    bot.send_message(cid, text, reply_markup=kb, parse_mode='HTML')
+
+@bot.callback_query_handler(func=lambda c: bool(c.data) and c.data.startswith('gc_'))
+def cb_getcode(call):
+    cid = call.from_user.id
+    if cid != sudo and cid not in (db.get("admins") or []):
+        try: bot.answer_callback_query(call.id, '❌ مش متاح')
+        except: pass
+        return
+    data = call.data or ''
+
+    if data == 'gc_noop':
+        try: bot.answer_callback_query(call.id)
+        except: pass
+        return
+
+    if data == 'gc_close':
+        try: bot.delete_message(call.message.chat.id, call.message.message_id)
+        except: pass
+        try: bot.answer_callback_query(call.id)
+        except: pass
+        return
+
+    if data.startswith('gc_p_') or data.startswith('gc_back_'):
+        try:
+            page = int(data.rsplit('_', 1)[1])
+        except Exception:
+            page = 0
+        text, kb = _gc_render_list(page=page)
+        try:
+            bot.edit_message_text(text, chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=kb, parse_mode='HTML')
+        except Exception: pass
+        try: bot.answer_callback_query(call.id)
+        except: pass
+        return
+
+    if data.startswith('gc_a_'):
+        parts = data.split('_')
+        try:
+            idx = int(parts[2])
+            mode_char = parts[3] if len(parts) > 3 else 't'
+        except Exception:
+            try: bot.answer_callback_query(call.id, '❌ خطأ')
+            except: pass
+            return
+        mode = 'telegram' if mode_char == 't' else 'all'
+        accounts = db.get('accounts') or []
+        if idx < 0 or idx >= len(accounts):
+            try: bot.answer_callback_query(call.id, '❌ الحساب مش موجود')
+            except: pass
+            return
+        try: bot.answer_callback_query(call.id, '⏳ جاري القراءة...')
+        except: pass
+        try:
+            bot.edit_message_text(
+                f"⏳ جاري قراءة الحساب {_gc_account_label(idx, accounts[idx])} ...",
+                chat_id=call.message.chat.id, message_id=call.message.message_id
+            )
+        except Exception: pass
+        sess = accounts[idx].get('s', '') if isinstance(accounts[idx], dict) else ''
+        if not sess:
+            try:
+                bot.edit_message_text("❌ مفيش session للحساب ده", chat_id=call.message.chat.id, message_id=call.message.message_id)
+            except: pass
+            return
+        try:
+            res = _pyro_run(_read_codes_from_session(sess, mode=mode))
+        except Exception as e:
+            try:
+                bot.edit_message_text(f"❌ خطأ تشغيل: {type(e).__name__}: {e}", chat_id=call.message.chat.id, message_id=call.message.message_id)
+            except: pass
+            return
+        # بناء الرسالة
+        hdr = [f"📱 <b>الحساب #{idx+1}</b>"]
+        if res.get('phone'): hdr.append(f"+{res['phone']}")
+        if res.get('name'): hdr.append(str(res['name'])[:25])
+        header = " · ".join(hdr)
+        mode_label = "@Telegram فقط" if mode == 'telegram' else "كل الشاتات"
+        if res.get('status') != 'ok':
+            body = f"\n\n❌ <b>فشل</b>: <code>{(res.get('error') or res.get('status') or '?')[:300]}</code>"
+        else:
+            codes = res.get('codes', [])
+            if codes:
+                codes_section = "\n\n🔑 <b>الأكواد المستخرجة:</b>\n"
+                seen = set()
+                for c in codes[:10]:
+                    if c['code'] in seen: continue
+                    seen.add(c['code'])
+                    src = f" — {c.get('sender','')}" if mode == 'all' else ''
+                    codes_section += f"· <code>{c['code']}</code>  ({c['time']}{src})\n"
+            else:
+                codes_section = "\n\n⚠️ مفيش أكواد في آخر الرسائل"
+            msgs = res.get('messages', [])
+            if msgs:
+                msgs_section = "\n\n📋 <b>آخر الرسائل:</b>"
+                for m in msgs[:4]:
+                    sender = str(m.get('sender', ''))[:30]
+                    ts = m.get('time', '')
+                    mtext = str(m.get('text', '')).replace('<', '&lt;').replace('>', '&gt;')[:250]
+                    msgs_section += f"\n\n<i>[{ts}] {sender}:</i>\n{mtext}"
+            else:
+                msgs_section = ""
+            body = codes_section + msgs_section
+        full = f"{header}\n<i>المصدر: {mode_label}</i>{body}"
+        if len(full) > 3900:
+            full = full[:3900] + '\n\n...(مقصوص)'
+        kb2 = mk(2)
+        switch_char = 'a' if mode == 'telegram' else 't'
+        switch_label = "📬 من كل الشاتات" if mode == 'telegram' else "📩 من @Telegram فقط"
+        kb2.add(
+            TelebotButton(text="🔄 تحديث", callback_data=f"gc_a_{idx}_{mode_char}"),
+            TelebotButton(text=switch_label, callback_data=f"gc_a_{idx}_{switch_char}")
+        )
+        kb2.add(TelebotButton(text="🔙 رجوع للقائمة", callback_data="gc_back_0"))
+        kb2.add(TelebotButton(text="❌ إغلاق", callback_data="gc_close"))
+        try:
+            bot.edit_message_text(full, chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=kb2, parse_mode='HTML')
+        except Exception:
+            try:
+                bot.send_message(call.message.chat.id, full, reply_markup=kb2, parse_mode='HTML')
+            except: pass
+        return
+
 @bot.message_handler(commands=['vipclear'])
 def cmd_vipclear(message):
     """يمسح ملف أخطاء الـ VIP"""
@@ -4994,7 +5334,7 @@ def _log_btn(call):
             f'🆔 الأيدي : <code>{u.id}</code>\n'
             f'🔘 الزر : <b>{label}</b>\n'
             f'🔑 الكود : <code>{data}</code>\n'
-            f'🕐 الوقت : {now}\n'
+            f'🕐 ال��قت : {now}\n'
             f'━━━━━━━━━━━━━━━━'
         )
         threading.Thread(
@@ -5264,7 +5604,7 @@ def _c_rs_worker(call):
             "━━━━━━━━━━━━━━━━━━━\n"
             "📩 لبيع أرقامك مقابل نقاط تواصل مع المالك:\n"
             "👤 <b>@DA3M_6</b>\n"
-            "━━━━━━━━━━━━━━━━━━━"
+            "━���━━━━━━━━━━━━━━━━━"
         )
         bot.edit_message_text(text=sell_txt, chat_id=cid, message_id=mid, reply_markup=sell_keys, parse_mode='HTML')
         return
@@ -6301,7 +6641,7 @@ def _c_rs_worker(call):
             frames = [
                 "🎡 ━━━━━━━━━━━━━━\n┃ 🌟 💫 ⚡ 🔥 💎 👑 🏆 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ 💫 ⚡ 🔥 💎 👑 🏆 🌟 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
-                "🎡 ━━━━━━━━━━━━━━\n┃ ⚡ 🔥 💎 👑 🏆 🌟 💫 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
+                "🎡 ━━━━━━━��━━━━━━\n┃ ⚡ 🔥 💎 👑 🏆 🌟 💫 ┃\n━━━━━━━━━━━━━━\n\n⏳ <b>العجلة تدور...</b>",
                 "🎡 ━━━━━━━━━━━━━━\n┃ 🔥 💎 👑 🏆 🌟 💫 ⚡ ┃\n━━━━━━━━━━━━━━\n\n🎲 <b>على وشك التوقف...</b>",
             ]
             msg = bot.edit_message_text(chat_id=cid, message_id=mid, text=frames[0], parse_mode='HTML')
@@ -6811,7 +7151,7 @@ def _c_rs_worker(call):
                 '📎 أرسل الآن رابط المنشور\n'
                 '━━━━━━━━━━━━━━━━━━━\n\n'
                 '• مثال: https://t.me/channel/123\n'
-                '• سيتم إضافة <b>50 تفاعل</b> على المنشور\n'
+                '• سيتم إضافة <b>50 تفاعل</b> ��لى المنشور\n'
                 '• + <b>مشاهدات تلقائية</b> على أول 10 منشورات قادمة في القناة'
             ),
             chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML"
@@ -7042,7 +7382,7 @@ def _c_rs_worker(call):
         prem = 'Premium' if (info or {}).get('premium') is True else 'Free'
         _phones_list = acc.get('phones', [])
         _phones_txt  = '\n'.join([f'  📞 {p}' for p in _phones_list]) if _phones_list else '  لا يوجد'
-        textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحاله التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد التحويلات التي قمت بها : {trans}\n• [📱] الأرقام ��لمسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
+        textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحال�� التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد التحويلات التي قمت بها : {trans}\n• [📱] الأرقام ��لمسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
         bot.edit_message_text(text=textt, chat_id=cid, message_id=mid, reply_markup=bk_cancel, parse_mode="HTML")
         return
     if data == 'setforce':
@@ -7451,7 +7791,7 @@ def _c_rs_worker(call):
         keys.add(btn('رجوع', callback_data='buy_force_sub', color='red'))
         contact_line = f"\n📞 للتواصل: @{vf_contact}" if vf_contact else "\n📞 تواصل مع الأدمن لإتمام الدفع"
         txt = (
-            f"📱 دفع بفودافون كاش\n\n"
+            f"📱 دفع بف��دافون كاش\n\n"
             f"💰 المبلغ المطلوب: {fsub_cash} جنيه\n"
             f"📲 رقم فودافون كاش:\n<code>{vf_number}</code>"
             f"{contact_line}\n\n"
@@ -10683,7 +11023,7 @@ def get_time_votes(message, amount):
         bot.reply_to(message, text=f'• رجاء ارسل وقت الرشق بين 0 و 500')
         return
     if wait_time > 500:
-        bot.reply_to(message, text=f'• رجاء ارسل وقت الرشق بين 0 و 500')
+        bot.reply_to(message, text=f'• رجاء ارس�� وقت الرشق بين 0 و 500')
         return
     _req_txt = (
         f'╔══════════════════════╗\n'
@@ -11391,7 +11731,7 @@ def get_react_url_first(message, amount):
 
 
     async def _fetch_reacts_special():
-        """يجيب الـ custom emoji reactions من القناة باستخدام Raw API"""
+        """يجيب ��لـ custom emoji reactions من القناة باستخدام Raw API"""
         try:
             session = db.get('accounts')[0]['s']
             client = Client('::memory::', api_id=API_ID, api_hash=API_HASH,
@@ -12537,7 +12877,7 @@ def _umg_amount(message, uid, op):
         return
     b = db.get('user_' + str(uid))
     if not b:
-        bot.reply_to(message, '❌ المستخدم مش موجود')
+        bot.reply_to(message, '❌ ��لمستخدم مش موجود')
         return
     cur = int(b.get('coins', 0) or 0)
     if op == 'add':
@@ -13626,7 +13966,7 @@ def _handle_ai_support_chat(message):
         except Exception:
             pass
     except Exception as _e:
-        try: bot.reply_to(message, f'⚠️ خطأ غير متوقّع: {_e}')
+        try: bot.reply_to(message, f'⚠�� خطأ غير متوقّع: {_e}')
         except Exception: pass
 
 def _ai_ask(user_text):
@@ -13716,7 +14056,7 @@ def _gen_start_menu(uid, first_name):
         f'╚══════════════════╝\n\n'
         f'👋 أهلاً {first_name}!\n\n'
         f'💎 <b>مكافأة كل رقم :</b> {_rent_pts:,} نقطة\n'
-        f'📱 <b>أرقام سجّلتها أنت :</b> {_user_submitted} رقم\n'
+        f'📱 <b>��رقام سجّلتها أنت :</b> {_user_submitted} رقم\n'
         f'📅 <b>حالة التسجيل اليوم :</b> {_daily_txt}\n'
         + (f'📊 <b>إجمالي الأرقام :</b> {len(db.get("accounts") or []):,} رقم\n' if uid == int(sudo) or uid in (db.get("admins") or []) else '')
         + f'\n━━━━━━━━━━━━━━━━━━━\n'
@@ -14195,7 +14535,7 @@ def gen_msg_handler(message):
 
 import asyncio as _pyro_asyncio
 
-# ── Event loop دائم يعمل في thread مخصص ──
+# ── Event loop دائم يعمل في thread مخ��ص ──
 # الكود القديم كان بينده run_until_complete على نفس الـ loop من أكتر من thread
 # في نفس الوقت (تسج��ل أرقام + تنفيذ طلبات)، وده بيرمي:
 #   RuntimeError: This event loop is already running
@@ -14582,7 +14922,7 @@ def _schedule_reminder_for_user(uid: int):
 
 def _reminder_loop():
     """
-    حلقة واحدة بس — تفحص كل 5 ثواني الـ dict وتبعت لمن حان وقته.
+    حلقة واحدة بس ��� تفحص كل 5 ثواني الـ dict وتبعت لمن حان وقته.
     بديل عن مئات الـ threading.Timer.
     """
     while True:
