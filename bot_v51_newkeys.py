@@ -1,21 +1,3 @@
-#════════════════════════════════════════════════════════════
-# ████████     ███    ████████ ██     ██    ███    ██    ██ 
-# ██     ██   ██ ██      ██    ███   ███   ██ ██   ███   ██ 
-# ██     ██  ██   ██     ██    ████ ████  ██   ██  ████  ██ 
-# ████████  ██     ██    ██    ██ ███ ██ ██     ██ ██ ██ ██ 
-# ██     ██ █████████    ██    ██     ██ █████████ ██  ████ 
-# ██     ██ ██     ██    ██    ██     ██ ██     ██ ██   ███ 
-# ████████  ██     ██    ██    ██     ██ ██     ██ ██    ██ 
-#
-#  [العروسه بتاعتي]
-#
-#  R3D_19 Bot Engine — Python Telegram Bot
-#  Developer : @R3D_19  (🦇 Batman 🦇)
-#
-#  "صُنع بسهر وتعب — احترم المصدر"
-#  "كل سطر هنا تحت حراستي — العبث به اتحار"
-#  "أنا الانقام... كل سطر هنا تحت حراستي"
-# ════════════════════════════════════════════════════════════
 import os
 import sys
 
@@ -1954,12 +1936,33 @@ async def poll(session, link, pi):
             pass
 
 async def userbot(session, user):
+    """
+    رشق مستخدمين بوت — يفتح بوت مستهدف عبر آلية StartBot الحقيقية.
+    ⚠️ إصلاح حقيقي: StartBot محتاجة bot=InputUser للبوت المستهدف،
+    peer=InputPeer لـ"أنا نفسي" (الحساب اللي بيعمل /start) — لا نفس
+    البوت مكرر مرتين كما كان، لأن ده بيخلي تيليجرام ميسجّلش الإحالة
+    فعليًا حتى لو الاستدعاء نفذ بدون استثناء (نجاح كاذب).
+    """
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
     await client.start()
     try:
-        await client.send_message(user, "/start")
-        return True
+        try:
+            from pyrogram.raw.functions.messages import StartBot
+            from pyrogram.raw.types import InputPeerSelf
+            bot_peer = await client.resolve_peer(user)  # InputUser للبوت المستهدف
+            await client.invoke(
+                StartBot(
+                    bot=bot_peer,
+                    peer=InputPeerSelf(),   # "أنا نفسي" — النوع الرسمي المخصص لده
+                    random_id=__import__('random').randint(0, 2**63),
+                    start_param=''
+                )
+            )
+            return True
+        except Exception as e:
+            print(f'[userbot] StartBot error: {e}')
+            return False
     except Exception as e:
         print(e)
         return False
@@ -1970,17 +1973,55 @@ async def userbot(session, user):
             pass
 
 async def linkbot(session, user, text):
+    """
+    رشق روابط دعوة (مجاني) — ينضم لبوت مستهدف عبر رابط الدعوة (deeplink).
+    ⚠️ إصلاح حقيقي: StartBot محتاجة:
+       - bot  : InputUser لِلبوت المستهدف
+       - peer : InputPeer للحساب اللي بيعمل /start (يعني الحساب الحالي نفسه)
+    الكود القديم كان بيعمل resolve_peer(user) للاتنين — يعني الاتنين كانوا
+    يشيروا لنفس البوت المستهدف، فمفيش حاجة بتمثّل "أنا" اللي بعمل /start.
+    النتيجة: تيليجرام ميسجّلش الإحالة فعليًا حتى لو الاستدعاء نفذ بدون
+    استثناء — وده سبب ظهور "اكتمل بنجاح" بدون أي دعوة حقيقية للبوت المستهدف.
+    """
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
     await client.start()
     try:
         _me = await client.get_me()
         db.set(f'is_fake_{_me.id}', True)
-        await client.send_message(user, text)
-        return True
+
+        # text بيكون مثلاً "/start 123456789" — نفصل الـ start_param ونستخدم
+        # آلية StartBot الحقيقية، نفس الطريقة المستخدمة في linkbot2 بالأسفل
+        start_param = text.replace('/start ', '').strip() if text.startswith('/start ') else None
+        if start_param:
+            try:
+                from pyrogram.raw.functions.messages import StartBot
+                from pyrogram.raw.types import InputPeerSelf
+                bot_peer = await client.resolve_peer(user)  # InputUser للبوت المستهدف
+                await client.invoke(
+                    StartBot(
+                        bot=bot_peer,
+                        peer=InputPeerSelf(),   # "أنا نفسي" — النوع الرسمي المخصص لده
+                        random_id=__import__('random').randint(0, 2**63),
+                        start_param=start_param
+                    )
+                )
+                return True
+            except Exception as e:
+                print(f'[linkbot] StartBot error: {e}')
+                return False
+        else:
+            # مفيش start_param — مجرد رسالة عادية للبوت (حالة نادرة)
+            await client.send_message(user, text)
+            return True
     except Exception as e:
         print(e)
         return False
+    finally:
+        try:
+            await client.stop()
+        except Exception:
+            pass
 
 async def linkbot2(session, user, text, channel_force):
     # channel_force يمكن ان يكون string واحد او list من القنوات
@@ -1997,7 +2038,9 @@ async def linkbot2(session, user, text, channel_force):
         print(f'[linkbot2] start error: {e}')
         return False
     try:
-        # 1) ينضم لكل القنوات الإجبارية — يتعاب على الأقل واحدة تنجح
+        _me = await client.get_me()
+
+        # 1) ينضم لكل القنوات الإجبارية — يكفي على الأقل واحدة تنجح
         joined_count = 0
         for ch in channels:
             try:
@@ -2015,17 +2058,19 @@ async def linkbot2(session, user, text, channel_force):
 
         # 2) يفتح البوت عبر الـ deeplink (start parameter) — ده اللي بيصبح إحالة حقيقية
         # text هو مثلاً "/start 123456789"
+        # ⚠️ إصلاح حقيقي: bot=InputUser للبوت المستهدف، peer=InputPeer للحساب
+        # الحالي نفسه (اللي بيعمل /start) — مش نفس البوت مكرر مرتين كما كان
         start_param = text.replace('/start ', '').strip() if text.startswith('/start ') else None
         startbot_ok = False
         if start_param:
             try:
                 from pyrogram.raw.functions.messages import StartBot
-                bot_peer  = await client.resolve_peer(user)
-                user_peer = await client.resolve_peer(user)
+                from pyrogram.raw.types import InputPeerSelf
+                bot_peer = await client.resolve_peer(user)  # InputUser للبوت المستهدف
                 await client.invoke(
                     StartBot(
                         bot=bot_peer,
-                        peer=user_peer,
+                        peer=InputPeerSelf(),   # "أنا نفسي" — النوع الرسمي المخصص لده
                         random_id=__import__('random').randint(0, 2**63),
                         start_param=start_param
                     )
@@ -2053,8 +2098,7 @@ async def linkbot2(session, user, text, channel_force):
 
         if startbot_ok:
             try:
-                _me2 = await client.get_me()
-                db.set(f'is_fake_{_me2.id}', True)
+                db.set(f'is_fake_{_me.id}', True)
             except Exception as e:
                 print(f'[linkbot2] get_me: {e}')
             return True
@@ -9226,9 +9270,7 @@ def _c_rs_worker(call):
                 continue
 
         if true >= 1:
-            for _ in range(true):
-                acc['coins'] -= _svc_price
-            db.set(f'user_{cid}', acc)
+            _ok, _new_coins, acc = _user_coins_atomic_update(cid, lambda c: c - (true * _svc_price))
         addord()
         buys = int(db.get(f"user_{cid}_buys")) if db.exists(f"user_{cid}_buys") else 0
         db.set(f"user_{cid}_buys", buys + 1)
@@ -10795,9 +10837,7 @@ def votes_fsub_chforce(message, amount, wait_time, vote_url):
             print(e)
             continue
     if true >= 1:
-        for ix in range(true):
-            acc['coins'] -= votes_fsub_price
-        db.set(f'user_{message.from_user.id}', acc)
+        _ok, _new_coins, acc = _user_coins_atomic_update(message.from_user.id, lambda c: c - (true * votes_fsub_price))
     addord()
     user_id = message.from_user.id
     buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
@@ -10934,8 +10974,7 @@ def linkbot_chforce(message, amount, url):
             print(e)
             continue
     if true >= 1:
-        acc['coins'] -= int(true * _lb2_price)
-        db.set(f'user_{message.from_user.id}', acc)
+        _ok, _new_coins, acc = _user_coins_atomic_update(message.from_user.id, lambda c: c - int(true * _lb2_price))
     addord()
     user_id = message.from_user.id
     buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
@@ -11028,8 +11067,9 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(send_comment(y['s'], url, text))
-                    true += 1
+                    x = _pyro_run(send_comment(y['s'], url, text))
+                    if x is True: true += 1
+                    else: false += 1
                 except: false += 1
             unit_price = svc_price('comments')
 
@@ -11048,8 +11088,9 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(reactions(y['s'], url, like))
-                    true += 1
+                    x = _pyro_run(reactions(y['s'], url, like))
+                    if x is True: true += 1
+                    else: false += 1
                 except: false += 1
             unit_price = svc_price('react')
 
@@ -11057,8 +11098,9 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(view(y['s'], url))
-                    true += 1
+                    x = _pyro_run(view(y['s'], url))
+                    if x is True: true += 1
+                    else: false += 1
                 except: false += 1
             unit_price = svc_price('views')
 
@@ -11068,8 +11110,9 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(poll(y['s'], url, int(poll_idx)))
-                    true += 1
+                    x = _pyro_run(poll(y['s'], url, int(poll_idx)))
+                    if x is True: true += 1
+                    else: false += 1
                 except: false += 1
             unit_price = svc_price('votes')
 
@@ -11123,8 +11166,9 @@ def def_execute_order(uid: int, cb=None):
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
                 try:
-                    _pyro_run(send_message(y['s'], chat=url, text=text))
-                    true += 1
+                    x = _pyro_run(send_message(y['s'], chat=url, text=text))
+                    if x is True: true += 1
+                    else: false += 1
                 except: false += 1
             unit_price = spam_price
 
@@ -11721,9 +11765,7 @@ def react_special_get_url_final(message, amount):
             continue
 
     if true >= 1:
-        for _ in range(true):
-            acc['coins'] -= _svc_price
-        db.set(f'user_{cid}', acc)
+        _ok, _new_coins, acc = _user_coins_atomic_update(cid, lambda c: c - (true * _svc_price))
     addord()
     buys = int(db.get(f"user_{cid}_buys")) if db.exists(f"user_{cid}_buys") else 0
     db.set(f"user_{cid}_buys", buys + 1)
@@ -12178,9 +12220,7 @@ def get_url_react_special(message, url, emoji_msg):
             print(e)
             continue
     if true >= 1:
-        for ix in range(true):
-            acc['coins'] -= _svc_price
-        db.set(f'user_{message.from_user.id}', acc)
+        _ok, _new_coins, acc = _user_coins_atomic_update(message.from_user.id, lambda c: c - (true * _svc_price))
     addord()
     user_id = message.from_user.id
     buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
