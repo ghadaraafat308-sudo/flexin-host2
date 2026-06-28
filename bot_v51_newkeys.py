@@ -1,3 +1,21 @@
+════════════════════════════════════════════════════════════
+# ████████     ███    ████████ ██     ██    ███    ██    ██ 
+# ██     ██   ██ ██      ██    ███   ███   ██ ██   ███   ██ 
+# ██     ██  ██   ██     ██    ████ ████  ██   ██  ████  ██ 
+# ████████  ██     ██    ██    ██ ███ ██ ██     ██ ██ ██ ██ 
+# ██     ██ █████████    ██    ██     ██ █████████ ██  ████ 
+# ██     ██ ██     ██    ██    ██     ██ ██     ██ ██   ███ 
+# ████████  ██     ██    ██    ██     ██ ██     ██ ██    ██ 
+#
+#  [العروسه بتاعتي]
+#
+#  R3D_19 Bot Engine — Python Telegram Bot
+#  Developer : @R3D_19  (🦇 Batman 🦇)
+#
+#  "صُنع بسهر وتعب — احترم المصدر"
+#  "كل سطر هنا تحت حراستي — العبث به اتحار"
+#  "أنا الانقام... كل سطر هنا تحت حراستي"
+# ════════════════════════════════════════════════════════════
 import os
 import sys
 
@@ -1096,6 +1114,28 @@ def _get_gift_lock(code):
             lk = threading.RLock()
             _gift_locks[key] = lk
         return lk
+
+# 🔒 تحديث ذرّي لنقاط مستخدم واحد — بيمنع نفس مشكلة accounts بالضبط
+# لو حصل خصم وإضافة لنفس المستخدم في نفس اللحظة (مثلاً: خصم عقاب خروج
+# الجلسة + استرداد جلسة + هدية يومية + مكافأة إحالة) من غير قفل، آخر
+# كتابة بتمسح تعديلات اللي قبلها — يعني المستخدم ممكن "يستلم" نقاط
+# المكافأة لكن الخصم يضيع، أو العكس.
+def _user_coins_atomic_update(uid, delta_fn):
+    """
+    delta_fn(current_coins:int) -> new_coins:int
+    يقرأ بيانات المستخدم، يطبّق delta_fn على رصيده الحالي، ويحفظ
+    النتيجة — كل ده تحت قفل خاص بنفس المستخدم عشان نضمن عدم التضارب.
+    يرجع (success: bool, new_coins: int|None, user_data: dict|None)
+    """
+    with _get_user_lock(uid):
+        if not db.exists(f'user_{uid}'):
+            return False, None, None
+        udata = db.get(f'user_{uid}')
+        cur_coins = int(udata.get('coins', 0) or 0)
+        new_coins = delta_fn(cur_coins)
+        udata['coins'] = new_coins
+        db.set(f'user_{uid}', udata)
+        return True, new_coins, udata
 
 # 🔒 قفل خاص بقائمة accounts — يمنع تضارب الكتابة (race condition) بين:
 #   1) تسجيل رقم جديد (adds_session)
@@ -12935,10 +12975,9 @@ def _do_restore_session(message, phon, broken):
         return
 
     # الجلسة صح — نرجع النقاط ونضيف الجلسة
+    new_bal = '—'
     if db.exists(f'user_{owner_id}'):
-        udata = db.get(f'user_{owner_id}')
-        udata['coins'] = int(udata.get('coins', 0)) + penalty
-        db.set(f'user_{owner_id}', udata)
+        ok, new_bal, _ = _user_coins_atomic_update(owner_id, lambda c: c + penalty)
 
     adds_session(txt, phon, owner_id=owner_id)
 
@@ -12950,13 +12989,12 @@ def _do_restore_session(message, phon, broken):
         pass
 
     phone_display = phon if phon else '—'
-    new_bal = int(udata.get('coins', 0)) if db.exists(f'user_{owner_id}') else '—'
     bot.reply_to(
         message,
         f'✅ <b>تم استرداد الجلسة بنجاح!</b>\n\n'
         f'📱 الرقم: <code>{phone_display}</code>\n'
         f'💰 تم إرجاع <b>{penalty:,} نقطة</b> لرصيدك\n'
-        f'💰 رصيدك الحالي: <b>{new_bal:,} نقطة</b>',
+        f'💰 رصيدك الحالي: <b>{new_bal if isinstance(new_bal, str) else format(new_bal, ",")} نقطة</b>',
         parse_mode='HTML'
     )
 
@@ -13192,8 +13230,10 @@ def _get_session_penalty() -> int:
 async def _check_sessions_task():
     """
     فحص جلسات التأجير.
-    - الحلقة تشتغل كل دقيقة
-    - كل جلسة تُفحص مرة كل دقيقتين فقط (لتجنب إغراق تيليجرام بالاتصالات)
+    - الحلقة تشتغل كل 5 ثواني
+    - كل جلسة تُفحص فعليًا كل 8 ثواني تقريباً (أسرع بكتير من النسخة
+      القديمة اللي كانت بتفحص كل دقيقتين، وكانت بتاخد لحد دقيقتين
+      كاملتين عشان تكتشف إن جلسة خرجت)
     - بدون Grace Period وبدون انتظار فشل متكرر: أول ما يتأكد إن الجلسة
       خرجت (auth/unauthorized/deactivated/invalid) بيتم الخصم فوراً —
       لا يوجد سبب لتأخير الخصم لو الجلسة فعلاً ميتة.
@@ -13201,8 +13241,12 @@ async def _check_sessions_task():
       عبر _accounts_update_in_place، مش بقراءة كل القائمة في البداية
       وكتابتها كلها تاني في الآخر — وده اللي كان بيسبب ضياع أرقام
       اتسجلت في نفس الوقت اللي الفحص كان شغال فيه.
+    ⚠️ ملاحظة: السرعة دي مناسبة لعدد أرقام متوسط. لو عدد الأرقام
+    المسجّلة كبير جداً (مئات)، الفحص المتكرر بالسرعة دي ممكن يخلي
+    تيليجرام يعتبره نشاط غير طبيعي (rate limit) — لو حصل كذا، نقدر
+    نرفع _CHECK_INTERVAL أو وقت الحلقة تاني.
     """
-    _CHECK_INTERVAL = 120   # دقيقتين بين كل فحص فعلي لنفس الجلسة (بدل 10 دقايق)
+    _CHECK_INTERVAL = 8   # 8 ثواني بين كل فحص فعلي لنفس الجلسة (بدل دقيقتين)
 
     while True:
         try:
@@ -13267,12 +13311,9 @@ async def _check_sessions_task():
                 if not penalized and owner_id:
                     try:
                         if db.exists(f'user_{owner_id}'):
-                            udata  = db.get(f'user_{owner_id}')
-                            coins  = int(udata.get('coins', 0))
-                            # يسمح بالرصيد السالب عمداً (بدون max)
-                            new_coins = coins - _penalty_amount
-                            udata['coins'] = new_coins
-                            db.set(f'user_{owner_id}', udata)
+                            ok, new_coins, udata = _user_coins_atomic_update(
+                                owner_id, lambda c: c - _penalty_amount
+                            )
                             db.set(f'session_penalized_{phon}', True)
                             db.set(f'session_broken_{phon}', {
                                 'phone': phon, 'owner_id': owner_id, 'penalty': _penalty_amount,
@@ -13316,8 +13357,8 @@ async def _check_sessions_task():
 
         except Exception as e:
             print(f"[session_check] خطأ عام: {e}")
-        # الحلقة كل دقيقة — الفحص الفعلي per session كل _CHECK_INTERVAL
-        await asyncio.sleep(60)
+        # الحلقة كل 5 ثواني — الفحص الفعلي per session كل _CHECK_INTERVAL
+        await asyncio.sleep(5)
 
 def _start_session_checker():
     """يشغّل دالة الفحص في event loop منفصل"""
