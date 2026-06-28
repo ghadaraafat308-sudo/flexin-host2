@@ -14,6 +14,7 @@ import datetime
 import asyncio
 import threading
 import concurrent.futures
+import uuid as _uuid_mod
 
 # Rate Limiter — يمنع فلود /start
 
@@ -1096,6 +1097,89 @@ def _get_gift_lock(code):
             _gift_locks[key] = lk
         return lk
 
+# 🔒 قفل خاص بقائمة accounts — يمنع تضارب الكتابة (race condition) بين:
+#   1) تسجيل رقم جديد (adds_session)
+#   2) فحص الجلسات التلقائي (_check_sessions_task)
+#   3) تنظيف الجلسات اليدوي (_gen_clear_sessions)
+# المشكلة القديمة: كل دالة كانت تقرأ accounts، تعدّل نسختها المحلية،
+# وتكتبها بالكامل فوق القديم. لو حصلت قراءتين في نفس الوقت تقريباً
+# (مثلاً فحص جلسات بياخد دقايق طويلة وفي نص الوقت اتسجل رقم جديد)،
+# آخر كتابة كانت تمسح تعديلات التانية بدون أي رسالة خطأ — وهنا
+# "تختفي" الأرقام المُسجَّلة حديثاً أو تترجع بيانات قديمة.
+# الحل: كل تعديل على accounts لازم يحصل تحت نفس القفل، وبقراءة
+# *فورية* لأحدث نسخة من القائمة وقت الكتابة، مش نسخة قديمة محفوظة من قبل.
+_accounts_lock = threading.RLock()
+
+def _accounts_atomic_update(mutate_fn):
+    """
+    يطبّق mutate_fn على أحدث نسخة من accounts بشكل ذرّي (atomic) تحت قفل واحد.
+    mutate_fn(accounts_list) -> accounts_list الجديدة (أو None لعدم التغيير)
+    يرجع القائمة الجديدة بعد الحفظ.
+    """
+    with _accounts_lock:
+        current = db.get('accounts') or []
+        new_list = mutate_fn(list(current))
+        if new_list is None:
+            return current
+        db.set('accounts', new_list)
+        return new_list
+
+def _accounts_add_or_replace(entry: dict, match_phone: str = None) -> bool:
+    """
+    يضيف حساب جديد لقائمة accounts بشكل ذرّي، أو يستبدل حساب موجود
+    بنفس الرقم (لو match_phone محدد). يرجع True لو تم الحفظ بنجاح.
+    """
+    result_ok = {"ok": False}
+
+    def _mutate(accounts):
+        replaced = False
+        if match_phone:
+            for i, acc in enumerate(accounts):
+                if str(acc.get('phone', '')).strip() == match_phone:
+                    accounts[i] = entry
+                    replaced = True
+                    break
+        if not replaced:
+            accounts.append(entry)
+        result_ok["ok"] = True
+        return accounts
+
+    _accounts_atomic_update(_mutate)
+    return result_ok["ok"]
+
+def _accounts_remove_by_phone(phone: str) -> bool:
+    """يحذف حساب واحد من accounts بالرقم بشكل ذرّي. يرجع True لو كان موجود وتم حذفه."""
+    removed = {"ok": False}
+
+    def _mutate(accounts):
+        new_accounts = []
+        for acc in accounts:
+            if str(acc.get('phone', '')).strip() == str(phone).strip():
+                removed["ok"] = True
+                continue
+            new_accounts.append(acc)
+        return new_accounts
+
+    _accounts_atomic_update(_mutate)
+    return removed["ok"]
+
+def _accounts_update_in_place(updater_fn):
+    """
+    يمشي على كل حسابات accounts ويسمح بتعديلها واحد واحد (in place) أو حذفها،
+    بشكل ذرّي بدون أي فجوة زمنية بين القراءة والكتابة.
+    updater_fn(account_dict) -> (keep: bool, modified_account: dict)
+    يرجع القائمة النهائية بعد التعديل.
+    """
+    def _mutate(accounts):
+        new_accounts = []
+        for acc in accounts:
+            keep, modified = updater_fn(acc)
+            if keep:
+                new_accounts.append(modified if modified is not None else acc)
+        return new_accounts
+
+    return _accounts_atomic_update(_mutate)
+
 # إخفاء افتراضي لليدربورد + تصفير المهام القديمة (مرّة واحدة)
 try:
     if not db.get("_migrated_hide_lb_v2"):
@@ -1272,7 +1356,7 @@ def _edit_force_sub_msg(bot_obj, chat_id, message_id, not_subscribed):
     except Exception:
         bot_obj.send_message(chat_id=chat_id, text=txt, reply_markup=keys, parse_mode="HTML")
 
-# cache نتائج الاشتراك — مفتاح: user_id، قي��ة: (ok, not_sub, timestamp)
+# cache نتائج الاشتراك — مفتاح: user_id، قيمة: (ok, not_sub, timestamp)
 _subs_cache: dict = {}
 _SUBS_CACHE_TTL = 600  # 10 دقائق — يقلل API calls بشكل كبير
 
@@ -1398,7 +1482,7 @@ if _existing_accounts is None:
         # كان موجود لكن الـ cache لم يحمّله — نحدث الـ cache
         with db._lock:
             db._cache['accounts'] = _existing_accounts
-        print(f"[📥] ����م استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
+        print(f"[📥] تم استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
 
 # db.delete("force")  # تم التعطيل — كان يمسح القنوات الإجبارية عند كل تشغيل
 
@@ -2080,7 +2164,7 @@ def trend():
         except:
             continue
     sorted_users = sorted(users, key=lambda x: len(x.get("users", [])), reverse=True)
-    result_string = "•  المستخدمين الاكثر مشاركة لرابط ال����عوى : \n"
+    result_string = "•  المستخدمين الاكثر مشاركة لرابط الدعوة : \n"
     for user in sorted_users[:5]:
         result_string += f"🏅: ({len(user.get('users', []))}) > {user['id']}\n"
     return result_string
@@ -2512,7 +2596,7 @@ def _get_user_level_stats(uid: int) -> dict:
     refs      = len(info.get('users', []))
     orders    = int(db.get(f'user_{uid}_buys') or 0)
     coins     = int(info.get('coins', 0))
-    # ع��د الحسابات المسجّلة
+    # عدد الحسابات المسجّلة
     accounts  = db.get('accounts') or []
     acc_count = sum(1 for a in accounts if isinstance(a, dict) and a.get('owner_id') == uid)
     return {"refs": refs, "orders": orders, "coins": coins, "accounts": acc_count}
@@ -2573,7 +2657,7 @@ def check_and_award_level(uid: int):
                     congrats = (
                         f"🎉 <b>ترقية إلى مستوى جديد!</b>\n\n"
                         f"{lv['color']} {lv['emoji']} المستوى {lv['level']} — <b>{lv['name']}</b>\n\n"
-                        f"🎁 مكافأتك: <b>{reward:,} نقطة</b> أُضيفت لرصيد��\n\n"
+                        f"🎁 مكافأتك: <b>{reward:,} نقطة</b> أُضيفت لرصيدك\n\n"
                         f"✨ <b>المميزات:</b> {lv['perks']}\n\n"
                         f"📈 المستوى التالي: {next_lv['emoji']} {next_lv['name']}"
                     )
@@ -2946,7 +3030,7 @@ def _do_claim_daily_gift(call):
         daily_prev = int(db.get(f"user_{uid}_daily_count")) if db.exists(f"user_{uid}_daily_count") else 0
         db.set(f"user_{uid}_daily_count", daily_prev + 1)
 
-        # جدول التذكير التالي — check_dayy كتب�� timee للتو فالحساب دقيق
+        # جدول التذكير التالي — check_dayy كتبت timee للتو فالحساب دقيق
         try:
             _schedule_reminder_for_user(uid)
         except Exception:
@@ -3059,72 +3143,90 @@ def fmt_remaining(seconds):
     return f"{s} ثانية"
 
 def adds_session(session: str, phone: str, owner_id: int = None) -> bool:
-    d = db.get('accounts') or []
-
-    # ✅ منع إضافة رقم موجود بالفعل ونشط
-
+    """
+    يضيف رقم جديد لقائمة accounts (أو يستبدل رقم مكسور/ميت بنفس الجلسة الجديدة).
+    ⚠️ كل القراءة والتعديل والكتابة بتحصل تحت _accounts_lock في عملية واحدة
+    ذرّية (atomic) — عشان نمنع تضارب الكتابة مع _check_sessions_task أو
+    _gen_clear_sessions اللي ممكن تكتب فوق accounts في نفس اللحظة وتمسح
+    الرقم اللي اتسجل لسه (سبب مشكلة "الأرقام بتنقص" الأصلية).
+    """
     phone_clean = str(phone).strip() if phone else ''
-
-
     session_prefix = session[:30] if session else ''
-    if session_prefix:
-        for existing in d:
-            existing_s = existing.get('s', '')
-            if existing_s and existing_s[:30] == session_prefix:
-                existing_phone_s = str(existing.get('phone', '')).strip()
-                is_broken_s = db.get(f'session_broken_{existing_phone_s}')
-                is_dead_s   = db.get(f'session_dead_{existing_phone_s}')
-                if not is_broken_s and not is_dead_s:
-                    # نفس الجلسة ونشطة — ارفض
-                    return False
 
-    if phone_clean:
-        for existing in d:
-            existing_phone = str(existing.get('phone', '')).strip()
-            if existing_phone == phone_clean:
-                # الرقم موجود — لو نشط ارفض الإضافة
-                existing_session = existing.get('s', '')
-                is_broken  = db.get(f'session_broken_{phone_clean}')
-                is_dead    = db.get(f'session_dead_{phone_clean}')
-                if not is_broken and not is_dead:
-                    # الرقم نشط — ارفض
-                    return False
-                else:
-                    # الرقم موجود لكن مكسور/ميت — استبدله بالجلسة الجديدة
-                    existing['s']             = session
-                    existing['registered_at'] = time.time()
-                    if owner_id:
-                        existing['owner_id'] = int(owner_id)
-                    db.set('accounts', d)
-                    db.set(f'session_penalized_{phone_clean}', False)
-                    db.set(f'session_fail_count_{phone_clean}', 0)
-                    try:
-                        db.delete(f'session_broken_{phone_clean}')
-                        db.delete(f'session_dead_{phone_clean}')
-                    except: pass
-                    # تحقق فعلي بعد الاستبدال
-                    d_verify = db.get('accounts') or []
-                    actually_saved = any(str(a.get('phone', '')).strip() == phone_clean for a in d_verify)
-                    return actually_saved
+    result = {"status": None}  # 'rejected_session' | 'rejected_phone' | 'replaced' | 'added'
 
-    # رقم جديد — أضفه
-    entry = {"s": session, 'phone': phone, 'registered_at': time.time()}
-    if owner_id:
-        entry['owner_id'] = int(owner_id)
+    def _mutate(d):
+        # ✅ منع إضافة جلسة موجودة بالفعل ونشطة (نفس session string)
+        if session_prefix:
+            for existing in d:
+                existing_s = existing.get('s', '')
+                if existing_s and existing_s[:30] == session_prefix:
+                    existing_phone_s = str(existing.get('phone', '')).strip()
+                    is_broken_s = db.get(f'session_broken_{existing_phone_s}')
+                    is_dead_s   = db.get(f'session_dead_{existing_phone_s}')
+                    if not is_broken_s and not is_dead_s:
+                        result["status"] = "rejected_session"
+                        return None  # لا تعديل — رفض الإضافة
+
+        # ✅ منع إضافة رقم موجود بالفعل ونشط
+        if phone_clean:
+            for i, existing in enumerate(d):
+                existing_phone = str(existing.get('phone', '')).strip()
+                if existing_phone == phone_clean:
+                    is_broken = db.get(f'session_broken_{phone_clean}')
+                    is_dead   = db.get(f'session_dead_{phone_clean}')
+                    if not is_broken and not is_dead:
+                        # الرقم نشط — ارفض
+                        result["status"] = "rejected_phone"
+                        return None
+                    else:
+                        # الرقم موجود لكن مكسور/ميت — استبدله بالجلسة الجديدة
+                        new_entry = dict(existing)
+                        new_entry['s']             = session
+                        new_entry['registered_at'] = time.time()
+                        if owner_id:
+                            new_entry['owner_id'] = int(owner_id)
+                        d[i] = new_entry
+                        result["status"] = "replaced"
+                        return d
+
+        # رقم جديد تماماً — أضفه
+        entry = {"s": session, 'phone': phone, 'registered_at': time.time()}
+        if owner_id:
+            entry['owner_id'] = int(owner_id)
+        d.append(entry)
+        result["status"] = "added"
+        return d
+
+    final_list = _accounts_atomic_update(_mutate)
+
+    if result["status"] in ("rejected_session", "rejected_phone"):
+        return False
+
+    # نظّف مفاتيح الحالة المرتبطة بالرقم (خارج القفل الذري — مش لازم تكون
+    # ذرّية مع accounts نفسها، دي مفاتيح مستقلة)
+    if result["status"] == "replaced":
         db.set(f'session_penalized_{phone_clean}', False)
-    db.set(f'session_fail_count_{phone_clean}', 0)
-    d.append(entry)
-    db.set("accounts", d)
+        db.set(f'session_fail_count_{phone_clean}', 0)
+        try:
+            db.delete(f'session_broken_{phone_clean}')
+            db.delete(f'session_dead_{phone_clean}')
+        except Exception:
+            pass
+    elif result["status"] == "added":
+        if owner_id:
+            db.set(f'session_penalized_{phone_clean}', False)
+        db.set(f'session_fail_count_{phone_clean}', 0)
 
-    # ✅ تحقق فعلي: اكتب مباشرة لـ Firebase وتأكد من الحفظ
-    _saved_direct = db._http_put('accounts', d)
+    # ✅ تحقق فعلي: اكتب مباشرة لـ Firebase وتأكد من الحفظ (لأن الكتابة العادية
+    # بتروح لـ write queue بفاصل 20ms — هنا بنتأكد فوراً بدون انتظار)
+    _saved_direct = db._http_put('accounts', final_list)
     if not _saved_direct:
         print(f"[adds_session] ⚠️ فشل الحفظ المباشر في Firebase للرقم {phone_clean} — محاولة ثانية...")
         time.sleep(1)
-        _saved_direct = db._http_put('accounts', d)
+        _saved_direct = db._http_put('accounts', final_list)
 
-    d_verify = db.get('accounts') or []
-    actually_saved = any(str(a.get('phone', '')).strip() == phone_clean for a in d_verify)
+    actually_saved = any(str(a.get('phone', '')).strip() == phone_clean for a in final_list)
     if not actually_saved:
         print(f"[adds_session] ❌ الرقم {phone_clean} لم يُحفظ بشكل صحيح!")
     else:
@@ -3389,7 +3491,7 @@ def _settle_pending_referral(join_user):
                 f'• الاسم : {_invitee_name}\n'
                 f'• المعرف : {_invitee_user}\n'
                 f'• الأيدي : {join_user}\n'
-                f'• دُعي بو��سطة : {to_user}\n\n'
+                f'• دُعي بواسطة : {to_user}\n\n'
                 f'*• عدد الأعضاء الكلي : {good}*'
             ),
             parse_mode="Markdown"
@@ -4009,7 +4111,7 @@ def start_asinvite(message):
         start_message(message)
         return
 
-    # ✅ حفظ الإحالة مؤقتاً — النقاط تتضاف بعد الاشتراك ف�� القنوات
+    # ✅ حفظ الإحالة مؤقتاً — النقاط تتضاف بعد الاشتراك في القنوات
 
     # تسجيل المدعو لو مش موجود
     if not check_user(join_user):
@@ -4125,7 +4227,7 @@ def _send_db_export_file(cid, export_type="all", label="الكل"):
             caption=(
                 f"✅ <b>نسخة احتياطية — {label}</b>\n\n"
                 f"📦 العناصر: <b>{len(snapshot):,}</b>\n"
-                f"��� المستخدمون: <b>{n_users:,}</b>\n"
+                f"👥 المستخدمون: <b>{n_users:,}</b>\n"
                 f"📱 الأرقام: <b>{n_accs:,}</b>\n\n"
                 f"<i>احتفظ بالملف لاستعادته لاحقاً عبر زر الاستيراد.</i>"
             ),
@@ -4243,26 +4345,27 @@ def _import_db_from_json(jdata, import_type="all"):
     # دمج الحسابات (الأرقام) بدون تكرار حسب رقم الهاتف/الجلسة
     if isinstance(incoming_accounts, list):
         try:
-            current = db.get('accounts') or []
-            existing_phones = set()
-            existing_sessions = set()
-            for a in current:
-                if isinstance(a, dict):
-                    existing_phones.add(str(a.get('phone', '')).strip())
-                    existing_sessions.add((a.get('s', '') or '')[:30])
-            for a in incoming_accounts:
-                if not isinstance(a, dict):
-                    continue
-                ph = str(a.get('phone', '')).strip()
-                s30 = (a.get('s', '') or '')[:30]
-                if (ph and ph in existing_phones) or (s30 and s30 in existing_sessions):
-                    res["accounts_skipped"] += 1
-                    continue
-                current.append(a)
-                if ph: existing_phones.add(ph)
-                if s30: existing_sessions.add(s30)
-                res["accounts_imported"] += 1
-            db.set('accounts', current)
+            with _accounts_lock:
+                current = db.get('accounts') or []
+                existing_phones = set()
+                existing_sessions = set()
+                for a in current:
+                    if isinstance(a, dict):
+                        existing_phones.add(str(a.get('phone', '')).strip())
+                        existing_sessions.add((a.get('s', '') or '')[:30])
+                for a in incoming_accounts:
+                    if not isinstance(a, dict):
+                        continue
+                    ph = str(a.get('phone', '')).strip()
+                    s30 = (a.get('s', '') or '')[:30]
+                    if (ph and ph in existing_phones) or (s30 and s30 in existing_sessions):
+                        res["accounts_skipped"] += 1
+                        continue
+                    current.append(a)
+                    if ph: existing_phones.add(ph)
+                    if s30: existing_sessions.add(s30)
+                    res["accounts_imported"] += 1
+                db.set('accounts', current)
         except Exception as _e:
             res["errors"].append(f"accounts: {_e}")
     return res
@@ -4365,7 +4468,7 @@ def _show_admin_panel(target, is_edit=False, mid=None):
 
     _txt = (
         '**• اهلا بك في لوحه الأدمن الخاصه بالبوت 🤖**\n\n'
-        '- اختر القس�� اللي عايز تتحكم فيه من تحت 👇\n\n==================='
+        '- اختر القسم اللي عايز تتحكم فيه من تحت 👇\n\n==================='
     )
     if is_edit and mid:
         send_func(text=_txt, chat_id=cid, message_id=mid, reply_markup=keys_, parse_mode='Markdown')
@@ -4470,7 +4573,7 @@ def _show_rec_panel(cid, mid):
     contact_line = f'@{support_username}' if support_username else '@admin'
     txt = (
         '┏━━━━━━━━━━━━━━━━━━━━━━━┓\n'
-        '   🛰️ <b>خدمة ال��فاعل التلقائي</b>\n'
+        '   🛰️ <b>خدمة التفاعل التلقائي</b>\n'
         '┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
         '✨ <b>ما هي الخدمة؟</b>\n'
         'اشتراك احترافي يجعل قناتك تحصل على\n'
@@ -4866,7 +4969,7 @@ def _cb_alert(call, text=None, show_alert=False):
         except Exception:
             pass
         return
-    # لو النص قصير كفاية — استخدم تنبيه تيليجرام الأصلي (ي��فل السبينر فو��اً ومش محتاج رسالة منفصلة)
+    # لو النص قصير كفاية — استخدم تنبيه تيليجرام الأصلي (يوقف السبينر فوراً ومش محتاج رسالة منفصلة)
     if len(str(text)) <= 200:
         try:
             bot.answer_callback_query(callback_query_id=call.id, text=str(text), show_alert=show_alert)
@@ -4936,6 +5039,7 @@ def _c_rs_worker(call):
         'chset_vip_toggle', 'buy_vip_sub', 'vip_buy_',
         'charge_points',
         'adm_rewards_panel', 'rwd_daily', 'rwd_invite', 'rwd_wheel', 'rwd_toggle_remind',
+        'rwd_rent_reward', 'rwd_session_penalty',
         'dailygift', 'daily_gift_claim',
         'chgapprove_', 'chgreject_',
         'restore_session_',
@@ -5045,7 +5149,7 @@ def _c_rs_worker(call):
         # 🤖 زر الدعم بالذكاء الاصطناعي — يظهر فقط لو الخدمة مفعّلة
         try:
             if _ai_support_enabled():
-                keys.add(btn('🤖 دعم بالذ��ا�� الاصطناعي', callback_data='ai_support_chat', color='green'))
+                keys.add(btn('🤖 دعم بالذكاء الاصطناعي', callback_data='ai_support_chat', color='green'))
         except Exception:
             pass
         if support_username:
@@ -5077,7 +5181,7 @@ def _c_rs_worker(call):
                 '🤖 <b>المساعد الذكي</b>\n'
                 '━━━━━━━━━━━━━━━━━\n\n'
                 '👋 اسألني أي حاجة عن البوت وخدماته:\n'
-                '• تسجي�� الأرقام والمكافآت\n'
+                '• تسجيل الأرقام والمكافآت\n'
                 '• الشحن والمتجر و VIP\n'
                 '• الألعاب والمهام\n\n'
                 '✍️ اكتب سؤالك الآن...'
@@ -5356,7 +5460,7 @@ def _c_rs_worker(call):
             text=f'✅ <b>تم نشر إعلانك في المتجر!</b>\n\n'
                  f'📱 الحساب: {phone}\n'
                  f'💰 السعر: {price:,} نقطة\n'
-                 f'━━━━━━━━���━━━━��━━━━━\n'
+                 f'━━━━━━━━━━━━━━━━━━━\n'
                  f'🔄 سيتم إشعارك عند البيع',
             chat_id=cid, message_id=mid, reply_markup=bk, parse_mode='HTML'
         )
@@ -5591,7 +5695,7 @@ def _c_rs_worker(call):
             _start_param = f'btask_{task_id}_{cid}'
             link = f"https://t.me/{_bot_username}?start={_start_param}"
             bot_keys = mk(row_width=1)
-            bot_keys.add(btn('🤖 افتح البوت وابد��', url=link))
+            bot_keys.add(btn('🤖 افتح البوت وابدأ', url=link))
             bot_keys.add(btn('✅ تحقق تلقائي', callback_data=f'task_verify_{task_id}', color='green'))
             bot_keys.add(btn('رجوع', callback_data='tasks', color='blue'))
             bot.edit_message_text(
@@ -5704,7 +5808,7 @@ def _c_rs_worker(call):
                 reward = int(t.get("reward", 0))
                 txt += f'{icon} {i}. {desc}\n'
                 txt += f'   💰 المكافأة: {reward:,} نقطة\n\n'
-        txt += '━━━━━━━━━━━━━━━��━━���\n'
+        txt += '━━━━━━━━━━━━━━━━━━━\n'
         txt += '💡 استخدم /guess للعبة التخمين'
         keys = mk(row_width=1)
         for t in active_tasks:
@@ -6018,7 +6122,7 @@ def _c_rs_worker(call):
         reg_keys.add(btn('رجوع', callback_data='back', color='blue'))
         reg_txt = (
             "╔═══════════════════╗\n"
-            "   📲 تسجيل حسابا��ك للتحكم فيها\n"
+            "   📲 تسجيل حساباتك للتحكم فيها\n"
             "╚══════════════════╝\n\n"
             f"📱 <b>حساباتك المسجلة :</b> {_my_submitted} حساب\n"
             f"💰 <b>نقاط كل حساب :</b> {_rent_pts_val:,} نقطة\n\n"
@@ -6100,7 +6204,7 @@ def _c_rs_worker(call):
             f'  • عدد الطلبات : {orders_yesterday:,}\n'
             f'  • نقاط مُنفقة : {points_yesterday:,}\n\n'
             f'🔢 <b>إجمالي الطلبات الكلي :</b> {total_orders:,}\n\n'
-            f'���━━━━━━━━━━━━━━━━━━\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
             f'🏆 <b>الخدمات الأكثر طلباً اليوم :</b>'
             f'{top_txt}\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
@@ -6306,7 +6410,7 @@ def _c_rs_worker(call):
             ckeys.add(btn('🔗 إذاعة مع زر رابط', callback_data='cast_link', color='blue'))
             ckeys.add(btn('➕ إضافة قناة يدوياً', callback_data='cast_add_ch', color='green'))
             ckeys.add(btn('📊 القنوات المكتشفة', callback_data='cast_discovered', color='green'))
-            ckeys.add(btn('🔍 مسح وإضافة القنوات ��لقائياً', callback_data='cast_auto_scan', color='blue'))
+            ckeys.add(btn('🔍 مسح وإضافة القنوات تلقائياً', callback_data='cast_auto_scan', color='blue'))
             ckeys.add(btn('رجوع', callback_data='adm_cat_general', color='red'))
             bot.edit_message_text(
                 chat_id=cid, message_id=mid,
@@ -6594,8 +6698,8 @@ def _c_rs_worker(call):
             f'👥 <b>رشق أعضاء قناة عامة</b>\n\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_price} نقطة / عضو</b>\n'
-            f'📉 الحد الأ��نى : <b>{_min}</b>\n'
-            f'📈 ا��حد ال��قصى : <b>{_max}</b>\n'
+            f'📉 الحد الأدنى : <b>{_min}</b>\n'
+            f'📈 الحد الأقصى : <b>{_max}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
             f'أرسل الآن العدد الذي تريده (<b>{_min}</b> - <b>{_max}</b>):'
         )
@@ -6674,7 +6778,7 @@ def _c_rs_worker(call):
         keys.add(btn_tasks)
         keys.add(btn_sell)
         keys.add(btn_lvl)
-        keys.add(btn('ر��وع', callback_data='back', color='blue'))
+        keys.add(btn('رجوع', callback_data='back', color='blue'))
         bot.edit_message_text(text='💰 مرحباً بك في قسم تجميع النقاط\n\n• اختر إحدى الطرق التالية لجمع النقاط:', chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
         return
 
@@ -6884,7 +6988,7 @@ def _c_rs_worker(call):
         prem = 'Premium' if (info or {}).get('premium') is True else 'Free'
         _phones_list = acc.get('phones', [])
         _phones_txt  = '\n'.join([f'  📞 {p}' for p in _phones_list]) if _phones_list else '  لا يوجد'
-        textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحاله التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد التحويلات التي قمت بها : {trans}\n• [📱] الأرقام ��لمسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
+        textt = f'''\n• [❇️] عدد نقاط حسابك : {coins}\n• [🌀] عدد عمليات الاحاله التي قمت بها : {users_count}\n• [👤] نوع اشتراكك داخل البوت : {prem}\n• [🎁] عدد الهدايا اليومية التي جمعتها : {daily_count}\n• [❇️] عدد النقاط اللي جمعتها من الهدايا اليومية : {all_gift}\n• [📮] عدد الطلبات التي طلبتها : {buys}\n• [♻️] عدد التحويلات التي قمت بها : {trans}\n• [📱] الأرقام المسجلة ({len(_phones_list)}) :\n{_phones_txt}\n\n{y}'''
         bot.edit_message_text(text=textt, chat_id=cid, message_id=mid, reply_markup=bk_cancel, parse_mode="HTML")
         return
     if data == 'setforce':
@@ -7193,7 +7297,7 @@ def _c_rs_worker(call):
             f'📉 الحد الأدنى : <b>{_mn}</b>\n'
             f'📈 الحد الأقصى : <b>{_mx}</b>\n'
             f'━━━━━━━━━━━━━━━━━━━\n\n'
-            f'أرسل الآن الع��د الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
+            f'أرسل الآن العدد الذي تريده (<b>{_mn}</b> - <b>{_mx}</b>):'
         )
         db.set(f'vote_{cid}_proccess', True)
         x = bot.edit_message_text(text=_svc_txt, reply_markup=_bk_cancel_svc('normal'), chat_id=cid, message_id=mid, parse_mode="HTML")
@@ -7452,7 +7556,7 @@ def _c_rs_worker(call):
         keys.add(btn('رجوع', callback_data='collect'))
         _user_data = get(cid)
         _users_count = len(_user_data["users"]) if _user_data and _user_data.get("users") else 0
-        xyz = f'''\n \nانسخ الرابط ثم قم بمشاركته مع اصدقائك !!\n \n~  كل شخص يقوم بالدخول ستحصل على  {int(db.get("link_price")) if db.exists("link_price") else link_price}  نقطه\n\n~ بإمكانك عمل اعلان خاص بر��بط الدعوة الخاص بك \n\n🌀 رابط الدعوة : \n {link}  .\n\n~ مشاركتك للرابط :  {_users_count}  .\n\n{y}\n        '''
+        xyz = f'''\n \nانسخ الرابط ثم قم بمشاركته مع اصدقائك !!\n \n~  كل شخص يقوم بالدخول ستحصل على  {int(db.get("link_price")) if db.exists("link_price") else link_price}  نقطه\n\n~ بإمكانك عمل اعلان خاص برابط الدعوة الخاص بك \n\n🌀 رابط الدعوة : \n {link}  .\n\n~ مشاركتك للرابط :  {_users_count}  .\n\n{y}\n        '''
         try:
             bot.edit_message_text(text=xyz, chat_id=cid, message_id=mid, reply_markup=keys, parse_mode="HTML")
         except Exception as e:
@@ -7529,7 +7633,7 @@ def _c_rs_worker(call):
         bot.register_next_step_handler(x, get_amount, 'membersp')
     if data == 'spams':
         if not svc_enabled('spam'):
-            _cb_alert(call, text='⛔ هذه الخدم�� معطّلة حالياً', show_alert=True)
+            _cb_alert(call, text='⛔ هذه الخدمة معطّلة حالياً', show_alert=True)
             return
         _vip_info = db.get(f'user_{cid}')
         _is_prem = _vip_info.get('premium', False) if _vip_info else False
@@ -7692,7 +7796,7 @@ def _c_rs_worker(call):
         _svc_txt = (
             f'⚡️ <b>رشق بلص | إحالات حقيقية اشتراك إجباري</b>\n\n'
             f'🔑 <b>الباقة المجانية</b>\n'
-            f'━━━━���━━━━━���━━━━���━━━\n'
+            f'━━━━━━━━━━━━━━━━━━━\n'
             f'💰 السعر : <b>{_pr * 100}</b> نقطة لكل 100\n'
             f'📉 الحد الأدنى : <b>{_mn}</b> إحالة\n'
             f'📈 الحد الأقصى : <b>{_mx}</b> إحالة\n'
@@ -7768,7 +7872,7 @@ def _c_rs_worker(call):
                 text=(
                     '👑 لازم تعمل دعوتين عشان تفعل قسم VIP\n\n'
                     f'📊 دعواتك: {_inv_count} من {_vip_thresh} المطلوبة\n'
-                    f'🎯 باقي عليك: {_remaining} ��عوة فقط للحصول على VIP مجاناً!\n\n'
+                    f'🎯 باقي عليك: {_remaining} دعوة فقط للحصول على VIP مجاناً!\n\n'
                     '💡 شارك رابط الدعوة وادعُ أصدقاءك للحصول على VIP تلقائياً'
                 ),
                 chat_id=cid, message_id=mid, reply_markup=_keys_vip, parse_mode="HTML"
@@ -7782,7 +7886,7 @@ def _c_rs_worker(call):
                 '👑 <b>رشق بلص | إحالات حقيقية اشتراك إجباري</b>\n\n'
                 '💎 <b>الباقة VIP</b>\n'
                 '━━━━━━━━━━━━━━━━━━━\n'
-                '🚀 إح����ات حقيقية بجودة عالية\n'
+                '🚀 إحالات حقيقية بجودة عالية\n'
                 '✅ اشتراك إجباري مضمون\n'
                 f'💰 السعر : <b>{_pr2 * 100}</b> نقطة لكل 100\n'
                 '━━━━━━━━━━━━━━━━━━━━━\n\n'
@@ -7965,7 +8069,7 @@ def _c_rs_worker(call):
         skeys2.add(btn(f'⬇️ تعديل الحد الأدنى (الحالي: {mn})', callback_data=f'svc_edit_min_{svc_key}', color='blue'))
         skeys2.add(btn(f'⬆️ تعديل الحد الأقصى (الحالي: {mx})', callback_data=f'svc_edit_max_{svc_key}', color='blue'))
         skeys2.add(btn(toggle_lbl, callback_data=f'svc_toggle_{svc_key}', color=toggle_col))
-        skeys2.add(btn('🔄 إعادة القيم الافتر��ضية', callback_data=f'svc_reset_{svc_key}', color='red'))
+        skeys2.add(btn('🔄 إعادة القيم الافتراضية', callback_data=f'svc_reset_{svc_key}', color='red'))
         skeys2.add(btn('🔙 رجوع للخدمات', callback_data='adm_svc_panel', color='blue'))
         try:
             bot.edit_message_text(
@@ -8012,7 +8116,7 @@ def _c_rs_worker(call):
         ckeys.add(btn('━━━ 👑 اشتراك VIP بالنقاط ━━━', callback_data='none', color='blue'))
         ckeys.add(btn(f'سعر الشهري ({vip_monthly:,} نقطة)', callback_data='chset_vip_monthly', color='green'))
         ckeys.add(btn(f'سعر السنوي ({vip_yearly:,} نقطة)', callback_data='chset_vip_yearly', color='green'))
-        ckeys.add(btn(f'سعر مدى ال��ياة ({vip_lifetime:,} نقطة)', callback_data='chset_vip_lifetime', color='green'))
+        ckeys.add(btn(f'سعر مدى الحياة ({vip_lifetime:,} نقطة)', callback_data='chset_vip_lifetime', color='green'))
         ckeys.add(btn(vip_toggle_lbl, callback_data='chset_vip_toggle', color=vip_toggle_col))
         ckeys.add(btn('━━━━━━━━━━━━━━━━', callback_data='none', color='blue'))
         ckeys.add(btn(f'📢 قناة الطلبات (ID: {orders_ch})', callback_data='chset_orders_channel', color='blue'))
@@ -8168,7 +8272,7 @@ def _c_rs_worker(call):
         keys.add(btn('🔙 رجوع للألوان', callback_data='adm_colors', color='blue'))
         color_icon = "🟢" if cur == "green" else "🔴" if cur == "red" else "🔵"
         bot.edit_message_text(
-            text=f'🎨 اختر لون الزر:\n\n*{label}*\nا��لون الحالي: {color_icon}',
+            text=f'🎨 اختر لون الزر:\n\n*{label}*\nاللون الحالي: {color_icon}',
             chat_id=cid, message_id=mid,
             reply_markup=keys, parse_mode='Markdown'
         )
@@ -8249,7 +8353,7 @@ def _c_rs_worker(call):
             'adm_export_users':    ("users",    "المستخدمين"),
             'adm_export_accounts': ("accounts", "الحسابات"),
             'adm_export_settings': ("settings", "الإعدادات"),
-            'adm_export_all':      ("all",      "ال��ل"),
+            'adm_export_all':      ("all",      "الكل"),
         }
         exp_type, exp_label = _labels[data]
         try:
@@ -8473,7 +8577,7 @@ def _c_rs_worker(call):
         ekeys.add(btn('مساعدة', callback_data='adm_emoji_help', color='blue'))
         ekeys.add(btn('رجوع', callback_data='adm_btn_panel', color='blue'))
         bot.edit_message_text(
-            text=f'✨ <b>إيموجي مميز للأزرار (Custom Emoji)</b>\n\nتقدر تضبط Custom Emoji Premium لأي زر ��ي البوت.\n\n📌 يظهر الإيموجي كأيقونة في الزر مباشرة.\n\nعدد الأزرار المضبوط حالياً: <b>{count}</b>',
+            text=f'✨ <b>إيموجي مميز للأزرار (Custom Emoji)</b>\n\nتقدر تضبط Custom Emoji Premium لأي زر في البوت.\n\n📌 يظهر الإيموجي كأيقونة في الزر مباشرة.\n\nعدد الأزرار المضبوط حالياً: <b>{count}</b>',
             chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode="HTML"
         )
 
@@ -8491,7 +8595,7 @@ def _c_rs_worker(call):
                 '2⃣ هتلاقي الرد فيه رقم طويل — ده الـ ID\n\n'
                 '<b>أو:</b>\n'
                 'أرسل الإيموجي المميز مباشرة والبوت يستخرج الـ ID تلقائياً\n\n'
-                '<b>ملاحظة:</b> يتطلب Telegram Premium أو قن��ة/بوت مدفوع'
+                '<b>ملاحظة:</b> يتطلب Telegram Premium أو قناة/بوت مدفوع'
             ),
             chat_id=cid, message_id=mid, reply_markup=ekeys, parse_mode="HTML"
         )
@@ -8538,7 +8642,7 @@ def _c_rs_worker(call):
                 f'🎨 <b>تعيين إيموجي للزر: {cur_label}</b>\n'
                 f'{cur_txt}\n\n'
                 '━━━━━━━━━━━━━━━━━━\n'
-                '�� أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
+                '✍️ أرسل الإيموجي المميز مباشرة أو أرسل الـ ID كأرقام فقط:\n\n'
                 'مثال:\n'
                 '<code>5368324170671202286</code>'
             ),
@@ -8581,7 +8685,7 @@ def _c_rs_worker(call):
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_gift_ask_uses)
 
-    # 🎧 تعي��ن ��ص الدعم الفني
+    # 🎧 تعيين نص الدعم الفني
 
     if data == 'adm_ai_panel':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -8635,7 +8739,7 @@ def _c_rs_worker(call):
         bot.register_next_step_handler(x, _do_set_support_info)
 
 
-    # ✨ إعداد ال��يموجي المخصص
+    # ✨ إعداد الإيموجي المخصص
 
     if data == 'adm_set_emojis':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -8800,11 +8904,26 @@ def _c_rs_worker(call):
             chat_id=cid, message_id=mid,
             text=(f"📲 <b>تعديل مكافأة تسجيل/تسليم حساب</b>\n\n"
                   f"القيمة الحالية: <b>{cur} نقطة</b>\n\n"
-                  "أ��سل القيمة الجديد�� (رقم صحيح):"),
+                  "أرسل القيمة الجديدة (رقم صحيح):"),
             parse_mode='HTML'
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
         bot.register_next_step_handler(x, _do_rwd_rent_reward)
+
+    if data == 'rwd_session_penalty':
+        if cid not in (db.get('admins') or []) and cid != sudo:
+            return
+        cur = _get_session_penalty()
+        x = bot.edit_message_text(
+            chat_id=cid, message_id=mid,
+            text=(f"⚠️ <b>تعديل خصم خروج الجلسة</b>\n\n"
+                  f"القيمة الحالية: <b>{cur} نقطة</b>\n\n"
+                  "هذه النقاط تُخصم فوراً من رصيد المستخدم بمجرد التأكد من خروج جلسة رقمه.\n\n"
+                  "أرسل القيمة الجديدة (رقم صحيح):"),
+            parse_mode='HTML'
+        , reply_markup=bk_cancel)
+        bot.clear_step_handler_by_chat_id(cid)
+        bot.register_next_step_handler(x, _do_rwd_session_penalty)
 
     if data == 'rwd_wheel':
         if cid not in (db.get("admins") or []) and cid != sudo:
@@ -8916,7 +9035,7 @@ def _c_rs_worker(call):
             f'━━━━━━━━━━━━━━━━━━━\n'
             f'✨ الخدمة : رشق إيموجي مميز\n'
             f'😀 الإيموجي : {emoji_display}\n'
-            f'��� الكمية : {amount}\n'
+            f'📦 الكمية : {amount}\n'
             f'🔗 الرابط : {url}\n'
             f'💰 التكلفة : {_total_cost:,} نقطة\n'
             f'━━━━━━━━━━━━━━━━━━━\n'
@@ -9164,7 +9283,7 @@ def _c_rs_worker(call):
             return
         x = bot.send_message(
             chat_id=cid,
-            text=f'✅ أرسل عدد النقاط التي تريد إضافتها ��لمستخدم <code>{target_uid}</code>:',
+            text=f'✅ أرسل عدد النقاط التي تريد إضافتها للمستخدم <code>{target_uid}</code>:',
             parse_mode='HTML'
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -9249,7 +9368,7 @@ def _c_rs_worker(call):
             return
         cur = db.get("fsub_cash") if db.exists("fsub_cash") else 50
         x = bot.edit_message_text(
-            text=f'📱 سعر فودافون كاش لباقة الاشتراك الإجباري\n\nالحالي: {cur} ��نيه\n\nأرسل السعر الجديد:',
+            text=f'📱 سعر فودافون كاش لباقة الاشتراك الإجباري\n\nالحالي: {cur} جنيه\n\nأرسل السعر الجديد:',
             chat_id=cid, message_id=mid
         , reply_markup=bk_cancel)
         bot.clear_step_handler_by_chat_id(cid)
@@ -9533,7 +9652,7 @@ def _do_svc_edit(message, svc_key, field):
     val = int(raw)
     svc_info = SERVICES[svc_key]
     if field == 'price_direct':
-        # ��عر مباشر لكل وحدة (مثل رشق أعضاء قناة عامة)
+        # سعر مباشر لكل وحدة (مثل رشق أعضاء قناة عامة)
         db.set(svc_info["price_key"], val)
         label = f'💰 السعر الجديد: {val} نقطة / عضو'
     elif field in ('price1000', 'price'):
@@ -10012,7 +10131,7 @@ def get_amount(message, type_req):
             pr = svc_price('member') * amount
             acc = db.get(f'user_{message.from_user.id}')
             if int(pr) > int(acc.get('coins', 0)):
-                bot.reply_to(message, f'• ن��اطك غير كافية ، تحتاج الي   {pr - amount}  نقطة')
+                bot.reply_to(message, f'• نقاطك غير كافية ، تحتاج الي   {pr - amount}  نقطة')
                 return
             load_ = db.get('accounts') or []
             if len(load_) < amount:
@@ -10022,7 +10141,7 @@ def get_amount(message, type_req):
                 f'╔══════════════════════╗\n'
                 f'       🔐 طلب أعضاء قناة خاصة جديد\n'
                 f'╚══════════════════════╝\n\n'
-                f'✅ الكمية ��لمطلوبة : {amount} عضو\n\n'
+                f'✅ الكمية المطلوبة : {amount} عضو\n\n'
                 f'🔗 أرسل الآن رابط الدعوة الخاص بقناتك الخاصة\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
             )
@@ -10140,7 +10259,7 @@ def get_amount(message, type_req):
                 return
             _req_txt = (
                 f'╔══════════════════════╗\n'
-                f'       📊 طلب استفتا�� جديد\n'
+                f'       📊 طلب استفتاء جديد\n'
                 f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} صوت\n\n'
                 f'🔗 أرسل الآن رابط المنشور\n'
@@ -10191,7 +10310,7 @@ def get_amount(message, type_req):
             return
 
     if type_req == 'react_special':
-        return  # تم نقل المنطق ل�� react_special_get_url
+        return  # تم نقل المنطق لـ react_special_get_url
 
     if type_req == 'view':
         if not db.get(f'view_{cid}_proccess'):
@@ -10345,7 +10464,7 @@ def get_amount(message, type_req):
                 return
             _req_txt = (
                 f'╔══════════════════════╗\n'
-                f'       💣 طلب ��بام رسائل جديد\n'
+                f'       💣 طلب سبام رسائل جديد\n'
                 f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} رسالة\n\n'
                 f'👤 أرسل الآن يوزر أو رابط الحساب المستهدف\n'
@@ -10465,9 +10584,9 @@ def get_amount(message, type_req):
             _req_txt = (
                 f'╔══════════════════════╗\n'
                 f'       💎 طلب روابط دعوة VIP جديد\n'
-                f'╚════════���═════════════╝\n\n'
+                f'╚══════════════════════╝\n\n'
                 f'✅ الكمية المطلوبة : {amount} رسالة\n\n'
-                f'🔗 أرسل الآن رابط الدعوة الخاص ب��\n'
+                f'🔗 أرسل الآن رابط الدعوة الخاص بك\n'
                 f'━━━━━━━━━━━━━━━━━━━━'
             )
             x = bot.reply_to(message, _req_txt, reply_markup=bk_cancel, parse_mode='HTML')
@@ -10733,7 +10852,7 @@ def lespoints_final(message, uid):
     bot.reply_to(message, f'تم بنجاح نقاطه الان : {b["coins"]} ')
 
 def linkbot_chforce(message, amount, url):
-    # دعم أكثر من قناة — ��فصولة بفاصلة أو سطر جديد
+    # دعم أكثر من قناة — مفصولة بفاصلة أو سطر جديد
     raw = message.text.replace('\n', ' ')
     channels_list = [
         c.strip().replace('https://t.me/', '').replace('@', '')
@@ -10800,7 +10919,7 @@ def show_order_confirm(message, order_type: str, amount: int, url: str, price: i
     info  = db.get(f'user_{uid}') or {}
     coins = int(info.get('coins', 0))
     confirm_txt = (
-        f"╔═══════════════════���══╗\n"
+        f"╔══════════════════════╗\n"
         f"       ✅ تأكيد الطلب\n"
         f"╚══════════════════════╝\n\n"
         f"📋 <b>النوع</b>    : {order_type}\n"
@@ -10947,7 +11066,7 @@ def def_execute_order(uid: int, cb=None):
                 except: false += 1
             unit_price = forward_price
 
-        elif otype == '��ستفتاء':
+        elif otype == 'استفتاء':
             poll_idx = extra.get('poll_idx', 0)
             for y in load_:
                 if true >= amount or (true + false) >= amount * 2: break
@@ -11169,7 +11288,7 @@ def get_url_mem(message, amount):
         info = get(message.from_user.id)
         price = svc_price('member') * amount
         if price > int(info['coins']):
-            bot.reply_to(message, f'• نق��طك غير كافية، تحتاج {price - int(info["coins"])} نقطة إضافية', reply_markup=bk_cancel, parse_mode="HTML")
+            bot.reply_to(message, f'• نقاطك غير كافية، تحتاج {price - int(info["coins"])} نقطة إضافية', reply_markup=bk_cancel, parse_mode="HTML")
             return
         show_order_confirm(message, 'أعضاء', amount, url, price)
     else:
@@ -11193,7 +11312,7 @@ def get_url_free_mem(message, amount):
         # فحص أخير للنقاط قبل التنفيذ
         if _total_price > 0 and int(acc.get('coins', 0)) < _total_price:
             bot.reply_to(message,
-                f'• نقاطك غير كا��ية ❌\n'
+                f'• نقاطك غير كافية ❌\n'
                 f'• تحتاج إلى <b>{_total_price}</b> نقطة\n'
                 f'• رصيدك الحالي: <b>{acc["coins"]}</b> نقطة',
                 reply_markup=bk_cancel, parse_mode="HTML")
@@ -11217,7 +11336,7 @@ def get_react_url_first(message, amount):
     url = message.text.strip() if message.text else ''
     cid = message.from_user.id
     if not checks(url):
-        x = bot.reply_to(message, '• ��جاء ارسل الرابط بشكل صحيح', reply_markup=bk_cancel)
+        x = bot.reply_to(message, '• رجاء ارسل الرابط بشكل صحيح', reply_markup=bk_cancel)
         bot.register_next_step_handler(x, get_react_url_first, amount)
         return
 
@@ -11283,7 +11402,7 @@ def get_react_url_first(message, amount):
 
     # لو ما قدرناش نجيب — نستخدم القائمة الافتراضية (بدون custom emoji)
     if not available_raw:
-        available_raw = [(em, None) for em in ["👍","🤩","🎉","��","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨",
+        available_raw = [(em, None) for em in ["👍","🤩","🎉","🔥","❤️","🥰","🥱","🥴","🌚","🍌","💔","🤨",
                      "😐","😈","👎","😁","😢","💩","🤮","🤔","🤯","🤬","💯","😍",
                      "🕊","🐳","🤝","👻","🗿","🍾","⚡️","🏆","🤡","🌭","🆒","💊"]]
 
@@ -11293,7 +11412,7 @@ def get_react_url_first(message, amount):
     db.set(f'react_special_list_{cid}', available_raw[:20])
 
 
-    nums = ['1️⃣','2️⃣','3️⃣','4️⃣','5️��','6️⃣','7️⃣','8️⃣','9️⃣','🔟',
+    nums = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟',
             '1⃣1⃣','1⃣2⃣','1⃣3⃣','1⃣4⃣','1⃣5⃣','1⃣6⃣','1⃣7⃣','1⃣8⃣','1⃣9⃣','2⃣0⃣']
     emoji_lines = ''
     ek = mk(row_width=5)
@@ -11326,7 +11445,7 @@ def get_react(message, amount):
         _req_txt = (
             f'╔══════════════════════╗\n'
             f'       ⚡ طلب تفاعلات اختياري جديد\n'
-            f'╚═════════════════════���╝\n\n'
+            f'╚══════════════════════╝\n\n'
             f'✅ الكمية المطلوبة : {amount} تفاعل\n'
             f'😀 التفاعل المختار : {message.text}\n\n'
             f'🔗 أرسل الآن رابط المنشور\n'
@@ -11342,7 +11461,7 @@ def get_react(message, amount):
 def get_url_votes(message, amount, wait_time):
     url = message.text
     if not checks(url):
-        bot.reply_to(message, text=f'����� رجاء ارسل الرابط بشكل صحيح')
+        bot.reply_to(message, text=f'• رجاء ارسل الرابط بشكل صحيح')
         return
     acc = db.get(f'user_{message.from_user.id}')
     price = vote_price * amount
@@ -11606,7 +11725,7 @@ def react_special_step1_amount(message):
         bot.register_next_step_handler(x, react_special_step1_amount)
         return
 
-    # ن��فظ الكمية وننتقل لطلب الرابط
+    # نحفظ الكمية وننتقل لطلب الرابط
     db.set(f'react_special_amount_{cid}', amount)
     x = bot.reply_to(
         message,
@@ -11858,7 +11977,7 @@ def react_special_get_url(message):
         f'🔗 الرابط : {url}\n\n'
         f'#تحذير في حال الايموجي كان معطل سيتم احتساب المشاهدة وتخطي الايموجي لذلك تأكد من الايموجي المفعلة في المنشور قبل الرشق\n\n'
         f'الايموجي المميز يظهر بالترتيب حسب المنشور\n'
-        f'قم باختي��ره من الأسفل بنفس الترتيب\n'
+        f'قم باختياره من الأسفل بنفس الترتيب\n'
         f'──>',
         reply_markup=ek,
         parse_mode='HTML'
@@ -12419,7 +12538,7 @@ def send(message):
     coins = int(from_user.get('coins', 0))
     x2 = bot.reply_to(
         message,
-        f'👤 <b>تحويل ��لنقاط إلى:</b> {name}\n'
+        f'👤 <b>تحويل النقاط إلى:</b> {name}\n'
         f'💳 رصيدك الحالي: <b>{coins:,} نقطة</b>\n\n'
         f'• أرسل الآن عدد النقاط التي تريد تحويلها:',
         reply_markup=bk_cancel, parse_mode='HTML'
@@ -12589,7 +12708,7 @@ def vipp(message, type_op):
         db.set(f'user_{uid}', d)
         bot.reply_to(message, f"تم انهاء الاشتراك الـ ViP للمستخدم {uid}")
 
-# شح�� النجوم التلقائي — pre_checkout و successful_payment
+# شحن النجوم التلقائي — pre_checkout و successful_payment
 
 @bot.pre_checkout_query_handler(func=lambda q: True)
 def pre_checkout_stars(pre_checkout_q):
@@ -12885,9 +13004,10 @@ def _do_charge_approve(message, uid):
 
 def _rewards_text():
     """يبني نص لوحة المكافآت مع القيم الحالية من DB"""
-    daily  = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
-    invite = int(db.get("link_price"))  if db.exists("link_price")  else link_price
-    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
+    daily   = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
+    invite  = int(db.get("link_price"))  if db.exists("link_price")  else link_price
+    rent    = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
+    penalty = _get_session_penalty()
     prizes = get_wheel_prizes()
     remind_on = db.get('daily_remind_enabled')
     remind_on = remind_on if remind_on is not None else True
@@ -12902,6 +13022,7 @@ def _rewards_text():
         f"🎁 الهدية اليومية   : <b>{daily} نقطة</b>\n"
         f"🔮 مكافأة الإحالة  : <b>{invite} نقطة</b>\n"
         f"📲 مكافأة تسجيل حساب: <b>{rent} نقطة</b>\n"
+        f"⚠️ خصم خروج الجلسة  : <b>{penalty} نقطة</b>\n"
         f"🔔 تذكير الهدية    : <b>{remind_status}</b>\n\n"
         "🎰 <b>جوائز عجلة الحظ:</b>\n"
         f"{wheel_lines}\n\n"
@@ -12911,9 +13032,10 @@ def _rewards_text():
 
 def _rewards_keys():
     """يبني أزرار لوحة المكافآت"""
-    daily  = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
-    invite = int(db.get("link_price"))  if db.exists("link_price")  else link_price
-    rent   = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
+    daily   = int(db.get("daily_gift"))  if db.exists("daily_gift")  else 30
+    invite  = int(db.get("link_price"))  if db.exists("link_price")  else link_price
+    rent    = int(db.get("rent_reward")) if db.exists("rent_reward") else CONFIG.get("rent_reward", 100)
+    penalty = _get_session_penalty()
     remind_on = db.get('daily_remind_enabled')
     remind_on = remind_on if remind_on is not None else True
     remind_lbl = '🔔 تذكير الهدية: مفعّل  🔴 إيقاف' if remind_on else '🔕 تذكير الهدية: متوقف  🟢 تفعيل'
@@ -12921,6 +13043,7 @@ def _rewards_keys():
     k.add(btn(f'🎁 الهدية اليومية: {daily} نقطة  ✏️ تعديل', callback_data='rwd_daily', color='green'))
     k.add(btn(f'🔮 مكافأة الإحالة: {invite} نقطة  ✏️ تعديل', callback_data='rwd_invite', color='blue'))
     k.add(btn(f'📲 مكافأة تسجيل حساب: {rent} نقطة  ✏️ تعديل', callback_data='rwd_rent_reward', color='green'))
+    k.add(btn(f'⚠️ خصم خروج الجلسة: {penalty} نقطة  ✏️ تعديل', callback_data='rwd_session_penalty', color='red'))
     k.add(btn('🎰 جوائز عجلة الحظ  ✏️ تعديل', callback_data='rwd_wheel', color='blue'))
     k.add(btn(remind_lbl, callback_data='rwd_toggle_remind', color='green' if not remind_on else 'red'))
     k.add(btn('🔙 رجوع للوحة', callback_data='adm_cat_tasks', color='red'))
@@ -12981,7 +13104,7 @@ def _do_rwd_invite(message):
         if val < 0:
             raise ValueError
         db.set("link_price", val)
-        bot.reply_to(message, f'✅ تم تعيين مكافأة ال��حالة إلى <b>{val} نقطة</b>', parse_mode='HTML')
+        bot.reply_to(message, f'✅ تم تعيين مكافأة الإحالة إلى <b>{val} نقطة</b>', parse_mode='HTML')
         bot.send_message(cid, _rewards_text(), reply_markup=_rewards_keys(), parse_mode='HTML')
     except Exception:
         bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
@@ -12998,7 +13121,21 @@ def _do_rwd_rent_reward(message):
         if val < 0:
             raise ValueError
         db.set('rent_reward', val)
-        bot.reply_to(message, f"✅ تم تعيين مكافأة تسجيل الحساب إلى <b>{val} ن��طة</b>", parse_mode='HTML')
+        bot.reply_to(message, f"✅ تم تعيين مكافأة تسجيل الحساب إلى <b>{val} نقطة</b>", parse_mode='HTML')
+        bot.send_message(cid, _rewards_text(), reply_markup=_rewards_keys(), parse_mode='HTML')
+    except Exception:
+        bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
+
+def _do_rwd_session_penalty(message):
+    cid = message.from_user.id
+    if cid not in (db.get('admins') or []) and cid != sudo:
+        return
+    try:
+        val = int(message.text.strip())
+        if val < 0:
+            raise ValueError
+        db.set('session_penalty', val)
+        bot.reply_to(message, f"✅ تم تعيين خصم خروج الجلسة إلى <b>{val} نقطة</b>", parse_mode='HTML')
         bot.send_message(cid, _rewards_text(), reply_markup=_rewards_keys(), parse_mode='HTML')
     except Exception:
         bot.reply_to(message, '❌ أرسل رقماً صحيحاً أكبر من أو يساوي 0')
@@ -13045,41 +13182,50 @@ def _do_rwd_wheel(message):
 
 # نظام فحص الجلسات تلقائياً وخصم النقاط عند انتهاء الجلسة
 
+def _get_session_penalty() -> int:
+    """قيمة الخصم عند خروج جلسة الرقم — قابلة للتعديل من لوحة الأدمن (زر بجانب مكافأة التسجيل)."""
+    try:
+        return int(db.get('session_penalty')) if db.exists('session_penalty') else 500
+    except Exception:
+        return 500
+
 async def _check_sessions_task():
-    """\n    فحص جلسات التأجير.\n    - الحلقة تشتغل كل دقيقة\n    - كل جلسة تُفحص مرة كل 10 دقائق فقط (لتجنب إغراق تيليجرام بالاتصالات)\n    - Grace Period: 10 دقائق للحسابات الجديدة\n    - Retry: 3 فشل متتالي قبل الخصم\n    """
-    _GRACE_SECONDS      = 600   # 10 دقائق grace للحسابات الجديدة
-    _CHECK_INTERVAL     = 600   # 10 دقائق بين كل فحص فعلي للجلسة
-    _MAX_FAILS          = 3     # فشل 3 مرات قبل الخصم
+    """
+    فحص جلسات التأجير.
+    - الحلقة تشتغل كل دقيقة
+    - كل جلسة تُفحص مرة كل دقيقتين فقط (لتجنب إغراق تيليجرام بالاتصالات)
+    - بدون Grace Period وبدون انتظار فشل متكرر: أول ما يتأكد إن الجلسة
+      خرجت (auth/unauthorized/deactivated/invalid) بيتم الخصم فوراً —
+      لا يوجد سبب لتأخير الخصم لو الجلسة فعلاً ميتة.
+    - أي عملية تعديل على accounts (حذف/تعليم جلسة) بتحصل بشكل ذرّي
+      عبر _accounts_update_in_place، مش بقراءة كل القائمة في البداية
+      وكتابتها كلها تاني في الآخر — وده اللي كان بيسبب ضياع أرقام
+      اتسجلت في نفس الوقت اللي الفحص كان شغال فيه.
+    """
+    _CHECK_INTERVAL = 120   # دقيقتين بين كل فحص فعلي لنفس الجلسة (بدل 10 دقايق)
+
     while True:
         try:
-            accounts = db.get('accounts') or []
-            updated  = []
-            now      = time.time()
-            for session in accounts:
+            now = time.time()
+            # نقرأ نسخة للمرور عليها فقط (read-only) — التعديل الفعلي
+            # هيحصل بشكل ذرّي لكل جلسة لوحدها عبر _accounts_update_in_place
+            accounts_snapshot = db.get('accounts') or []
+
+            for session in accounts_snapshot:
                 sessio   = session.get('s')
                 phon     = session.get('phone', '')
                 owner_id = session.get('owner_id')
-                reg_time = session.get('registered_at', now)
-
 
                 if not sessio:
                     continue
 
-
-                if now - reg_time < _GRACE_SECONDS:
-                    updated.append(session)
-                    continue
-
-
                 last_check = float(db.get(f'session_last_check_{phon}') or 0)
                 if now - last_check < _CHECK_INTERVAL:
-                    # لسه مش وقت الفحص — نحتفظ بالجلسة
-                    updated.append(session)
-                    continue
-
+                    continue  # لسه مش وقت الفحص لهذه الجلسة
 
                 db.set(f'session_last_check_{phon}', now)
                 session_ok = False
+                temporary_error = False
                 try:
                     # نستخدم connect/disconnect بدل start/stop عشان نتجنب
                     # أي logout أو session invalidation من Pyrogram
@@ -13095,89 +13241,82 @@ async def _check_sessions_task():
                     session_ok = True
                 except Exception as ex:
                     err_str = str(ex).lower()
-                    # لو الخطأ صريح بانتهاء الجلسة — نعتبره فشل حقيقي
-                    # لو خطأ شبكة مؤقت — نتجاهله
                     if any(k in err_str for k in ['auth', 'unauthorized', 'deactivated', 'invalid']):
+                        # خطأ صريح بانتهاء الجلسة — فشل حقيقي ومؤكد
                         session_ok = False
                     else:
-                        # خطأ مؤقت (شبكة/timeout) — نحتفظ بالجلسة ونجرب بعدين
+                        # خطأ مؤقت (شبكة/timeout) — نتجاهله ونجرب تاني المرة الجاية
                         print(f"[session_check] {phon}: خطأ مؤقت ({ex}) — تم الاحتفاظ")
-                        updated.append(session)
-                        continue
+                        temporary_error = True
                     try:
                         await client.disconnect()
-                    except:
+                    except Exception:
                         pass
 
+                if temporary_error:
+                    continue
+
                 if session_ok:
-                    # الجلسة تمام — نصفّر عداد الفشل
                     db.set(f'session_fail_count_{phon}', 0)
-                    updated.append(session)
-                else:
+                    continue
 
-                    fail_count = int(db.get(f'session_fail_count_{phon}') or 0) + 1
-                    db.set(f'session_fail_count_{phon}', fail_count)
+                # ❌ الجلسة مؤكد إنها خرجت — خصم فوري بدون انتظار، وحذف الحساب
+                _penalty_amount = _get_session_penalty()
+                penalized = db.get(f'session_penalized_{phon}')
 
-                    if fail_count < _MAX_FAILS:
-                        print(f"[session_check] {phon}: فشل {fail_count}/{_MAX_FAILS} — انتظار")
-                        updated.append(session)
-                        continue
+                if not penalized and owner_id:
+                    try:
+                        if db.exists(f'user_{owner_id}'):
+                            udata  = db.get(f'user_{owner_id}')
+                            coins  = int(udata.get('coins', 0))
+                            # يسمح بالرصيد السالب عمداً (بدون max)
+                            new_coins = coins - _penalty_amount
+                            udata['coins'] = new_coins
+                            db.set(f'user_{owner_id}', udata)
+                            db.set(f'session_penalized_{phon}', True)
+                            db.set(f'session_broken_{phon}', {
+                                'phone': phon, 'owner_id': owner_id, 'penalty': _penalty_amount,
+                            })
+                            restore_keys = mk(row_width=1)
+                            restore_keys.add(btn(
+                                '🔄 أرجع الجلسة واسترد نقاطك',
+                                callback_data=f'restore_session_{phon}',
+                                color='green'
+                            ))
+                            if new_coins < 0:
+                                balance_note = (
+                                    f"💸 تم خصم <b>{_penalty_amount:,} نقطة</b> من رصيدك.\n"
+                                    f"💰 رصيدك الحالي: <b>{new_coins:,} نقطة</b> (رصيد سالب)\n\n"
+                                    "⚠️ رصيدك أصبح سالباً — لن تتمكن من استخدام البوت حتى تُرجع الجلسة وتُصفّي رصيدك."
+                                )
+                            else:
+                                balance_note = (
+                                    f"💸 تم خصم <b>{_penalty_amount:,} نقطة</b> من رصيدك.\n"
+                                    f"💰 رصيدك الحالي: <b>{new_coins:,} نقطة</b>"
+                                )
+                            try:
+                                bot.send_message(
+                                    chat_id=owner_id,
+                                    text=(
+                                        "⚠️ <b>تنبيه مهم!</b>\n\n"
+                                        f"📱 الحساب المرتبط بالرقم <code>{phon}</code> خرجت جلسته من البوت.\n\n"
+                                        f"{balance_note}\n\n"
+                                        "🔄 اضغط الزر أدناه لإرجاع الجلسة واسترداد نقاطك فوراً."
+                                    ),
+                                    reply_markup=restore_keys,
+                                    parse_mode="HTML"
+                                )
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        print(f"[session_check] خطأ في خصم نقاط: {e}")
 
+                # نحذف الجلسة المكسورة من accounts بشكل ذرّي (آمن مع باقي العمليات)
+                _accounts_remove_by_phone(phon)
 
-                    penalized = db.get(f'session_penalized_{phon}')
-                    if not penalized and owner_id:
-                        _rent_pts = 500
-                        try:
-                            if db.exists(f'user_{owner_id}'):
-                                udata  = db.get(f'user_{owner_id}')
-                                coins  = int(udata.get('coins', 0))
-                                # يسمح بالرصيد السالب عمداً (بدون max)
-                                new_coins = coins - _rent_pts
-                                udata['coins'] = new_coins
-                                db.set(f'user_{owner_id}', udata)
-                                db.set(f'session_penalized_{phon}', True)
-                                db.set(f'session_broken_{phon}', {
-                                    'phone': phon, 'owner_id': owner_id, 'penalty': _rent_pts,
-                                })
-                                restore_keys = mk(row_width=1)
-                                restore_keys.add(btn(
-                                    '🔄 أرجع الجلسة واسترد نقاطك',
-                                    callback_data=f'restore_session_{phon}',
-                                    color='green'
-                                ))
-                                # بناء نص الرسالة حسب إذا الرصيد سالب أو لا
-                                if new_coins < 0:
-                                    balance_note = (
-                                        f"💸 تم خصم <b>{_rent_pts:,} نقطة</b> من رصيدك.\n"
-                                        f"💰 رصيدك الحالي: <b>{new_coins:,} نقطة</b> (رصيد سالب)\n\n"
-                                        "⚠️ رصيدك أصبح سالباً — لن تتمكن من استخدام البوت حتى تُرجع الجلسة وتُصفّي رصيدك."
-                                    )
-                                else:
-                                    balance_note = (
-                                        f"💸 تم خصم <b>{_rent_pts:,} نقطة</b> من رصيدك.\n"
-                                        f"💰 رصيدك الحالي: <b>{new_coins:,} نقطة</b>"
-                                    )
-                                try:
-                                    bot.send_message(
-                                        chat_id=owner_id,
-                                        text=(
-                                            "⚠️ <b>تنبيه مهم!</b>\n\n"
-                                            f"📱 الحساب المرتبط بالرقم <code>{phon}</code> خرجت جلسته من البوت.\n\n"
-                                            f"{balance_note}\n\n"
-                                            "🔄 اضغط الزر أدناه لإرجاع الجلسة واسترداد نقاطك فوراً."
-                                        ),
-                                        reply_markup=restore_keys,
-                                        parse_mode="HTML"
-                                    )
-                                except:
-                                    pass
-                        except Exception as e:
-                            print(f"[session_check] خطأ في خصم نقاط: {e}")
-                    # نحذف الجلسة المكسورة
-            db.set('accounts', updated)
         except Exception as e:
             print(f"[session_check] خطأ عام: {e}")
-        # الحلقة كل دقيقة — لكن الفحص الفعلي كل 10 دقائق per session
+        # الحلقة كل دقيقة — الفحص الفعلي per session كل _CHECK_INTERVAL
         await asyncio.sleep(60)
 
 def _start_session_checker():
@@ -13375,7 +13514,7 @@ def _finish_registration_sync(message, data, uid, txt_session):
     ).start()
 
     kb = _gikb(
-        [_gbtn('➕ تسجيل رقم آ��ر', cb='reg_new')],
+        [_gbtn('➕ تسجيل رقم آخر', cb='reg_new')],
         [_gbtn('📊 رصيدي في البوت الرئيسي', cb='reg_balance')]
     )
     gen_bot.reply_to(message,
@@ -13553,7 +13692,7 @@ def _gen_start_menu(uid, first_name):
         + (f'📊 <b>إجمالي الأرقام :</b> {len(db.get("accounts") or []):,} رقم\n' if uid == int(sudo) or uid in (db.get("admins") or []) else '')
         + f'\n━━━━━━━━━━━━━━━━━━━\n'
         f'📌 اضغط <b>تسجيل رقم جديد</b> للبدء\n'
-        f'📋 اقرأ <b>��لشروط</b> قبل التسجيل'
+        f'📋 اقرأ <b>الشروط</b> قبل التسجيل'
     )
     return text, kb
 
@@ -13729,7 +13868,7 @@ def _gen_cb_worker(call):
             '   مثال: <code>+201012345678</code>\n'
             '3️⃣ استلم كود التحقق على تيليجرام\n'
             '4️⃣ أرسل الكود بالشكل: <code>1-2-3-4-5</code>\n'
-            '5️�� تستلم نقاطك فوراً 🎉\n\n'
+            '5️⃣ تستلم نقاطك فوراً 🎉\n\n'
             '━━━━━━━━━━━━━━━━━━━\n'
             f'💰 <b>مكافأة كل رقم :</b> {_rent_pts:,} نقطة\n'
             '📅 <b>الحد اليومي :</b> غير محدود\n'
@@ -13754,7 +13893,7 @@ def _gen_cb_worker(call):
 
     elif data == 'reg_ai':
         if not _ai_support_enabled():
-            answer('⚠️ المساعد الذكي غير متاح حال��اً', alert=True)
+            answer('⚠️ المساعد الذكي غير متاح حالياً', alert=True)
             return
         answer()
         _reg_state[uid] = 'ai_chat'
@@ -13870,7 +14009,7 @@ def _gen_clear_sessions(call):
 
     deleted_count = 0
     working_count = 0
-    updated_sessions = []
+    dead_phones = []
 
     async def _check_all():
         nonlocal deleted_count, working_count
@@ -13882,26 +14021,29 @@ def _gen_clear_sessions(call):
                 await client.start()
                 await client.get_me()
                 working_count += 1
-                updated_sessions.append(session)
             except Exception:
                 deleted_count += 1
-                owner_id  = session.get('owner_id')
-                penalized = db.get(f'session_penalized_{phon}')
-                if not penalized and owner_id:
-                    _penalty = 500
-                    if db.exists(f'user_{owner_id}'):
-                        udata = db.get(f'user_{owner_id}')
-                        coins = int(udata.get('coins', 0))
-                        udata['coins'] = max(0, coins - _penalty)
-                        db.set(f'user_{owner_id}', udata)
-                        db.set(f'session_penalized_{phon}', True)
-                        db.set(f'session_broken_{phon}', {'phone': phon, 'owner_id': owner_id, 'penalty': _penalty})
+                dead_phones.append((phon, session.get('owner_id')))
 
     loop = asyncio.new_event_loop()
     loop.run_until_complete(_check_all())
     loop.close()
 
-    db.set('accounts', updated_sessions)
+    # ⚠️ نحذف كل جلسة ميتة بشكل ذرّي واحدة واحدة (بدل overwrite للقائمة كاملة)
+    # عشان لو حد سجّل رقم جديد في نفس وقت التنظيف، الرقم الجديد ميضيعش.
+    _penalty_amount = _get_session_penalty()
+    for phon, owner_id in dead_phones:
+        _accounts_remove_by_phone(phon)
+        penalized = db.get(f'session_penalized_{phon}')
+        if not penalized and owner_id:
+            if db.exists(f'user_{owner_id}'):
+                udata = db.get(f'user_{owner_id}')
+                coins = int(udata.get('coins', 0))
+                udata['coins'] = max(0, coins - _penalty_amount)
+                db.set(f'user_{owner_id}', udata)
+                db.set(f'session_penalized_{phon}', True)
+                db.set(f'session_broken_{phon}', {'phone': phon, 'owner_id': owner_id, 'penalty': _penalty_amount})
+
     try:
         from telebot.types import InlineKeyboardMarkup as _TM, InlineKeyboardButton as _TB
         _clr_kb = _TM(row_width=1)
@@ -13924,7 +14066,7 @@ def gen_msg_handler(message):
     if step == 'ai_chat':
         if not text:
             return
-        _typing = gen_bot.reply_to(message, '🤖 لحظة... ب��كّر في إجابتك')
+        _typing = gen_bot.reply_to(message, '🤖 لحظة... بفكّر في إجابتك')
         ans, err = _ai_ask(text)
         out = ans if ans else err
         kb = _gikb([_gbtn('🚪 إنهاء المحادثة', cb='reg_cancel')])
@@ -13976,7 +14118,7 @@ def gen_msg_handler(message):
                 gen_bot.reply_to(message,
                     f'❌ <b>الرقم مسجّل بالفعل</b>\n\n'
                     f'📱 <code>{phone}</code>{_owner_txt}\n\n'
-                    '• لا يمكن ��سجيل نفس الرقم مرتين\n'
+                    '• لا يمكن تسجيل نفس الرقم مرتين\n'
                     '• إذا كان هذا رقمك وتواجه مشكلة، تواصل مع الدعم',
                     reply_markup=kb, parse_mode='HTML'
                 )
@@ -14032,7 +14174,7 @@ import asyncio as _pyro_asyncio
 # في نفس الوقت (تسجيل أرقام + تنفيذ طلبات)، وده بيرمي:
 #   RuntimeError: This event loop is already running
 # وبيخلي العمليات تتسلسل ورا بعض (بطء) أو تفشل، وكمان بيقطع جلسة pyrogram بين
-# خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في ��لخلفية،
+# خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في الخلفية،
 # ونبعتله الـ coroutines بشكل thread-safe عن طريق run_coroutine_threadsafe.
 
 _pyro_loop = _pyro_asyncio.new_event_loop()
@@ -14226,7 +14368,7 @@ def on_channel_post(message):
         print(f'[future_views listener] {_fve}')
 
 # ══════════════════════════════════════════════════════════════
-#  دوال مكتملة — ��انت مستدعاة بس مش معرّفة أو ناقصة
+#  دوال مكتملة — كانت مستدعاة بس مش معرّفة أو ناقصة
 # ══════════════════════════════════════════════════════════════
 
 def get_url_linkbot(message, amount):
@@ -14295,7 +14437,7 @@ def _send_order_confirm(cid, service_label, section_label, amount, price, extra=
         f'📂 القسم : {section_label}\n'
         f'🛠 الخدمة : {service_label}\n'
         f'📦 الكمية : {amount:,}\n'
-        f'💰 التكلف�� : <b>{price:,} ن��طة</b>\n'
+        f'💰 التكلفة : <b>{price:,} نقطة</b>\n'
         f'💳 رصيدك : {balance:,} نقطة\n'
         f'━━━━━━━━━━━━━━━━━━━━\n'
         f'هل تريد تأكيد الطلب؟'
@@ -14357,7 +14499,7 @@ def _send_daily_reminder(uid: int):
             pass
     except Exception as _e:
         err = str(_e).lower()
-        # BUG 5 FIX: لو المستخدم blocked البوت أو محذوف → و��ف التذكير
+        # BUG 5 FIX: لو المستخدم blocked البوت أو محذوف → وقف التذكير
         if 'forbidden' in err or '403' in err or 'blocked' in err or 'deactivated' in err:
             return   # مش بنجدول تاني
         if 'chat not found' in err:
