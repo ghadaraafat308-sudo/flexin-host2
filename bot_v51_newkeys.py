@@ -1361,6 +1361,46 @@ bk_cancel_adm.add(btn('🔙 رجوع للوحة الأدمن', callback_data='ad
 
 print("[⏳] جارٍ إنشاء البوت...")
 bot = TeleBot(token=BOT_TOKEN, num_threads=16)
+
+# ============================================================
+# 🐞 VIP Debug Logger — يسجّل أسباب فشل خدمات الـ VIP تلقائياً
+# ============================================================
+import os as _vip_os
+import datetime as _vip_dt
+import threading as _vip_th
+
+_VIP_LOG_PATH = _vip_os.path.join(_vip_os.path.dirname(_vip_os.path.abspath(__file__)), 'vip_errors.log')
+_vip_lock = _vip_th.Lock()
+_vip_last_notify = {'ts': 0}   # لتجنب غرق السودو بالرسائل
+
+def _vip_log(stage, err, extra=None):
+    """يسجّل خطأ + يبعته للسودو (mute لـ 30ث بين كل رسالة عشان ميصرخش)"""
+    try:
+        ts = _vip_dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if isinstance(err, BaseException):
+            err_type = type(err).__name__
+            err_msg = str(err)
+        else:
+            err_type = 'INFO'
+            err_msg = str(err)
+        line = f"[{ts}] {stage} | {err_type}: {err_msg}"
+        if extra:
+            line += f" | extra={extra}"
+        with _vip_lock:
+            with open(_VIP_LOG_PATH, 'a', encoding='utf-8') as f:
+                f.write(line + "\n")
+        # بعت للسودو (بحد أقصى مرة كل 30 ثانية عشان لو فيه فشل جماعي ميبعتش 100 رسالة)
+        import time as _t
+        now = _t.time()
+        if now - _vip_last_notify['ts'] > 30:
+            _vip_last_notify['ts'] = now
+            try:
+                bot.send_message(int(sudo), f"🐞 VIP خطأ:\n<code>{line}</code>\n\nاكتب /vipdebug عشان تشوف التفاصيل", parse_mode='HTML')
+            except Exception:
+                pass
+    except Exception:
+        pass
+
 print("[✅] البوت جاهز — BOT_TOKEN صحيح")
 
 # ── cache لـ _get_bot_me() عشان منعملش API call في كل رسالة ──
@@ -1398,7 +1438,7 @@ if _existing_accounts is None:
         # كان موجود لكن الـ cache لم يحمّله — نحدث الـ cache
         with db._lock:
             db._cache['accounts'] = _existing_accounts
-        print(f"[📥] ����م استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
+        print(f"[📥] ������م استرداد {len(_existing_accounts)} حساب من Firebase مباشرة")
 
 # db.delete("force")  # تم التعطيل — كان يمسح القنوات الإجبارية عند كل تشغيل
 
@@ -1846,17 +1886,47 @@ async def userbot(session, user):
             pass
 
 async def linkbot(session, user, text):
+    """رابط دعوة عادي — يستخدم raw StartBot عشان الإحالة تتسجل فعلياً"""
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
-    await client.start()
     try:
-        _me = await client.get_me()
-        db.set(f'is_fake_{_me.id}', True)
-        await client.send_message(user, text)
-        return True
+        await client.start()
     except Exception as e:
-        print(e)
+        print(f'[linkbot] start: {e}')
         return False
+    try:
+        try:
+            _me = await client.get_me()
+            db.set(f'is_fake_{_me.id}', True)
+        except Exception:
+            pass
+        # FIX: لازم نستخدم raw StartBot — إرسال /start كرسالة نصية مبيرجّعش start_param للبوت
+        # وبالتالي الـ deeplink handler في البوت المستهدف مبيشتغلش، والإحالة مبتتسجلش
+        try:
+            from pyrogram.raw.functions.messages import StartBot
+            start_param = text.replace('/start ', '').strip() if text.startswith('/start ') else None
+            if start_param:
+                bot_peer = await client.resolve_peer(user)
+                me_peer = await client.resolve_peer('me')   # ← المستخدم نفسه
+                await client.invoke(
+                    StartBot(
+                        bot=bot_peer,
+                        peer=me_peer,
+                        random_id=__import__('random').randint(0, 2**63),
+                        start_param=start_param
+                    )
+                )
+                return True
+            else:
+                # مفيش start_param — رسالة عادية
+                await client.send_message(user, text)
+                return True
+        except Exception as e:
+            _vip_log('linkbot.StartBot', e, extra=f"bot={user} param={text!r}")
+            return False
+    finally:
+        try: await client.stop()
+        except: pass
 
 async def linkbot2(session, user, text, channel_force):
     # channel_force يمكن ان يكون string واحد او list من القنوات
@@ -1896,19 +1966,21 @@ async def linkbot2(session, user, text, channel_force):
         if start_param:
             try:
                 from pyrogram.raw.functions.messages import StartBot
-                bot_peer  = await client.resolve_peer(user)
-                user_peer = await client.resolve_peer(user)
+                bot_peer = await client.resolve_peer(user)
+                # FIX: كان غلط فادح — user_peer كان = bot_peer (نفس البوت)
+                # الصح إن peer يبقى 'me' (الحساب اللي بيبدأ البوت) عشان الإحالة تتسجل
+                me_peer = await client.resolve_peer('me')
                 await client.invoke(
                     StartBot(
                         bot=bot_peer,
-                        peer=user_peer,
+                        peer=me_peer,
                         random_id=__import__('random').randint(0, 2**63),
                         start_param=start_param
                     )
                 )
                 startbot_ok = True
             except Exception as e:
-                print(f'[linkbot2] StartBot error: {e}')
+                _vip_log('linkbot2.StartBot', e, extra=f"bot={user} param={start_param!r}")
                 # FIX: مفىش fallback لرسالة نصية — دي مبتتحسبش إحالة
                 startbot_ok = False
         else:
@@ -1961,21 +2033,70 @@ async def check_chat(session: str, link: str):
         return False
 
 async def send_comment(session, url, text):
+    """يبعت تعليق حقيقي في الـ discussion group المربوط بالقناة — مش في القناة نفسها"""
     client = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
                     lang_code="ar", no_updates=True, session_string=session)
-    await client.start()
+    try:
+        await client.start()
+    except Exception as e:
+        print(f'[send_comment] start: {e}')
+        return False
     x = check_format(url)
     if not x:
+        try: await client.stop()
+        except: pass
         return False
     channel, msg_id = x
     try:
-        await client.join_chat(channel)
-        await client.send_message(channel, text, reply_to_message_id=msg_id)
-        await client.leave_chat(channel)
+        # 1) ندخل القناة أولاً (عشان نقدر نجيب الـ discussion)
+        try:
+            await client.join_chat(channel)
+        except Exception as je:
+            _vip_log('send_comment.join_channel', je, extra=channel)
+
+        # 2) نجيب الرسالة المناظرة في الـ discussion group
+        try:
+            disc_msg = await client.get_discussion_message(channel, int(msg_id))
+        except Exception as ge:
+            _vip_log('send_comment.get_discussion', ge, extra=f"{channel}/{msg_id}")
+            try: await client.leave_chat(channel)
+            except: pass
+            return False
+        if not disc_msg:
+            _vip_log('send_comment.no_discussion', f'discussion_msg=None', extra=f"{channel}/{msg_id}")
+            try: await client.leave_chat(channel)
+            except: pass
+            return False
+
+        # 3) ندخل الـ discussion group (غالباً بيبقى public group مرتبط)
+        try:
+            await client.join_chat(disc_msg.chat.id)
+        except Exception as jge:
+            _vip_log('send_comment.join_group', jge, extra=str(disc_msg.chat.id))
+
+        # 4) نبعت التعليق كرد على رسالة الـ discussion (مش رسالة القناة)
+        try:
+            await client.send_message(
+                chat_id=disc_msg.chat.id,
+                text=text,
+                reply_to_message_id=disc_msg.id
+            )
+        except Exception as se:
+            _vip_log('send_comment.send', se, extra=f"group={disc_msg.chat.id} reply_to={disc_msg.id}")
+            return False
+
+        # 5) تنظيف — نخرج من الاتنين
+        try: await client.leave_chat(disc_msg.chat.id)
+        except: pass
+        try: await client.leave_chat(channel)
+        except: pass
         return True
     except Exception as e:
-        print(e)
+        _vip_log('send_comment.outer', e, extra=url)
         return False
+    finally:
+        try: await client.stop()
+        except: pass
 
 async def join_chatp(session, invite_link):
     c = Client('::memory::', in_memory=True, api_hash=API_HASH, api_id=API_ID,
@@ -2832,7 +2953,7 @@ def send_order_complete_to_channel(user, service_label, section_label, amount, d
         f"👤 المستخدم: {user_link}\n"
         f"🔖 اليوزر: {username_str}\n"
         f"🪪 الأيدي: <code>{user.id}</code>\n"
-        "━━━━━━���━━━━━━━━━━━━\n"
+        "━━━━━━�����━━━━━━━━━━━━\n"
         f"📂 القسم: {section_label}\n"
         f"🛠 الخدمة: {service_label}\n"
         f"📦 الكمية المطلوبة: {amount}\n"
@@ -3197,7 +3318,7 @@ def _build_main_keys(user_id):
 def _count_pending_referral(join_user):
     """
     تُشغَّل فوراً عند أول /start قبل التحقق من القنوات الإجبارية.
-    تحسب الإحالة (تضيف المدعو لقائمة الداعي) بدون إعطاء نقاط.
+    تحسب الإحالة (تضيف ��لمدعو لقائمة الداعي) بدون إعطاء نقاط.
     """
     _pending_key = f'ref_pending_{join_user}'
     if not db.exists(_pending_key):
@@ -4332,7 +4453,7 @@ _ADMIN_CATEGORIES = {
         'buttons': [
             ('📊 الاحصائيات',                       'stats',     'blue'),
             ('📢 اذاعة',                            'cast',      'green'),
-            ('🤖 إدارة الدعم بالذكاء الاصطناعي',    'adm_ai_panel','green'),
+            ('🤖 إدارة الدعم بالذك��ء الاصطناعي',    'adm_ai_panel','green'),
             ('سحب اصوات',                           'dump_votes','red'),
             ('سبام رسائل',                          'spams',     'red'),
             ('مغادرة كل الحسابات من قناة',          'leave',     'red'),
@@ -4392,6 +4513,43 @@ def _show_admin_category(cid, mid, cat_key):
         text=f"**{cat['title']}**\n\n- اختر الإجراء المطلوب:\n\n===================",
         chat_id=cid, message_id=mid, reply_markup=keys_, parse_mode='Markdown'
     )
+
+@bot.message_handler(commands=['vipdebug', 'debug'])
+def cmd_vipdebug(message):
+    """يعرض آخر 50 سطر من أخطاء الـ VIP"""
+    cid = message.from_user.id
+    if cid != sudo and cid not in (db.get("admins") or []):
+        return
+    try:
+        if not _vip_os.path.exists(_VIP_LOG_PATH):
+            bot.reply_to(message, '✅ مفيش أخطاء مسجلة لحد دلوقتي (الملف أصلاً متعملش)')
+            return
+        with open(_VIP_LOG_PATH, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        last = lines[-50:] if len(lines) > 50 else lines
+        if not last:
+            bot.reply_to(message, '✅ ملف الأخطاء فاضي')
+            return
+        body = ''.join(last)
+        if len(body) > 3800:
+            body = body[-3800:]
+        bot.reply_to(message, f"🐞 آخر {len(last)} خطأ (VIP):\n<pre>{body}</pre>", parse_mode='HTML')
+    except Exception as e:
+        bot.reply_to(message, f'❌ فشل قراءة الملف: {e}')
+
+@bot.message_handler(commands=['vipclear'])
+def cmd_vipclear(message):
+    """يمسح ملف أخطاء الـ VIP"""
+    cid = message.from_user.id
+    if cid != sudo:
+        return
+    try:
+        if _vip_os.path.exists(_VIP_LOG_PATH):
+            _vip_os.remove(_VIP_LOG_PATH)
+        _vip_last_notify['ts'] = 0
+        bot.reply_to(message, '✅ اتمسح ملف الأخطاء')
+    except Exception as e:
+        bot.reply_to(message, f'❌ {e}')
 
 @bot.message_handler(commands=['admin'])
 
@@ -4526,7 +4684,7 @@ def _show_shop_panel(cid, mid):
         '┗━━━━━━━━━━━━━━━━━━━━━━━┛\n\n'
         '👑 <b>باقات الاشتراك المميزة:</b>\n\n'
         f'📅 <b>أسبوعي:</b> {week_price:,} نقطة\n'
-        f'📆 <b>شهري:</b>  {month_price:,} نقطة\n'
+        f'���� <b>شهري:</b>  {month_price:,} نقطة\n'
         f'🏆 <b>سنوي:</b>  {year_price:,} نقطة\n\n'
         '━━━━━━━━━━━━━━━━━━━\n\n'
         '✨ <b>مميزات VIP:</b>\n\n'
@@ -4830,7 +4988,7 @@ def _log_btn(call):
         uname = f'@{u.username}' if u.username else '—'
         txt = (
             f'📋 <b>ضغطة زر</b>\n'
-            f'━━━━━━━━━━━━━━━━\n'
+            f'━━━━━━━━━━━���━━━━\n'
             f'👤 الاسم : {name}\n'
             f'📛 اليوزر : {uname}\n'
             f'🆔 الأيدي : <code>{u.id}</code>\n'
@@ -5322,7 +5480,7 @@ def _c_rs_worker(call):
                     chat_id=cid, message_id=mid, reply_markup=bk, parse_mode='HTML'
                 )
                 return
-        _cb_alert(call, '❌ الإعلان غير موجود', show_alert=True)
+        _cb_alert(call, '❌ الإعلا�� غير موجود', show_alert=True)
         return
 
     if data == 'mkt_confirm_add':
@@ -5606,7 +5764,7 @@ def _c_rs_worker(call):
                 chat_id=cid, message_id=mid, reply_markup=bot_keys, parse_mode='HTML'
             )
             return
-        # نوع غير معروف — لا نعطي نقاط
+        # نوع غير معروف — ل�� نعطي نقاط
         _cb_alert(call, '❌ نوع المهمة غير مدعوم', show_alert=True)
         return
 
@@ -5679,7 +5837,7 @@ def _c_rs_worker(call):
             )
         return
 
-    # 📋 عرض المهام (من الأزرار)
+    # 📋 عرض المهام (م�� الأزرار)
 
     if data == 'tasks':
         tasks_list = db.get("tasks_list") or []
@@ -6563,7 +6721,7 @@ def _c_rs_worker(call):
         if svc_enabled('votes_fsub'):
             keys.add(btn('🏆 تصويت مسابقات اشتراك إجباري', callback_data='votes_fsub', color='green'))
 
-        # صف 6: سبام رسائل — عرض كامل
+        # صف 6: ��بام رسائل — عرض كامل
         if svc_enabled('spam'):
             keys.add(btn('💣 سبام رسائل', callback_data='spams', color='blue'))
 
@@ -6697,7 +6855,7 @@ def _c_rs_worker(call):
             "📱 <b>تسجيل الحسابات مقابل نقاط</b>\n\n"
             "ملاحظه : الحساب مش بيخرج من عندك ولا بيتحظر ولا بيحصل اي حاجه\n\n"
             "━━━━━━━━━━━━━━━━━━━\n"
-            f"💰 مكافأة تسليم حساب واحد : <b>{_rent_reward_val:,} نقطة</b>\n"
+            f"💰 مكافأ�� تسليم حساب واحد : <b>{_rent_reward_val:,} نقطة</b>\n"
             f"⚠️ خصم لو طلعت الجلسة    : <b>500 نقطة</b>\n"
             "━━━━━━━━━━━━━━━━━━━\n\n"
             "اضغط على الزر بالأسفل لتسجيل حسابك والحصول على النقاط فور التسليم"
@@ -7049,7 +7207,7 @@ def _c_rs_worker(call):
         _ck.add(btn('رجوع', callback_data='setforce', color='blue'))
         bot.edit_message_text(
             text=(
-                '✏️ <b>تخصيص زر التحقق</b>\n\n'
+                '✏️ <b>تخصيص زر ال��حقق</b>\n\n'
                 f'الحالي: <b>{_ce} {_ct}</b>\n\n'
                 '🎨 اختر إيموجي للزر:'
             ),
@@ -8142,7 +8300,7 @@ def _c_rs_worker(call):
         keys = mk(row_width=1)
         for cb, label in BTN_KEYS.items():
             cur = _get_btn_color(cb, "blue")
-            color_icon = "🟢" if cur == "green" else "🔴" if cur == "red" else "🔵"
+            color_icon = "����" if cur == "green" else "🔴" if cur == "red" else "🔵"
             keys.add(btn(f'{color_icon} {label}', callback_data=f'clr_pick_{cb}', color=cur))
         keys.add(btn('🔙 رجوع للتخصيص', callback_data='adm_btn_panel', color='blue'))
         bot.edit_message_text(
@@ -8382,7 +8540,7 @@ def _c_rs_worker(call):
                     "━━━━━━━━━━━━━━━━━━━\n"
                     f"👥 المستخدمون الجدد المستوردون: <b>{res['users_imported']:,}</b>\n"
                     f"👥 المستخدمون المُحدَّثون: <b>{res['users_updated']:,}</b>\n"
-                    f"📱 الأرقام المستوردة: <b>{res['accounts_imported']:,}</b>\n"
+                    f"📱 الأرقا�� المستوردة: <b>{res['accounts_imported']:,}</b>\n"
                     f"📱 الأرقام المتجاهلة (موجودة): <b>{res['accounts_skipped']:,}</b>\n"
                     f"⚙️ الإعدادات المستوردة: <b>{res['settings_imported']}</b>\n"
                     "━━━━━━━━━━━━━━━━━━━\n"
@@ -9278,7 +9436,7 @@ def _c_rs_worker(call):
         uses = int(gift.get("uses", 0))
         used_by = gift.get("used_by", [])
         if gift.get("used") or uses >= max_uses:
-            _cb_alert(call, text='❌ تم استنفاد استخدامات هذا الرابط', show_alert=True)
+            _cb_alert(call, text='❌ تم استنفاد استخدا��ات هذا الرابط', show_alert=True)
             return
         if cid in used_by:
             _cb_alert(call, text='❌ لقد استخدمت هذا الرابط من قبل', show_alert=True)
@@ -10381,7 +10539,7 @@ def get_amount(message, type_req):
                 return
             load_ = db.get('accounts') or []
             if len(load_) < amount:
-                bot.reply_to(message, f'• عدد حسابات البوت غير كافية لتنفيذ طلبك', reply_markup=bk_cancel, parse_mode="HTML")
+                bot.reply_to(message, f'��� عدد حسابات البوت غير كافية لتنفيذ طلبك', reply_markup=bk_cancel, parse_mode="HTML")
                 return
             _req_txt = (
                 f'╔══════════════════════╗\n'
@@ -10698,7 +10856,7 @@ def dump_votes(message):
         addord()
         buys = int(db.get(f"user_{user_id}_buys")) if db.exists(f"user_{user_id}_buys") else 0
         db.set(f"user_{user_id}_buys", int(buys) + 1)
-    # FIX: تصحيح العدادات المقلوبة + رسالة مشروطة
+    # FIX: تصحيح العدادات المقلوبة + رسالة مشرو��ة
     if true == 0:
         _final_txt = f'• ❌ فشل تنفيذ الطلب\n\nلم يتم سحب أي تصويت ({false} محاولة فاشلة)'
     else:
@@ -11138,7 +11296,7 @@ def get_bot_user(message, amount):
     if price > int(acc.get('coins', 0)):
         bot.reply_to(message, f'• نقاطك غير كافية ❌\n• تحتاج إلى <b>{price}</b> نقطة', reply_markup=bk_cancel, parse_mode="HTML")
         return
-    show_order_confirm(message, 'مستخدمين بوت', amount, url, price)
+    show_order_confirm(message, 'مستخدمين ب��ت', amount, url, price)
 
 def get_url_spam(message, amount):
     url = message.text
@@ -11757,7 +11915,7 @@ def react_special_step2_url(message):
             f'✨ <b>اختر الإيموجي المميز</b>\n\n'
             f'🔗 الرابط : {url}\n'
             f'🔢 الكمية : {amount}\n\n'
-            f'⬇️ <b>الإيموجيات المتاحة:</b>\n'
+            f'⬇️ <b>الإيموجيات ��لمتاحة:</b>\n'
             f'{emoji_lines}\n'
             f'اضغط رقم الإيموجي الذي تريده:',
             reply_markup=ek, parse_mode='HTML',
@@ -14039,7 +14197,7 @@ import asyncio as _pyro_asyncio
 
 # ── Event loop دائم يعمل في thread مخصص ──
 # الكود القديم كان بينده run_until_complete على نفس الـ loop من أكتر من thread
-# في نفس الوقت (تسجيل أرقام + تنفيذ طلبات)، وده بيرمي:
+# في نفس الوقت (تسج��ل أرقام + تنفيذ طلبات)، وده بيرمي:
 #   RuntimeError: This event loop is already running
 # وبيخلي العمليات تتسلسل ورا بعض (بطء) أو تفشل، وكمان بيقطع جلسة pyrogram بين
 # خطوة إرسال الكود وخطوة التأكيد. الحل: loop واحد شغّال بـ run_forever في ��لخلفية،
@@ -14145,7 +14303,7 @@ def _gen_verify_code(message, code_raw, uid):
         phone  = data.get('phone')
         ph_hash = data.get('hash')
         if not client or not phone:
-            gen_bot.reply_to(message, '❌ انتهت الجلسة، ابدأ من جديد')
+            gen_bot.reply_to(message, '❌ انتهت ��لجلسة، ابدأ من جديد')
             _reg_state.pop(uid, None)
             _reg_data.pop(uid, None)
             return
@@ -14317,7 +14475,7 @@ def _send_order_confirm(cid, service_label, section_label, amount, price, extra=
 
 
 # ══════════════════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════��═══════════════════════
 #  نظام التذكير بالهدية اليومية — حلقة واحدة بس (مش thread لكل مستخدم)
 #  بنخزن وقت التذكير القادم لكل مستخدم في dict في الذاكرة
 #  وحلقة واحدة بتفحص كل شوية وتبعت لمن وقته جه
